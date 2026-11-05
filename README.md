@@ -19,10 +19,12 @@ Zorq lets a data owner authorize one of their registered data assets to particip
 
 ## Status
 
-**Phase 1 complete — navigable app shell deployed to a stable Vercel Preview.**
+**Phase 2 complete — wallet authentication, sessions and Postgres foundation.**
 
 - Stable preview: <https://zorq-preview-uhhh2.vercel.app>
-- The current preview is a shell: wallet authentication, database, contract calls and Flower training are delivered in Phases 2–4. Unfinished controls are disabled and labelled; they never imply a successful action.
+- Wallet sign-in uses an EIP-4361 SIWE message signed by the user's Substrate sr25519 account; the server verifies the signature and binds the SS58 account to its chain-derived H160.
+- Postgres (Neon via Vercel) stores users, one-use nonces, audit events, idempotency records and rate-limit buckets. Migrations are versioned in `packages/db/migrations`.
+- Asset registration, job creation, licensing and Flower training remain Phases 3–4. Unfinished controls stay disabled and labelled.
 - Portaldot V3 EVM testnet chain ID `420420777` is verified live. The contract is not deployed yet.
 - Design reference images and a reference video are committed under `docs/design/reference/` and `docs/demo/reference/`. They are not used for styling until Phase 7 and demo production.
 - Source documents remain authoritative. See [`AI_HANDOFF.md`](./AI_HANDOFF.md) for current verification evidence, decisions and known limitations.
@@ -61,9 +63,12 @@ npm run typecheck
 npm run lint
 npm run build
 npm run test
+npm run test:auth        # real API + Neon integration; starts a local server
 npx playwright install chromium
 npm run test:e2e
 ```
+
+Local env values live in the gitignored repository-level `.env.local` and are loaded by `next.config.ts`. Hosted Preview values are managed in Vercel project settings. Apply committed migrations with `npm run db:migrate`.
 
 Exact compatible dependency versions are pinned in `package-lock.json`. Do not silently upgrade major versions.
 

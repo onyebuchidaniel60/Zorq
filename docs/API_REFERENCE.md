@@ -23,10 +23,12 @@ Do not return stack traces, SQL errors, secret values, signatures, auth cookies 
 |---|---|---|---|---|
 | GET | `/api/health` | None | — | Liveness only; no config details |
 | GET | `/api/ready` | None | — | Sanitized dependency readiness |
-| POST | `/api/auth/nonce` | None | `{address}` | Returns SIWE challenge/nonce; 5-minute expiry |
-| POST | `/api/auth/verify` | None | `{message,signature}` | Verifies SIWE; sets secure session cookie |
+| POST | `/api/auth/nonce` | None | `{address, ss58Address}` | Returns EIP-4361 challenge `{nonce, message, expiresAt}`; five-minute expiry |
+| POST | `/api/auth/verify` | None | `{message, signature, signatureType?}` | Verifies the sr25519 signature bound to the SS58 account and sets a secure session cookie |
 | GET | `/api/auth/me` | Session | — | Current wallet/session expiry |
-| POST | `/api/auth/logout` | Session | — | Clears cookie; same-origin check |
+| POST | `/api/auth/logout` | Session cookie | — | Clears the cookie; same-origin check |
+
+The challenge request must include both the H160 `address` and the `ss58Address` that signs the message. The server recomputes the H160 from the SS58 account and rejects a mismatch. `signatureType` is `payload` for raw message bytes or `bytes` for the `<Bytes>…</Bytes>` extension wrapper.
 
 ## Assets
 

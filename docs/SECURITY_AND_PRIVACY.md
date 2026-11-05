@@ -51,6 +51,17 @@ Zorq controls authorization for a defined training operation. It does not itself
 - Contract owner emergency pause cannot block revocation.
 - `checkAuthorization` returns deterministic deny reason for non-existing, wrong owner, wrong job, revoked, inactive asset, non-open job, not-yet-valid or expired license.
 
+## Authentication and session model
+
+Zorq uses an EIP-4361 SIWE message with a Portaldot-specific signature scheme. The wallet address in the message is the H160 derived from the user's SS58 account. The extension signs the exact UTF-8 message bytes with sr25519; the backend verifies the signature with `@polkadot/util-crypto` and requires `ss58ToH160(ss58) === address` when the challenge is requested. This adapts EIP-4361 to the chain's only write-capable account type without changing the identity or permission model.
+
+- Nonce: 128-bit random, one use, five minutes, stored server-side with wallet/SS58/domain/URI/chain.
+- Verification: exact domain, URI, chain ID and address; issue/expiry time; signature over raw bytes or the extension's `<Bytes>` wrapper.
+- Session: eight-hour HS256 JWT in an `HttpOnly`, `Secure` (hosted HTTPS), `SameSite=Lax` cookie. No session data is stored in localStorage.
+- Logout clears the cookie. The signed JWT remains cryptographically valid until expiry if replayed; server-side session revocation is future work (L-003).
+- Rate limits: nonce 5/IP/10 minutes; verification 20/IP/10 minutes. Bucket keys are HMACs, not raw IPs.
+- The server never receives a seed phrase, private key or transaction-signing capability for a user wallet.
+
 ## FL trust and privacy limitations
 
 The MVP Flower coordinator is an off-chain trusted component. It must obey the authorization snapshot but Portaldot does not cryptographically force a third-party coordinator to do so. The architecture mitigates this with a single-block snapshot, signed/recorded evidence and aggregation allowlist checks, but it does not prove coordinator honesty.

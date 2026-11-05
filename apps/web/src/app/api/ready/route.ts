@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSql } from "@zorq/db";
 
 export const dynamic = "force-dynamic";
 
@@ -36,17 +37,26 @@ async function checkChain(): Promise<{ ok: boolean; detail: string }> {
   }
 }
 
+async function checkDatabase(): Promise<{ ok: boolean; detail: string }> {
+  try {
+    await getSql()`select 1 as ok`;
+    return { ok: true, detail: "connected" };
+  } catch {
+    return { ok: false, detail: "unavailable" };
+  }
+}
+
 export async function GET() {
-  const database = process.env.DATABASE_URL ? "configured" : "not_configured";
+  const database = await checkDatabase();
   const contract = process.env.ZORQ_CONTRACT_ADDRESS ? "configured" : "not_deployed";
   const chain = await checkChain();
-  const ready = database === "configured" && contract === "configured" && chain.ok;
+  const ready = database.ok && contract === "configured" && chain.ok;
 
   return NextResponse.json(
     {
       status: ready ? "ready" : "not_ready",
       dependencies: {
-        database,
+        database: database.detail,
         chain: chain.detail,
         contract,
       },

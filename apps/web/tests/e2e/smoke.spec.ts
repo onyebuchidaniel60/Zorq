@@ -52,7 +52,7 @@ test.describe("public and app shell", () => {
     await expect(page.getByRole("button", { name: /create job/i })).toBeDisabled();
     await page.goto("/app/assets/new");
     await expect(page.getByLabel("Display name")).toBeDisabled();
-    await expect(page.getByText(/Phase 3/i).first()).toBeVisible();
+    await expect(page.getByText("Form preview · Phase 3")).toBeVisible();
   });
 
   test("health endpoint is liveness-only", async ({ request }) => {

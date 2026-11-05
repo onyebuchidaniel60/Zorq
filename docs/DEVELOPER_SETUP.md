@@ -78,6 +78,16 @@ Exact names are controlled by `ARCHITECTURE.md` section 11. Do not add new varia
 
 Portaldot network values are recorded in `ARCHITECTURE.md`. Before a transaction, check live `eth_chainId` and `eth_blockNumber`. The test-token distribution instructions have referred to native SS58 addresses rather than EVM H160 addresses; confirm the mapping/funding path with Portaldot support. Never ask the operator to paste a seed phrase or private key into chat or source control.
 
+For local development, `next.config.ts` loads the repository-level `.env.local`. The Preview environment receives the same names from Vercel. `npm run db:migrate` applies the committed Drizzle migrations using `DATABASE_URL_UNPOOLED` (or `DATABASE_URL`).
+
+## Authentication implementation
+
+- The browser uses a Substrate extension (polkadot.js, Talisman or SubWallet) through `twinkey-provider`'s `fromExtension`.
+- The server creates a one-use, five-minute nonce and an EIP-4361 SIWE message bound to the app domain, URI and chain ID `420420777`.
+- The extension signs the message bytes with sr25519; the server verifies the signature against the SS58 public key and requires `ss58ToH160(ss58) === address` from the challenge request.
+- A successful verification issues an eight-hour signed HttpOnly session cookie. Nonces are atomically consumed in Postgres; replayed signatures are rejected.
+- Sign-in never sends a transaction and never sends an EVM private key to the server.
+
 ## Test data
 
 Only generated synthetic partitions may be used. Do not import or upload any real personal, medical, financial or commercial dataset. Use a deterministic seed in tests and clearly label all seeded accounts/assets/jobs as demo data.
