@@ -16,3 +16,5 @@
 - [Prerequisites manifest](../PREREQUISITES.md)
 
 This index should be linked from the real in-app `/docs` route in the completed frontend. Keep links relative within the repository; expose only the actual deployed documentation destination in the public site.
+
+- [`FL_SERVICE.md`](./FL_SERVICE.md) — Flower/FastAPI service endpoints, authorization rule, tests and Render deployment.
