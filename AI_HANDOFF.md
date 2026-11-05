@@ -3,18 +3,20 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 2 complete — wallet sign-in (sr25519 SIWE), sessions, Neon Postgres schema and migrations, rate limits and audit foundation are live on the stable preview.
-**Current phase:** Phase 2 checkpoint committed. Phase 3 contract and domain APIs start immediately; deployer is funded with 10 tPOTv3.
+**Project state:** Phase 3 in progress — `ZorqRegistry` implemented and all 11 contract tests pass; Portaldot deployment is blocked on the deployer's remaining balance being below the chain's storage-deposit estimate.
+**Current phase:** Phase 3 contract implementation complete. Testnet deployment awaits a small tPOT top-up; no deployment transaction has been sent since the balance preflight was added.
 
-## Phase 2 funding preflight (reported first)
+## Phase 3 funding preflight (current blocker)
 
 | Check | Result |
 |---|---|
 | SS58 address | `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` |
 | Chain runtime H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
-| Native free balance (`twinkey_identity`) | `1000000000000000` base units = `10.0000` tPOTv3 |
-| EVM balance (`eth_getBalance`) | `0x8963dd8c2c5e0000` = `10000000000000000000` wei (18 dp) |
-| Funding received | **Yes** — operator funded the SS58 address at the POT Starter Hub |
+| Current free balance | `6.0003` tPOTv3 (`600025702442782` native base units) |
+| Contract runtime code | 6,861 bytes; creation code 7,872 bytes after viaIR/optimizer size optimization |
+| Conservative deploy estimate | `7.2749` tPOTv3 (estimated storage deposit + fee + existential deposit) |
+| Shortfall | approximately `1.28` tPOTv3; a `2` tPOTv3 top-up gives safe headroom |
+| Last on-chain effect | Three failed deployment attempts consumed fees only; no contract was created. The script now aborts before sending when the balance is below the estimate. |
 
 ## Product in one paragraph
 
@@ -108,7 +110,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 
 ## Known issues / risks / blockers
 
-1. **Resolved — Portaldot gas funding:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` now holds `10.0000` tPOTv3. Phase 3 deployment can proceed.
+1. **Hard blocker — deployer storage-deposit shortfall:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `6.0003` tPOTv3. The conservative deploy estimate is `7.2749` tPOTv3; a `2` tPOTv3 top-up is requested. No transaction is sent below the estimate.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -170,6 +172,18 @@ GitHub URL or documented reason absent: https://github.com/onyebuchidaniel60/Zor
 Decisions logged this phase (D-NNN ids): D-001, D-002, D-003, D-004, D-005.
 New Known Limitations this phase: L-001, L-002.
 Next single task: Operator funds SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` and accepts the Neon marketplace terms; then Phase 2 backend/SIWE foundation and Phase 3 testnet deployment.
+```
+
+## Phase 3 interim status (contract only; deployment pending)
+
+```text
+Contract source: packages/contracts/contracts/ZorqRegistry.sol
+Compiler: solc 0.8.24, optimizer enabled, runs 1, viaIR true
+Runtime code: 6,861 bytes; creation code: 7,872 bytes
+Contract tests: 11/11 passing via `npx hardhat test`
+Coverage: registration/deactivation, job windows and state transitions, license issuance/revocation/revision, participant cohort cap, soulbound transfers/approvals, deterministic authorization reasons, creation pause, non-owner rejection.
+Deployment: not yet performed. Current balance 6.0003 tPOTv3; conservative estimate 7.2749 tPOTv3.
+No contract address or deployment transaction exists yet.
 ```
 
 ## Phase 2 completion report
@@ -247,6 +261,8 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-005 — 2026-11-05 — Phase 2 — Real Substrate wallet-extension UI path is not exercised in this environment.** Server-side sr25519 verification and the deployed API sign-in are tested with generated keypairs, but no polkadot.js/Talisman/SubWallet extension is installed in the build environment. Consequence: the browser `fromExtension` + `signRaw` UI path needs an operator manual check with a real extension. Mitigation: server verification is extension-agnostic; add a mock-injected extension to Playwright in Phase 5. Files: `apps/web/src/lib/wallet-client.ts`, `AI_HANDOFF.md`.
 
+**L-006 — 2026-11-05 — Phase 3 — Portaldot code storage deposit dominates deployment cost.** The chain charges a storage deposit proportional to deployed code size (observed effective rate roughly `0.0009` tPOTv3 per byte). The size-optimized `ZorqRegistry` runtime code is 6,861 bytes, so the deployer needs more than the initial 10 tPOTv3 faucet claim after failed-attempt fees. Consequence: testnet deployment waits for a small operator top-up; contract functionality is verified locally. Mitigation: viaIR/size optimization reduced the contract; the deploy script now aborts before sending when the balance is below the conservative estimate. Files: `packages/contracts/scripts/deploy-portaldot.ts`, `AI_HANDOFF.md`.
+
 ## Exact next task
 
-**Phase 3 — core contract, domain behaviour and APIs.** Implement `ZorqRegistry` with OpenZeppelin ERC-721/Ownable2Step and full contract tests; deploy to Portaldot V3 testnet with the funded SS58 deployer via `twinkey-provider`; implement asset/job/license draft, confirmation, state and revocation APIs with receipt/event verification; record contract address, deployment transaction and explorer evidence.
+**Top up the deployer with 2 tPOTv3, then resume Phase 3.** Send testnet tPOTv3 to SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` (H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf`), reply `topped up`, and the agent will rerun `packages/contracts/scripts/deploy-portaldot.ts`, record the contract address/deployment transaction, then complete the asset/job/license domain APIs and receipt verification.

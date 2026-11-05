@@ -1,0 +1,29 @@
+{
+  "name": "@zorq/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy-local.ts",
+    "deploy:portaldot": "tsx scripts/deploy-portaldot.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.0.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "5.0.7",
+    "@polkadot-apps/address": "0.4.0",
+    "@polkadot/keyring": "14.0.3",
+    "@polkadot/util-crypto": "14.0.3",
+    "@types/node": "22.19.11",
+    "dotenv": "18.0.9",
+    "hardhat": "3.21.2",
+    "tsx": "4.23.15",
+    "twinkey-provider": "0.1.1",
+    "typescript": "5.9.3",
+    "viem": "2.57.16"
+  }
+}

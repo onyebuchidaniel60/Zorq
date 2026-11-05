@@ -48,3 +48,8 @@ tmp/
 # TypeScript incremental build info
 *.tsbuildinfo
 .env*
+
+# Hardhat build output
+packages/contracts/artifacts/
+packages/contracts/cache/
+packages/contracts/types/
