@@ -13,6 +13,7 @@ class Settings:
     max_participants: int
     data_seed: int
     timeout_seconds: float
+    round_delay_ms: int
 
 
 def load_settings() -> Settings:
@@ -33,4 +34,5 @@ def load_settings() -> Settings:
         max_participants=int(os.environ.get("FLOWER_MAX_PARTICIPANTS", "5")),
         data_seed=int(os.environ.get("DEMO_DATA_SEED", "20261104")),
         timeout_seconds=float(os.environ.get("FL_SERVICE_TIMEOUT_MS", "15000")) / 1000.0,
+        round_delay_ms=int(os.environ.get("ROUND_DELAY_MS", "0")),
     )

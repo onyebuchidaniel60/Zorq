@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
         backend,
         max_concurrent_runs=settings.max_concurrent_runs,
         max_participants=settings.max_participants,
+        round_delay_ms=settings.round_delay_ms,
     )
     app.state.settings = settings
     app.state.manager = manager

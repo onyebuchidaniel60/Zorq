@@ -73,6 +73,7 @@ async def run_simulation(
     state: RunState,
     backend: ZorqBackendClient,
     data_seed: int | None = None,
+    round_delay_ms: int = 0,
 ) -> None:
     seed = data_seed or default_data_seed()
     torch.manual_seed(seed)
@@ -186,6 +187,8 @@ async def run_simulation(
                     "aggregatedCount": round_metrics["aggregatedCount"],
                 },
             )
+            if round_number < state.total_rounds and round_delay_ms > 0:
+                await asyncio.sleep(round_delay_ms / 1000.0)
 
         final_hash = model_hash(model)
         final_metrics = state.metrics[-1] if state.metrics else {}
@@ -230,9 +233,11 @@ class RunManager:
         backend: ZorqBackendClient,
         max_concurrent_runs: int = 1,
         max_participants: int = 5,
+        round_delay_ms: int = 0,
     ) -> None:
         self._backend = backend
         self._max_participants = max_participants
+        self._round_delay_ms = round_delay_ms
         self._semaphore = asyncio.Semaphore(max_concurrent_runs)
         self._runs: dict[str, RunState] = {}
         self._tasks: dict[str, asyncio.Task[None]] = {}
@@ -266,7 +271,11 @@ class RunManager:
 
         async def execute() -> None:
             async with self._semaphore:
-                await run_simulation(state, self._backend)
+                await run_simulation(
+                    state,
+                    self._backend,
+                    round_delay_ms=self._round_delay_ms,
+                )
 
         self._tasks[run_id] = asyncio.create_task(execute())
         return state
