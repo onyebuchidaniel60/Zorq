@@ -106,3 +106,20 @@ No final UI visual design before every blocking criterion passes and the evidenc
 ## Test evidence format
 
 Every checkpoint records commit SHA, exact commands, pass/fail output, E2E URL, chain/contract reference, run IDs, sanitized screenshots/logs, known limitations and manual review. Do not state “tested” without evidence.
+
+## Phase 2 evidence (5 November 2026)
+
+| Check | Command | Result |
+|---|---|---|
+| Drizzle generation | `npm run db:generate` | `migrations/0000_dapper_starhawk.sql`, 5 tables |
+| Migration | `npm run db:migrate` | Applied to Neon branch `br-solitary-frost-bcm6xvxx` |
+| Typecheck | `npm run typecheck` | Pass |
+| Lint | `npm run lint` | Pass |
+| Build | `npm run build` | Pass; auth routes dynamic |
+| Unit | `npm run test` | 10/10 Vitest + 4/4 scaffold |
+| Auth integration | `npm run test:auth` | Nonce, sr25519 signature, cookie flags, `/me`, replay, invalid signature, wrong origin, logout, rate limit |
+| Local E2E | `npx playwright test` | 40/40 desktop + mobile |
+| Deployed preview | `xvfb-run -a node tests/preview-smoke.mjs` | All 15 routes, real sign-in, cookie flags, replay rejection, logout, cleanup |
+| Readiness | `GET /api/ready` | 503 with database connected, chain verified, contract not deployed |
+
+The deployed preview smoke requires a display because Vercel's edge checkpoint rejects headless bulk traffic from this environment; use `xvfb-run` on Linux. The script never prints tokens, connection strings or signatures.

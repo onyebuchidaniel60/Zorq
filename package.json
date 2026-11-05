@@ -14,7 +14,7 @@
     "dev": "npm run dev --workspace @zorq/web",
     "build": "npm run build --workspace @zorq/web",
     "lint": "npm run lint --workspace @zorq/web",
-    "typecheck": "npm run typecheck --workspace @zorq/web",
+    "typecheck": "npm run typecheck --workspace @zorq/web && npm run typecheck --workspace @zorq/db",
     "test": "npm run test --workspace @zorq/web",
     "test:e2e": "npm run test:e2e --workspace @zorq/web",
     "db:generate": "npm run db:generate --workspace @zorq/db",

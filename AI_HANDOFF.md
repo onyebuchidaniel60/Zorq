@@ -3,8 +3,18 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 1 complete — navigable Next.js shell deployed to a stable Vercel Preview; no wallet, database, contract or FL execution yet.
-**Current phase:** Phase 1 checkpoint committed. Phase 2 code can proceed; Phase 3 contract deployment waits for operator funding of the preflight SS58 address. Neon provisioning waits for operator acceptance of the Vercel marketplace terms.
+**Project state:** Phase 2 complete — wallet sign-in (sr25519 SIWE), sessions, Neon Postgres schema and migrations, rate limits and audit foundation are live on the stable preview.
+**Current phase:** Phase 2 checkpoint committed. Phase 3 contract and domain APIs start immediately; deployer is funded with 10 tPOTv3.
+
+## Phase 2 funding preflight (reported first)
+
+| Check | Result |
+|---|---|
+| SS58 address | `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` |
+| Chain runtime H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
+| Native free balance (`twinkey_identity`) | `1000000000000000` base units = `10.0000` tPOTv3 |
+| EVM balance (`eth_getBalance`) | `0x8963dd8c2c5e0000` = `10000000000000000000` wei (18 dp) |
+| Funding received | **Yes** — operator funded the SS58 address at the POT Starter Hub |
 
 ## Product in one paragraph
 
@@ -56,26 +66,27 @@ Current network references recorded in `ARCHITECTURE.md`:
 |---|---|
 | Git repository | `onyebuchidaniel60/Zorq` (public) |
 | Actual Git remote URL | `https://github.com/onyebuchidaniel60/Zorq` |
-| Current branch / commit | `main` / Phase 1 checkpoint `a9b3b33`; this report is the commit immediately after |
+| Current branch / commit | `main` / Phase 2 checkpoint `c4b6def`; this report is the commit immediately after |
 | Vercel project | `uhhh2/zorq` — root directory `apps/web`, framework `nextjs`, Node `22.x` |
 | Stable preview URL | `https://zorq-preview-uhhh2.vercel.app` |
-| Deployed preview URL | `https://zorq-me71ph9qo-uhhh2.vercel.app` |
-| Deployed commit SHA | `a9b3b33` (shell); deployment ID not retrievable after Vercel edge/CLI access failed |
+| Deployed preview URL | `https://zorq-p470qche0-uhhh2.vercel.app` |
+| Deployed commit SHA | `c4b6def` (Phase 2 auth/database) |
+| Deployment ID | `dpl_3YQiqPcZbkk4YnCZZrCM4D5JR54d` |
 | Production URL | Out of scope for the MVP; `main` is the Vercel default production branch by project convention |
-| Database | Neon via Vercel integration — **awaiting operator ToS acceptance** |
+| Database | Neon project `zorq-db` (`still-bonus-67603921`), branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1 — connected |
 | Render FL service | Not provisioned yet — Phase 4 |
-| Portaldot contract address | Not deployed — Phase 3, awaiting funding |
+| Portaldot contract address | Not deployed — Phase 3; deployer funded |
 | Contract deployment transaction | Not available |
 
 ## Functional status
 
-- Repository classification: application scaffold now exists; no wallet/DB/contract/FL business logic yet.
+- Repository classification: application scaffold plus authentication/database foundation.
 - Product definition and PRD: specified.
 - Architecture and stack: specified; implementation follows it with the logged D-001/D-002 substitutions.
 - Contract/API/data model/security: specified in project documents.
-- Application implementation: Phase 1 shell only.
-- Tests: Phase 1 typecheck/lint/build/unit and local Playwright shell tests pass. Deployed-preview Playwright is currently blocked by the Vercel edge security checkpoint (L-001).
-- E2E business flows: not implemented or demonstrated.
+- Application implementation: Phase 1 shell + Phase 2 wallet authentication, sessions and DB.
+- Tests: Phase 2 typecheck/lint/build/unit/integration/auth and local Playwright pass; deployed-preview headful smoke passes all routes and a real sr25519 sign-in.
+- E2E business flows: asset/job/license/FL flows are not implemented yet (Phases 3–4).
 
 ## UI/design status
 
@@ -97,9 +108,9 @@ Current network references recorded in `ARCHITECTURE.md`:
 
 ## Known issues / risks / blockers
 
-1. **Hard blocker — Portaldot gas funding:** deployer H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` (SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F`) has balance `0`. Operator must fund the SS58 address with testnet POT and reply `funded` before Phase 3 deployment.
-2. **Hard blocker — Neon terms of service:** `vercel integration add neon` returned `integration_terms_acceptance_required`. Operator must open `https://vercel.com/uhhh2/~/integrations/accept-terms/neon?source=cli` and accept the marketplace terms, then the agent can retry provisioning. No acceptance was faked.
-3. **Environment limitation — Vercel edge access:** after the first deployment, this environment receives HTTP 403 “Vercel Security Checkpoint” from `*.vercel.app` and `api.vercel.com`, and the Vercel CLI session token expired and cannot refresh. Git-push deployments still work; CLI env/deployment updates and automated preview tests from this environment do not. See L-001.
+1. **Resolved — Portaldot gas funding:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` now holds `10.0000` tPOTv3. Phase 3 deployment can proceed.
+2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
+3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
 5. Confirm that the live V3 testnet accepts the chosen Solidity bytecode/compiler and standard ERC-721 methods before treating deployment as complete.
 6. Hackathon deadline surfaced as 6 November 2026, 04:00 UTC / 05:00 WAT; verify official submission page and any revised timeline.
@@ -161,6 +172,43 @@ New Known Limitations this phase: L-001, L-002.
 Next single task: Operator funds SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` and accepts the Neon marketplace terms; then Phase 2 backend/SIWE foundation and Phase 3 testnet deployment.
 ```
 
+## Phase 2 completion report
+
+```text
+Assigned phase/task: Phase 2 — backend, database and authentication foundation.
+Commit SHA: c4b6def (auth/DB checkpoint). This report is committed immediately after.
+Preview URL (exact): https://zorq-preview-uhhh2.vercel.app
+Deployed commit/deployment ID: c4b6def / dpl_3YQiqPcZbkk4YnCZZrCM4D5JR54d.
+ON-CHAIN BALANCE CHECK (reported first): twinkey_identity returned nativeFree 1000000000000000 = 10.0000 tPOTv3 and evmBalanceWei 10000000000000000000; eth_getBalance returned 0x8963dd8c2c5e0000. Funding received.
+Changes visible: wallet connect/sign-in/sign-out panel with session restore; real sr25519 SIWE challenge/verify endpoints; HttpOnly session cookie; one-use nonce persistence; DB-backed rate limits; audit events; idempotency table; Drizzle migration 0000_dapper_starhawk.sql; readiness now reports database connected; Neon project zorq-db (still-bonus-67603921), branch br-solitary-frost-bcm6xvxx, database neondb.
+Intentionally incomplete areas: asset/job/license domain APIs and contract (Phase 3); Flower run service and dashboard (Phase 4); final visual reference (Phase 7); expanded docs/footer (Phase 8); demo video (Phase 5.5/10).
+Tests (exact commands + actual results):
+  `vercel whoami` with operator-supplied VERCEL_TOKEN -> authenticated (token never printed)
+  `vercel integration add neon --name zorq-db --billing-plan free_v3 -e production -e preview` -> success, resource store_wHQlJczk7fQSnkNQ, connected true, envPulled true
+  `vercel env pull /tmp/... --environment=preview` -> DATABASE_URL present; `psql <DATABASE_URL> -tAc 'select 1'` -> 1
+  `npm run db:generate` -> migrations/0000_dapper_starhawk.sql (5 tables)
+  `npm run db:migrate` -> Database migrations applied
+  `npm run typecheck` -> PASS (exit 0)
+  `npm run lint` -> PASS (exit 0)
+  `npm run build` -> PASS; auth routes emitted as dynamic
+  `npm run test` -> PASS 10/10 Vitest + 4/4 scaffold tests
+  `npm run test:auth` -> PASS: nonce created, sr25519 signature verified, cookie flags, /me, replay rejected, invalid signature rejected, wrong origin rejected, logout clears cookie, nonce rate limit enforced
+  `npx playwright test` (local, port 3100) -> PASS 40/40 desktop + mobile
+  `xvfb-run -a node tests/preview-smoke.mjs` against https://zorq-preview-uhhh2.vercel.app -> PASS: challenge cleared, all 15 routes, health, real sr25519 sign-in through the deployed API, HttpOnly/Secure/SameSite cookie, nonce replay rejected, logout, test rows cleaned up (exit 0)
+  `curl https://zorq-preview-uhhh2.vercel.app/api/ready` -> 503 with `{"database":"connected","chain":"chain_id_verified","contract":"not_deployed"}`
+Manual verification: preview routes and sign-in exercised headful through the deployed origin; cookie flags inspected in the browser context; DB rows and cleanup verified with psql counts; no secrets printed.
+Known issues/blockers: contract not deployed (Phase 3); Render FL service not provisioned (Phase 4); Vercel edge checkpoint requires headful preview automation (L-004); real wallet-extension UI path not exercised in this environment (L-005).
+Security notes: VERCEL_TOKEN, RENDER_API_KEY, DATABASE_URL and all generated secrets were read from the gitignored mode-0600 .env.local and never printed in logs, reports or commits. A tracked-file secret scan found none. Nonce replay, invalid signature, wrong origin, rate limiting and cookie flags are covered by automated tests. Sign-in is sr25519 signature verification; no private key or seed is sent to the server.
+Design reference image status: Supplied (two WebP images); not used before Phase 7.
+Operator approval status (visuals: waived): Waived.
+README/docs status: README, developer setup, API reference and security/privacy docs updated for auth/DB; docs/TEST_PLAN includes Phase 2 evidence.
+Documentation footer URL: https://zorq-preview-uhhh2.vercel.app/docs
+GitHub URL or documented reason absent: https://github.com/onyebuchidaniel60/Zorq (public, actual remote).
+Decisions logged this phase (D-NNN ids): D-006, D-007, D-008.
+New Known Limitations this phase: L-003, L-004, L-005.
+Next single task: Phase 3 — ZorqRegistry contract, contract tests, testnet deployment with the funded deployer, and asset/job/license domain APIs.
+```
+
 ## Decision Log
 
 Append-only. One entry per non-trivial decision made by the agent without operator input. Never edit or remove prior entries.
@@ -177,6 +225,12 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-005 — 2026-11-05 — Phase 1 — Use `twinkey-provider` with a persisted sr25519 keypair for all Portaldot writes.** The chain runtime confirms the SS58→H160 mapping, and direct external EOA transactions are not supported on this build; `twinkey-provider` translates writes into sr25519-signed `revive.call` extrinsics. Deployer key is persisted at `.secrets/deployer.json` (gitignored, mode 0600); only public addresses are reported. Files: `.env.example`, `docs/PORTALDOT_VALIDATION.md`, `AI_HANDOFF.md`.
 
+**D-006 — 2026-11-05 — Phase 2 — Neon PostgreSQL provisioned via the Vercel integration.** The resource is `zorq-db` (`store_wHQlJczk7fQSnkNQ`), Neon project `still-bonus-67603921`, branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1. The pooled `DATABASE_URL` is used server-side with Postgres.js `prepare: false`; `DATABASE_URL_UNPOOLED` is used only for migrations. The integration connected production and preview and pulled env vars; the free plan id exposed by Vercel is `free_v3` (not `free`). Files: `.env.example`, `packages/db/**`, `docs/DEVELOPER_SETUP.md`, `docs/DEPLOYMENT.md`.
+
+**D-007 — 2026-11-05 — Phase 2 — SIWE signature scheme uses sr25519 over the EIP-4361 message.** Portaldot writes require Substrate keys, so the wallet signs the exact SIWE message bytes with sr25519 via the extension's `signRaw`. The server parses EIP-4361 fields with `siwe`, validates domain/URI/chain/nonce/time, recomputes `ss58ToH160` for the challenge, and verifies the signature with `@polkadot/util-crypto` against the stored SS58 public key. Identity and permissions remain H160-based; no ECDSA key is introduced. Files: `apps/web/src/server/auth/**`, `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/wallet/**`.
+
+**D-008 — 2026-11-05 — Phase 2 — Preview acceptance uses a headful xvfb Playwright smoke script.** Vercel's edge security checkpoint rejects headless bulk automation from this environment even with a valid session cookie; a real headful browser clears the challenge. The checked-in `apps/web/tests/preview-smoke.mjs` drives the deployed preview, performs a real sr25519 sign-in through the page context and cleans up its synthetic DB rows. Local Playwright remains headless for the 40-test shell suite. Files: `apps/web/tests/preview-smoke.mjs`, `AI_HANDOFF.md`, `docs/TEST_PLAN.md`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
@@ -187,6 +241,12 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-002 — 2026-11-05 — Phase 1 — Stable preview alias is maintained manually.** The auto-generated branch alias `zorq-git-preview-uhhh2.vercel.app` returned 404 because Vercel did not create a preview deployment for the `preview` branch push. The stable URL is a custom alias to the latest preview deployment. Consequence: each checkpoint must re-alias the newest preview deployment, currently blocked by L-001. Mitigation: use git-push preview deployments once Vercel preview detection is confirmed, or restore CLI access and re-alias.
 
+**L-003 — 2026-11-05 — Phase 2 — Logout is client-cookie clearing; signed sessions are stateless.** The session JWT is not revoked server-side on logout. A copied cookie remains cryptographically valid until its eight-hour expiry. Consequence: logout removes the browser credential but cannot invalidate a stolen copy. Mitigation: HttpOnly/Secure/SameSite cookie, short eight-hour lifetime, no localStorage; a server-side session revocation table is future work. Files: `apps/web/src/server/auth/session.ts`, `docs/SECURITY_AND_PRIVACY.md`.
+
+**L-004 — 2026-11-05 — Phase 2 — Vercel edge checkpoint blocks headless/bulk preview automation.** Direct curl and headless Playwright traffic to `*.vercel.app` from this environment intermittently returns HTTP 403 “Vercel Security Checkpoint”; a headful browser under xvfb clears it. Consequence: deployed-preview evidence uses `tests/preview-smoke.mjs` rather than the full headless suite; the full 40-test suite runs locally. Mitigation: headful xvfb preview smoke; operator browser verification; do not loop retries.
+
+**L-005 — 2026-11-05 — Phase 2 — Real Substrate wallet-extension UI path is not exercised in this environment.** Server-side sr25519 verification and the deployed API sign-in are tested with generated keypairs, but no polkadot.js/Talisman/SubWallet extension is installed in the build environment. Consequence: the browser `fromExtension` + `signRaw` UI path needs an operator manual check with a real extension. Mitigation: server verification is extension-agnostic; add a mock-injected extension to Playwright in Phase 5. Files: `apps/web/src/lib/wallet-client.ts`, `AI_HANDOFF.md`.
+
 ## Exact next task
 
-**Phase 2 — backend, database and authentication foundation.** Operator actions required first: (1) fund SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` with testnet POT at <https://pot-starter-hub.vercel.app> and reply `funded`; (2) accept the Neon marketplace terms at <https://vercel.com/uhhh2/~/integrations/accept-terms/neon?source=cli>. After those, provision Neon, apply the Drizzle schema, implement SIWE sessions/rate limits and continue to Phase 3 deployment.
+**Phase 3 — core contract, domain behaviour and APIs.** Implement `ZorqRegistry` with OpenZeppelin ERC-721/Ownable2Step and full contract tests; deploy to Portaldot V3 testnet with the funded SS58 deployer via `twinkey-provider`; implement asset/job/license draft, confirmation, state and revocation APIs with receipt/event verification; record contract address, deployment transaction and explorer evidence.

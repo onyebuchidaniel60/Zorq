@@ -12,6 +12,7 @@
     "test": "vitest run && node --test tests/scaffold/*.test.mjs",
     "test:scaffold": "node --test tests/scaffold/*.test.mjs",
     "test:auth": "tsx tests/integration/auth-flow.ts",
+    "test:preview": "node tests/preview-smoke.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
