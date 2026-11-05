@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 3 in progress — `ZorqRegistry` implemented and all 11 contract tests pass; Portaldot deployment is blocked on the deployer's remaining balance being below the chain's storage-deposit estimate.
-**Current phase:** Phase 3 contract implementation complete. Testnet deployment awaits a small tPOT top-up; no deployment transaction has been sent since the balance preflight was added.
+**Project state:** Phase 3 in progress — `ZorqRegistry` implemented and all 11 contract tests pass; Portaldot deployment is blocked by the chain's fixed contract-instantiation storage deposit exceeding the deployer balance.
+**Current phase:** Phase 3 contract implementation complete. A second 10 tPOTv3 top-up was received (balance now 15.8003), but a dry-run probe shows even a 116-byte contract requires 22.158 tPOTv3. Deployment awaits a larger top-up.
 
 ## Phase 3 funding preflight (current blocker)
 
@@ -12,11 +12,12 @@
 |---|---|
 | SS58 address | `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` |
 | Chain runtime H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
-| Current free balance | `6.0003` tPOTv3 (`600025702442782` native base units) |
-| Contract runtime code | 6,861 bytes; creation code 7,872 bytes after viaIR/optimizer size optimization |
-| Conservative deploy estimate | `7.2749` tPOTv3 (estimated storage deposit + fee + existential deposit) |
-| Shortfall | approximately `1.28` tPOTv3; a `2` tPOTv3 top-up gives safe headroom |
-| Last on-chain effect | Three failed deployment attempts consumed fees only; no contract was created. The script now aborts before sending when the balance is below the estimate. |
+| Current free balance | `15.8003` tPOTv3 (`1580025702442782` native base units) |
+| Minimal probe contract | 116-byte runtime code; dry-run required storage deposit **22.1580 tPOTv3** |
+| `ZorqRegistry` runtime code | 6,861 bytes |
+| Estimated `ZorqRegistry` requirement | at least 22.158 tPOTv3 plus code-size deposit; plan for ~30 tPOTv3 |
+| Recommended top-up | at least 15 tPOTv3 more; 25 tPOTv3 gives safe headroom |
+| Last on-chain effect | Failed deployment/dry-run probes did not create a contract; actual attempts consumed fees only. The script aborts before sending when the estimated balance is insufficient. |
 
 ## Product in one paragraph
 
@@ -110,7 +111,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 
 ## Known issues / risks / blockers
 
-1. **Hard blocker — deployer storage-deposit shortfall:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `6.0003` tPOTv3. The conservative deploy estimate is `7.2749` tPOTv3; a `2` tPOTv3 top-up is requested. No transaction is sent below the estimate.
+1. **Hard blocker — deployer storage-deposit shortfall:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `15.8003` tPOTv3. A 116-byte probe contract requires `22.1580` tPOTv3; `ZorqRegistry` needs more. At least `15` more tPOTv3 is requested (25 gives headroom). No transaction is sent below the estimate.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -182,7 +183,7 @@ Compiler: solc 0.8.24, optimizer enabled, runs 1, viaIR true
 Runtime code: 6,861 bytes; creation code: 7,872 bytes
 Contract tests: 11/11 passing via `npx hardhat test`
 Coverage: registration/deactivation, job windows and state transitions, license issuance/revocation/revision, participant cohort cap, soulbound transfers/approvals, deterministic authorization reasons, creation pause, non-owner rejection.
-Deployment: not yet performed. Current balance 6.0003 tPOTv3; conservative estimate 7.2749 tPOTv3.
+Deployment: not yet performed. Current balance 15.8003 tPOTv3. A dry-run probe with a 116-byte contract proved the chain requires 22.1580 tPOTv3 for instantiation; `ZorqRegistry` requires more.
 No contract address or deployment transaction exists yet.
 ```
 
@@ -265,4 +266,4 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 ## Exact next task
 
-**Top up the deployer with 2 tPOTv3, then resume Phase 3.** Send testnet tPOTv3 to SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` (H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf`), reply `topped up`, and the agent will rerun `packages/contracts/scripts/deploy-portaldot.ts`, record the contract address/deployment transaction, then complete the asset/job/license domain APIs and receipt verification.
+**Top up the deployer with at least 15 tPOTv3 (25 preferred), then resume Phase 3.** Send testnet tPOTv3 to SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` (H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf`), reply `topped up`, and the agent will rerun the deployment, record the contract address/deployment transaction, then complete the asset/job/license domain APIs.
