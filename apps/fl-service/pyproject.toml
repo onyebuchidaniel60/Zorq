@@ -9,7 +9,7 @@ dependencies = [
   "uvicorn[standard]==0.49.0",
   "httpx==0.28.1",
   "pydantic==2.12.5",
-  "flwr[simulation]==1.42.0",
+  "flwr==1.42.0",
   "torch==2.9.1",
   "numpy==2.3.4",
 ]
