@@ -104,7 +104,7 @@ async function connectApi() {
 const apiPromise = await connectApi();
 const signer = keyringSigner(apiPromise, pair);
 
-async function submitCall(functionName: string, args: readonly unknown[], depositPot = 18) {
+async function submitCall(functionName: string, args: readonly unknown[], depositPot = 19) {
   const data = encodeFunctionData({ abi: ZORQ_REGISTRY_ABI, functionName: functionName as never, args: args as never });
   const tx = apiPromise.tx.revive!.call!(
     contractAddress,
@@ -178,7 +178,7 @@ try {
   }
   console.log("PASS checkAuthorization returns NOT_YET_VALID for future window");
 
-  const revokeTx = await submitCall("revokeLicense", [BigInt(confirmed.tokenId)], 18);
+  const revokeTx = await submitCall("revokeLicense", [BigInt(confirmed.tokenId)], 19);
   await delay(7000);
   await api(`/api/licenses/${draft.licenseId}/revoke/confirm`, {
     method: "POST",

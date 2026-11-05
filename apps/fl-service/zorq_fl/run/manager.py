@@ -77,12 +77,26 @@ async def run_simulation(
     seed = data_seed or default_data_seed()
     torch.manual_seed(seed)
     model = BinaryClassifier()
+    def weighted_metrics(
+        metrics: list[tuple[int, dict[str, Any]]]
+    ) -> dict[str, Any]:
+        total = sum(count for count, _ in metrics)
+        if total == 0:
+            return {}
+        return {
+            "train_loss": sum(
+                count * float(values.get("train_loss", 0)) for count, values in metrics
+            )
+            / total
+        }
+
     strategy = AuthorizationFedAvg(
         min_fit_clients=2,
         min_available_clients=2,
         min_evaluate_clients=2,
         fraction_fit=1.0,
         fraction_evaluate=1.0,
+        fit_metrics_aggregation_fn=weighted_metrics,
     )
     parameters = ndarrays_to_parameters(get_parameters(model))
     participant_partitions = {

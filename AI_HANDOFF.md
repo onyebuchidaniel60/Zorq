@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 3 contract deployed and verified; asset/job/license APIs and receipt verifier implemented. Testnet asset and job creation succeeded; license issuance is blocked by the per-call storage deposit exceeding the remaining balance.
-**Current phase:** Phase 3 APIs implemented; testnet license execution awaits a small top-up. Phase 4 FL service work can proceed in parallel.
+**Project state:** Phase 3 contract deployed and verified; testnet asset and job creation confirmed. Phase 4 Flower/FastAPI FL service implemented and tested locally; Render deployment is in progress. Testnet license issuance is blocked by the per-call storage deposit (balance 19.1 tPOTv3 vs >19 required).
+**Current phase:** Phase 3 APIs complete except a funded testnet license/revocation run; Phase 4 service code complete, Render build in progress.
 
 ## Phase 3 deployment evidence
 
@@ -81,9 +81,12 @@ Current network references recorded in `ARCHITECTURE.md`:
 | Deployment ID | `dpl_3YQiqPcZbkk4YnCZZrCM4D5JR54d` |
 | Production URL | Out of scope for the MVP; `main` is the Vercel default production branch by project convention |
 | Database | Neon project `zorq-db` (`still-bonus-67603921`), branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1 — connected |
-| Render FL service | Not provisioned yet — Phase 4 |
+| Render FL service | `https://zorq-fl-service.onrender.com` (service `srv-dbmbfht9fdbs73ccvj5g`, build in progress) |
 | Portaldot contract address | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
 | Contract deployment transaction | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block `337014`) |
+| Testnet asset transaction | `0x2befac3470e0cfa45667266275624428f7b553e20dd98b03811ba56c34303fb0` (block `337097`) |
+| Testnet job transaction | `0x87958b335720f8130270c37778f329e3df149ce6ee9136cbde7d43a6bba1290a` (block `337103`) |
+| Render FL service | `https://zorq-fl-service.onrender.com` (build in progress) |
 
 ## Functional status
 
@@ -116,7 +119,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 ## Known issues / risks / blockers
 
 1. **Resolved — Portaldot contract deployment:** `ZorqRegistry` deployed successfully at `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` in block `337014`.
-2. **Current — license issuance storage deposit:** testnet asset registration and job creation succeeded, but each storage-creating contract call requires roughly 11–22 tPOTv3. The deployer now holds ~19.5 tPOTv3; a ~10 tPOTv3 top-up is requested for the license/revocation flow.
+2. **Current — license issuance storage deposit:** testnet asset registration and job creation succeeded, but a license mint needs more storage than the remaining ~19.1 tPOTv3. A ~10 tPOTv3 top-up completes the license/revocation flow; all other Phase 3 functionality is implemented.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -250,6 +253,12 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-008 — 2026-11-05 — Phase 2 — Preview acceptance uses a headful xvfb Playwright smoke script.** Vercel's edge security checkpoint rejects headless bulk automation from this environment even with a valid session cookie; a real headful browser clears the challenge. The checked-in `apps/web/tests/preview-smoke.mjs` drives the deployed preview, performs a real sr25519 sign-in through the page context and cleans up its synthetic DB rows. Local Playwright remains headless for the 40-test shell suite. Files: `apps/web/tests/preview-smoke.mjs`, `AI_HANDOFF.md`, `docs/TEST_PLAN.md`.
 
+**D-009 — 2026-11-05 — Phase 3 — Testnet calls use a direct `revive.call` path with the persisted sr25519 signer.** The browser-facing `twinkey-provider` wrapper obscured some revert reasons during testnet smoke tests, so the integration scripts encode the contract calldata and submit `revive.call` with `keyringSigner`; this is the same Substrate signing path and still uses the deployed contract ABI. Deployment uses `revive.instantiateWithCode`. Files: `apps/web/tests/integration/*.ts`, `packages/contracts/scripts/deploy-portaldot.ts`.
+
+**D-010 — 2026-11-05 — Phase 4 — Flower integration uses in-process NumPyClient plus FedAvg aggregation, not Ray simulation.** The service runs one deterministic simulation per request, calls only the snapshot allowlist, and passes the resulting `FitRes` objects to Flower's `FedAvg.aggregate_fit`. This keeps the Render free-plan footprint small and makes the authorization cutoff explicit. Files: `apps/fl-service/zorq_fl/flower_app/**`, `apps/fl-service/zorq_fl/run/manager.py`.
+
+**D-011 — 2026-11-05 — Phase 4 — Render Docker service uses the free plan, Oregon region, one instance and `/health`.** Env vars are set from the generated local secret; the service is deployed from `apps/fl-service` on `main`. Files: `apps/fl-service/Dockerfile`, `AI_HANDOFF.md`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
@@ -270,6 +279,8 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-007 — 2026-11-05 — Phase 3 — Portaldot protocol-level instantiation deposit is ~22 tPOTv3 even for a 116-byte contract.** Free dry-run probes measured `22.1580` tPOTv3 for a minimal contract and `revive.depositPerByte = 6e12` native (`0.06` tPOTv3 per runtime byte). `ZorqRegistry` is therefore estimated at 430–500 tPOTv3. The 10-tPOT faucet is structurally insufficient for any useful contract. Consequence: testnet deployment cannot proceed with faucet-only funding; the application can still be fully verified on a local Hardhat EVM. Mitigation: operator supplies a ~500 tPOTv3 account or authorizes the documented local-chain fallback; no further faucet claims should be sent to this address. Files: `packages/contracts/scripts/deploy-portaldot.ts`, `AI_HANDOFF.md`.
 
+**L-008 — 2026-11-05 — Phase 3 — Testnet license mint exceeds the remaining deployer balance.** The deployer holds ~19.1 tPOTv3 after contract deployment and successful asset/job creation; the license mint's storage deposit is higher than that. Consequence: the testnet license/revocation leg cannot be completed without another small top-up, although the API and contract paths are implemented and contract-tested. Mitigation: top up ~10 tPOTv3 and rerun `tests/integration/license-flow.ts`; the local contract tests cover the same rules. Files: `apps/web/tests/integration/license-flow.ts`, `AI_HANDOFF.md`.
+
 ## Exact next task
 
-**Send ~30 tPOTv3 more to the deployer, then deploy.** The measured requirement is 560–570 tPOTv3; the account holds 543.52. Send testnet tPOTv3 to SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F`, reply `topped up`, and the agent will immediately rerun the deployment and continue Phase 3 APIs.
+**Await Render build, verify `/health` and `/ready`, then complete a funded testnet license/revocation run.** The Render service is `https://zorq-fl-service.onrender.com`; Vercel Preview has `ZORQ_CONTRACT_ADDRESS`, `FL_SERVICE_URL` and the shared token. A ~10 tPOTv3 top-up to `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` completes the license leg; after that, run the FL service against the confirmed job and report Phase 4/5 evidence.
