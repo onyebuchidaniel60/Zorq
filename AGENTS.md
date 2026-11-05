@@ -8,18 +8,29 @@ Zorq is programmable authorization infrastructure for federated machine learning
 
 Build only the MVP in `PROJECT_SPEC.md`. Do not add features because they seem attractive. No tokenomics, marketplace, arbitrary model execution, arbitrary worker URL, revenue sharing, production data or invented Portaldot calls.
 
+## 1.1 Execution model — autonomous
+
+- OpenCode executes Phases 1 through 10 end-to-end in one continuous run, without stopping after any phase, checkpoint, functionality gate, or design phase, and without requesting operator approval for any decision.
+- Phase completion reports are for the record, not for approval. After writing a phase report, the agent proceeds to the next phase in the same session.
+- Prerequisites: at the end of Phase 0 the agent produces an exhaustive manifest listing every credential, account, access grant, funded address, API key, seed value, external service, and decision the agent requires to complete Phases 1–10 without further contact. The operator supplies all items once. The agent then executes to completion.
+- The only legitimate stops after prerequisites are supplied are hard blockers that cannot be worked around: a missing credential that was not on the manifest, a Portaldot testnet outage, or an external service that never becomes available. In these cases the agent stops, states the specific blocker and the exact input or action required, and does not proceed.
+- Ambiguous decisions are resolved by choosing the option most consistent with `PROJECT_SPEC.md` and `ARCHITECTURE.md`, logging the decision and rationale in `AI_HANDOFF.md`'s Decision Log, and continuing. Ambiguity is not a stop condition.
+- Any decision that would change contract semantics, license ownership model, data model for user data, or chain target must be resolved without changing them. If the source docs truly cannot support the required functionality otherwise, the agent logs the conflict in `AI_HANDOFF.md`'s Known Limitations section, implements the closest behaviour-consistent alternative, and continues. It does not stop for approval.
+
 ## 2. Fixed architecture
 
 - Next.js App Router + TypeScript for frontend and server API.
-- Tailwind CSS 4; temporary simple styling until final UI approval.
+- Tailwind CSS 4; temporary simple styling until the Phase 7 operator-supplied reference-image implementation.
 - wagmi/viem for wallet interactions; SIWE + signed HttpOnly cookie for application sessions.
 - Solidity `ZorqRegistry` on Portaldot V3 EVM testnet; single contract combines ERC-721 and authoritative registry; OpenZeppelin Contracts 5.x; Hardhat 3.
 - Supabase PostgreSQL + Drizzle/Postgres.js; DB server-side only; chain state is authority.
 - Python 3.12 + FastAPI + Flower + PyTorch CPU for synthetic FL demonstration.
 - Vercel Preview for web; Render Docker service for FL; separate staging/production environments.
 - No Redis, queue platform, object storage, payment service, LLM, or ZKP provider in MVP.
+- UI polish skill: stageshow (`npx skills add benjitaylor/skills --skill stageshow`), used only in Phase 7 against the operator-supplied reference image.
+- Demo video: Playwright-driven capture + free Google AI Studio text-to-speech + ffmpeg. No human voiceover, no named presenter.
 
-Do not change chain, chain ID, contract architecture, auth, DB, FL adapter, runtime, hosting topology, permissions, model preset or license semantics without explicit operator approval. Technical uncertainty is a reason to report a blocker, not silently substitute an architecture.
+Do not change chain, chain ID, contract architecture, auth, DB, FL adapter, runtime, hosting topology, permissions, model preset or license semantics. Deviations are permitted only under §1.1 and the architecture-freeze rule in `ARCHITECTURE.md`, and must be logged in `AI_HANDOFF.md`'s Decision Log. Technical uncertainty is a reason to report a blocker, not silently substitute an architecture.
 
 ## 3. Critical business rules
 
@@ -51,6 +62,9 @@ Do not change chain, chain ID, contract architecture, auth, DB, FL adapter, runt
 ## 5. Coding constraints
 
 - TypeScript strict mode. Avoid `any`; use typed domain interfaces and Zod validation.
+- Do not install or invoke Stageshow before Phase 7. It is an execution-quality skill for an already-chosen visual direction, not a substitute for functional implementation.
+- Demo-video scripts live in `scripts/demo-video/`, must be idempotent and re-runnable, must not use paid TTS APIs, cloned voices, or real personal data.
+- Demo-video reference inputs are operator-supplied and committed under `docs/demo/reference/`. Do not fetch, scrape, download, or generate a reference video. Do not copy footage, music, logos, presenter likeness, or verbatim narration from it. If no reference video is present when Phase 5.5 or Phase 10 begins, proceed using `docs/DEMO_VIDEO.md` alone and note the absence in the phase report.
 - Keep domain rules in server-side services, not React components.
 - All API input is validated server-side. Do not trust wallet address, tx hash, job ID, asset ID or status supplied by browser without verification.
 - Use parameterized SQL/Drizzle. Use DB transactions for multi-row state transitions.
@@ -77,46 +91,46 @@ Do not change chain, chain ID, contract architecture, auth, DB, FL adapter, runt
 - Complete and demonstrate all critical flows on the deployed preview before final visual polish: wallet login, register asset, create job, issue license, start three-round FL run, round-snapshot authorization, revoke between rounds, exclusion at next round, job pause/close and failure states.
 - Run contract/unit/integration/E2E tests and show evidence. A screenshot or agent assertion alone is insufficient.
 - Use one plain consistent temporary visual system while functionality is being implemented.
-- Do not begin final visual styling until Phase 5 is accepted.
+- Do not begin final visual styling until the Phase 5 self-verified functional checkpoint is complete.
 
-## 8. Design-reference and explicit approval gate
+## 8. Design reference and implementation rule
 
-- During Phase 6, collect operator-provided references or present candidates for the operator to select. Do not choose a final aesthetic autonomously.
-- Produce mockups/prototypes for the landing page, dashboard, assets, job detail, license detail, run dashboard, important states and desktop/mobile views.
-- Document what was inspired by each reference and what remains product-specific. Do not copy protected brand elements.
-- Present mockups; revise based on operator feedback.
-- STOP until the operator explicitly approves the complete direction. No final visual implementation without written approval. Silence or partial feedback is not approval.
-- Record approved assets, references, design tokens, mockups, deviations and approval in `docs/DESIGN_DECISIONS.md` and `docs/DESIGN_APPROVAL.md`.
-- Visual-only work must not change product behaviour, contract logic, API schemas, data model, permissions or system architecture. Seek separate approval for any such change.
+- The operator supplies reference image(s) at Phase 6 handoff, committed under `docs/design/reference/`.
+- The agent implements the UI directly from those images in Phase 7 using the Stageshow skill.
+- There is no mockup production and no approval loop; the operator has explicitly waived it.
+- The agent records the reference and its adaptations in `docs/DESIGN_DECISIONS.md`.
+- If the reference image is missing when Phase 7 begins, or if implementing it would require a product-behaviour, API, data-model, permission or architecture change, STOP and report the specific blocker under AGENTS.md §1.1.
+- Visual work must not change behaviour.
 
 ## 9. Documentation and complete frontend obligations
 
 - Maintain a useful `README.md` and project-specific `docs/` covering setup, configuration, testing, deployment, troubleshooting, API, architecture, user/operator guidance and security/privacy.
 - Complete all agreed routes, navigation and footer; loading/empty/validation/success/error/permission-denied/not-found states; responsive layouts; semantic structure, labels, keyboard access, focus visibility and accessible feedback; page titles/meta, favicon/app icon and applicable social metadata.
-- Home/footer must link to a real, reachable Documentation destination and actual GitHub repository when suitable. Never invent or guess URLs. The intended repo URL must be read from the actual git remote and verified. If private or public disclosure is inappropriate, document why and obtain operator approval for alternate link/omission. Do not expose private source code.
+- Home/footer must link to a real, reachable Documentation destination and actual GitHub repository when suitable. Never invent or guess URLs. The intended repo URL must be read from the actual git remote and verified. If private or public disclosure is inappropriate, document why and log the alternate link/omission decision in `AI_HANDOFF.md`'s Decision Log. Do not expose private source code.
 - `/docs` is the intended product documentation route; it must be real and useful, not a placeholder. Support/privacy/terms pages must contain accurate project-specific information; do not fabricate contact details or legal claims.
 - No dead links, `href="#"`, inert buttons, unexplained placeholders or unverified route claims in final UI.
 - Verify footer/docs/GitHub destinations on deployed preview.
 
 ## 10. Test, review and Git rules
 
-For every assigned phase: implement → test → inspect → fix → commit → checkpoint → stop.
+For every phase: implement → test → inspect → fix → commit → checkpoint → continue to the next phase. Do not stop after any phase. Do not request approval.
 
 - Run relevant unit, contract, integration, E2E and build/type/lint checks.
 - Test on the deployed preview where feasible. Never claim tests passed unless commands ran and output supports the claim.
 - Review security, ownership isolation, race conditions, idempotency, retry and state transitions.
 - Use small conventional commits. Do not rewrite history or force push unless explicitly asked.
-- Do not proceed to the next phase automatically.
+- Proceed to the next phase automatically after each checkpoint commit, unless a blocker defined in §1.1 is encountered.
 - Do not modify unrelated files.
 - Do not create a large one-shot implementation across multiple phases.
 
 ## 11. Handling ambiguity and failures
 
-- If a requirement is unclear or an implementation would alter the architecture/product semantics, stop and ask the operator with the specific conflict and recommended options.
-- If a Portaldot API is undocumented, do not guess endpoint names, pallet calls or proof formats. Report the evidence and preserve adapter boundary.
-- If a dependency/service is unavailable, implement only the already specified mock/local fixture where the specification permits it, label it honestly and do not present it as a production integration.
-- If a test fails, reproduce and diagnose. Do not suppress/skip test or weaken assertions to claim completion.
-- Report deployment blockers and missing access plainly.
+- If a requirement is unclear or an implementation would alter the architecture or product semantics: choose the option most consistent with `PROJECT_SPEC.md` and `ARCHITECTURE.md`, log the decision in `AI_HANDOFF.md`'s Decision Log, and continue.
+- If a Portaldot API is undocumented: use the `FlowerDemoProvider` adapter as specified. Do not guess endpoints or fabricate integrations. Log the gap as a Known Limitation and continue.
+- If a dependency or service is unavailable: implement the specified mock or local fixture where the specification permits, label it honestly in the UI and docs, and continue.
+- If a test fails: reproduce, diagnose, and fix. If the failure cannot be fixed within the phase's time budget after at least three distinct fix attempts, log it in Known Limitations with full detail, disable the specific failing assertion only if it is a documented external-dependency failure (never a business-rule failure), and continue. Do not weaken business-rule assertions.
+- Never claim a test passed that did not pass.
+- The only stop conditions are the hard blockers defined in §1.1.
 
 ## 12. Required phase completion report
 
@@ -133,12 +147,14 @@ Tests (exact commands + actual results):
 Manual verification:
 Known issues/blockers:
 Security notes:
-Design references/mockups status:
-Operator approval status:
+Design reference image status (supplied / missing / ambiguous):
+Operator approval status (visuals: waived):
 README/docs status:
 Documentation footer URL:
 GitHub URL or documented reason absent:
+Decisions logged this phase (D-NNN ids):
+New Known Limitations this phase:
 Next single task:
 ```
 
-Stop after this report and wait for the operator.
+Commit `AI_HANDOFF.md` and the checkpoint commit, then immediately begin the next phase. Do not wait for the operator.

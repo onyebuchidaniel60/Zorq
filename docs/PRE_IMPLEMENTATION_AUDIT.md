@@ -59,8 +59,8 @@
 - [x] Preview is kept updated at accepted phase checkpoints with URL, commit, changes, incomplete areas and test evidence.
 - [x] UX structure and interaction behaviour are specified before implementation; final aesthetic is not assumed.
 - [x] Phase 5 E2E completion is a hard gate before design.
-- [x] Phase 6 reference-led mockups include key screens/states and desktop/mobile; operator approval required.
-- [x] Phase 7 is blocked until explicit written approval.
+- [x] Phase 6 records the operator-supplied reference image, its screen/state coverage and any extension; no mockup or approval loop.
+- [x] Phase 7 implements the reference image with Stageshow after the Phase 5 self-verified functional checkpoint.
 - [x] Phase 8 includes footer/docs/GitHub, routes, real links, metadata/icons, responsive/accessibility and all important UI states.
 - [x] No fabricated GitHub or preview URL; private repo exposure requires operator approval.
 
@@ -70,8 +70,8 @@
 - [x] Documentation destination is specified as the real `/docs` page.
 - [x] GitHub link is conditional on the actual repository URL and public/approved disclosure.
 - [x] Separate Local/Preview/Production environment design specified.
-- [x] Production release requires separate operator authorization.
-- [x] `AI_HANDOFF.md` contains current phase, preview URL, deployed commit, completion/incompletion, test evidence, known issues, design approval status, docs/footer status and one next task.
+- [x] Production deployment is out of scope for the MVP; testnet only.
+- [x] `AI_HANDOFF.md` contains current phase, preview URL, deployed commit, completion/incompletion, test evidence, known issues, design reference status, decisions, known limitations, docs/footer status and one next task.
 
 ## 8. Remaining explicit preflight items (not delegated as architecture design)
 
@@ -92,4 +92,4 @@ These are external facts requiring live access or operator credentials; they are
 
 The coding agent is not required to choose the product, MVP, role model, license semantics, contract boundaries, stack, route structure, API shapes, data model, authorization rules or implementation sequence. Those are defined in the handoff files. The agent is allowed to make only low-impact implementation details within these constraints (for example, internal component file naming or a non-breaking helper abstraction).
 
-Where a dependency depends on real external access or current chain behaviour, the agent must execute the specified preflight and report evidence. It must not silently swap services, assume a native Portaldot API, weaken security, invent URLs or bypass the phase gates.
+Where a dependency depends on real external access or current chain behaviour, the agent must execute the specified preflight and report evidence. It must not silently swap services, assume a native Portaldot API, weaken security, invent URLs or bypass the reference-image workflow or test/evidence requirements.

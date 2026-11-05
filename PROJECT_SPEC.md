@@ -162,7 +162,7 @@ Real data onboarding, real customer use, real medical/financial records, payment
 - No more than five participant assets for a single job in the demo environment.
 - No arbitrary dataset file uploads or custom model code.
 
-**Fixed model preset (`synthetic-binary-classifier-v1`):** 8 numeric input features; one `torch.nn.Linear(8, 1)` logit output; binary labels; `BCEWithLogitsLoss`; SGD optimizer with learning rate `0.05`; batch size `32`; two local epochs per round; three server rounds; Flower FedAvg weighted by the number of local examples. Each synthetic participant receives 256 deterministic examples generated from `DEMO_DATA_SEED` plus its partition ID. Generate feature vectors from an eight-dimensional standard normal distribution; generate labels using a fixed sigmoid teacher with weight vector `[0.6,-0.8,0.4,0.2,-0.3,0.7,-0.5,0.1]` and a small deterministic partition-specific bias `(partitionId - 2) * 0.15`. A fixed synthetic global evaluation set of 512 examples uses the same feature/teacher distribution with zero bias and is used for aggregate loss/accuracy after each round. No participant-level metric or individual model update is shown in the UI. All participants are simulated Flower clients in a controlled simulation runtime; they are not separately operated hospital/company nodes. All eligible clients in the authorization snapshot participate in each round (no random sampling). Model weights are hashed as SHA-256 over sorted state-dict keys and each tensor's dtype, shape and contiguous CPU byte representation. These values are committed as the model configuration and included in `modelConfigHash`; the agent must not tune them without operator approval.
+**Fixed model preset (`synthetic-binary-classifier-v1`):** 8 numeric input features; one `torch.nn.Linear(8, 1)` logit output; binary labels; `BCEWithLogitsLoss`; SGD optimizer with learning rate `0.05`; batch size `32`; two local epochs per round; three server rounds; Flower FedAvg weighted by the number of local examples. Each synthetic participant receives 256 deterministic examples generated from `DEMO_DATA_SEED` plus its partition ID. Generate feature vectors from an eight-dimensional standard normal distribution; generate labels using a fixed sigmoid teacher with weight vector `[0.6,-0.8,0.4,0.2,-0.3,0.7,-0.5,0.1]` and a small deterministic partition-specific bias `(partitionId - 2) * 0.15`. A fixed synthetic global evaluation set of 512 examples uses the same feature/teacher distribution with zero bias and is used for aggregate loss/accuracy after each round. No participant-level metric or individual model update is shown in the UI. All participants are simulated Flower clients in a controlled simulation runtime; they are not separately operated hospital/company nodes. All eligible clients in the authorization snapshot participate in each round (no random sampling). Model weights are hashed as SHA-256 over sorted state-dict keys and each tensor's dtype, shape and contiguous CPU byte representation. These values are committed as the model configuration and included in `modelConfigHash`; the agent must not tune them.
 
 ---
 
@@ -758,7 +758,7 @@ assets/jobs/licenses 1 ── N chain_transactions and audit_events (polymorphic
 
 ## 7. UI/UX architecture
 
-This section specifies information architecture and behaviour, not the final visual aesthetic. Final design references and mockups are a late-stage approval-gated phase defined in `IMPLEMENTATION_PLAN.md`.
+This section specifies information architecture and behaviour, not the final visual aesthetic. Final visual direction comes from an operator-supplied reference image implemented in Phase 7; no mockup approval loop.
 
 ### 7.1 Public routes
 
@@ -817,7 +817,7 @@ Until core E2E flows pass, use a neutral, consistent temporary component system.
 - Loading, empty, validation, success, error, permission denied, unavailable service, transaction rejected, chain mismatch, not found and global error states.
 - Responsive desktop/tablet/mobile layouts and accessible keyboard interactions.
 - Page titles/metadata, icon/favicon, Open Graph metadata for public landing/docs pages.
-- `robots.txt`/sitemap policy: preview deployments should be noindex; production can index public landing/docs only if operator approves; authenticated app routes must not be indexed.
+- `robots.txt`/sitemap policy: preview deployments should be noindex; production is out of scope for the MVP; authenticated app routes must not be indexed.
 - Privacy and experimental terms pages are required. No analytics or cookie-consent platform in MVP; avoid non-essential tracking.
 - `/docs` is the real documentation destination for the footer. GitHub footer link must be configured to the actual public repository URL after it exists; do not render a fake placeholder URL.
 - No dead links, `href="#"`, inert buttons or unexplained placeholders in final UI.
@@ -1194,8 +1194,8 @@ All 10 items in §7.8 must pass on the deployed preview. Additionally:
 - At least one real user-wallet transaction consumed native testnet gas. Confirm exact gas asset/funding path on V3; do not assume Substrate and EVM account funding are automatically interchangeable.
 - No real dataset or production secret appears in preview, logs, repository or public UI.
 - Every core action has an evidence-backed success/failure state.
-- Build, lint, unit, integration, contract and E2E tests pass; remaining exceptions are explicitly documented and operator-approved.
-- Final visual phase remains blocked until functionality gate, references/mockups and explicit operator approval are complete.
+- Build, lint, unit, integration, contract and E2E tests pass; remaining exceptions are explicitly documented as Known Limitations.
+- Final visual phase follows the Phase 5 self-verified functional checkpoint and the operator-supplied reference image; no mockup approval loop.
 
 ---
 
@@ -1224,4 +1224,4 @@ All 10 items in §7.8 must pass on the deployed preview. Additionally:
 
 ---
 
-**Specification rule:** Any proposed change to user roles, asset visibility, license rights, authorization timing, model scope, raw-data handling or state transitions is a product decision and requires operator approval. The coding agent may not change these behaviours independently.
+**Specification rule:** Product behaviour is frozen. Changes are permitted only when the specification is internally inconsistent, or when an implementation reality (a hosting limitation, a chain behaviour, a security requirement) makes the specified behaviour impossible. Every such change must be logged in `AI_HANDOFF.md`'s Decision Log with rationale. Do not change user roles, asset visibility, license rights, authorization timing, model scope, raw-data handling, or state transitions without logging the change and the forcing reason.

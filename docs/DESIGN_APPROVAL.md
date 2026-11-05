@@ -1,26 +1,32 @@
-# Zorq Final UI Design Approval
+# Zorq Final UI Design — Waiver Record
 
-**Status:** PENDING — no final visual design may be implemented.
+**Status:** WAIVED — no mockup or design-approval loop applies.
 
-## Required prerequisites
+## Waiver
 
-- [ ] Phase 5 functional gate accepted.
-- [ ] Deployed preview URL and deployed commit recorded.
-- [ ] Core journeys demonstrated with test evidence.
-- [ ] Design references supplied or selected by operator.
-- [ ] Mockups cover all principal screens/states and desktop/mobile.
-- [ ] Reference attributes and original Zorq adaptations documented.
-- [ ] Operator feedback incorporated and revisions presented.
+The operator explicitly granted a waiver of the mockup and approval loop for the Zorq MVP.
 
-## Decision
+- The design source is the operator-supplied reference image committed under `docs/design/reference/`.
+- No mockups are produced for approval.
+- No approval is required to enter Phase 7.
+- Phase 7 implements the reference image directly with the Stageshow skill.
+- The agent records the reference, the adopted attributes, the adapted attributes and any uncovered screens/states in `docs/DESIGN_DECISIONS.md`.
 
-- Design revision: Not created.
-- Operator decision: **NOT APPROVED / PENDING**.
-- Explicit approval statement: Not provided.
-- Date: Not applicable.
-- Approved screens: None.
-- Outstanding changes: All mockups and reference review remain pending.
+## Behaviour and architecture boundary
 
-## Approval rule
+The waiver covers visual direction only. It does not authorize product-behaviour, API, data-model, permission or architecture changes.
 
-The operator must explicitly approve the final mockups/direction in a written instruction. No silence, implied approval or approval of only one screen unlocks Phase 7. If the operator requests revisions, remain in Phase 6. Any product behaviour/API/architecture change requires separate approval.
+- Visual-only adaptations are logged in `docs/DESIGN_DECISIONS.md` and `AI_HANDOFF.md`'s Decision Log, and the agent continues.
+- If the reference image cannot be implemented without a product-behaviour, API, data-model, permission or architecture change, the agent records the gap and implements the closest behaviour-consistent equivalent.
+- If no behaviour-consistent equivalent exists, the agent stops and reports the specific blocker under `AGENTS.md` §1.1 and §8.
+
+## Record
+
+| Item | Value |
+|---|---|
+| Mockup production | Waived by the operator |
+| Approval loop | Waived by the operator |
+| Design source | Operator-supplied reference image in `docs/design/reference/` |
+| Phase 7 entry | No approval required |
+| Visual deviations | Recorded in `docs/DESIGN_DECISIONS.md` |
+| Behaviour/API/architecture changes | Not authorized by this waiver; log and continue with the closest behaviour-consistent equivalent, or stop if none exists |

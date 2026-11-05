@@ -1,5 +1,7 @@
 # AI_HANDOFF.md — Zorq
 
+**Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
+
 **Last updated:** 4 November 2026  
 **Project state:** Pre-implementation; blueprint assembled; no application code written.  
 **Current phase:** Phase 0 — repository/environment inspection has not been run against the actual implementation repository.
@@ -14,7 +16,7 @@ Zorq is programmable authorization infrastructure for privacy-preserving federat
 2. `ARCHITECTURE.md` — fixed stack, smart contract, backend/FL boundaries, auth, deployment, DB, environment variables and repository layout.
 3. `IMPLEMENTATION_PLAN.md` — phase sequence, tasks, phase gates and checkpoint requirements.
 4. `AGENTS.md` — mandatory coding-agent rules.
-5. `docs/` — developer setup, API, deployment, privacy, operator/user guide, test plan, Portaldot validation and design approval records.
+5. `docs/` — developer setup, API, deployment, privacy, operator/user guide, test plan, Portaldot validation, design reference/waiver, demo-video spec and autonomous-execution contract.
 
 ## Current architecture decisions
 
@@ -72,10 +74,12 @@ Phase 1 must deploy the skeletal frontend early and then report its exact stable
 - Route/UX structure: specified in `PROJECT_SPEC.md`.
 - Early skeletal frontend: not implemented or deployed.
 - Temporary functional UI: not implemented.
-- Design references: not collected.
-- Mockups/prototypes: not produced.
-- Final visual design: **not selected and not approved**.
-- Final UI implementation is prohibited until core MVP functionality is accepted and the operator explicitly approves mockups.
+- Design source: operator-supplied reference image, to be committed at `docs/design/reference/`.
+- Mockup approval: explicitly waived by the operator. There is no mockup or approval loop.
+- Final visual direction: comes directly from the reference image in Phase 7 using Stageshow.
+- Reference image status: **missing — operator supply required before Phase 7**.
+- Demo-video reference: expected at `docs/demo/reference/` for demo-video production; optional, and absence is recorded rather than replaced.
+- Final UI implementation is prohibited until the Phase 5 self-verified functional checkpoint is complete and the reference image is present.
 
 ## Documentation/footer status
 
@@ -83,7 +87,7 @@ Phase 1 must deploy the skeletal frontend early and then report its exact stable
 - Repository README/docs must be materialized into the target repo by implementation phases.
 - `/docs` is planned as a real in-app docs destination.
 - Actual public GitHub repository URL is not known until repository inspection/creation. Footer link must not be fabricated.
-- Private repository or unsuitable public disclosure requires operator-approved alternative/omission.
+- Private repository or unsuitable public disclosure requires a documented alternative/omission recorded in the Decision Log.
 
 ## Known issues / risks / blockers
 
@@ -94,6 +98,22 @@ Phase 1 must deploy the skeletal frontend early and then report its exact stable
 5. Hackathon deadline surfaced as 6 November 2026, 04:00 UTC / 05:00 WAT; verify official submission page and any revised timeline.
 6. This is a synthetic-data technical demonstration, not production data governance/privacy certification.
 
+## Decision Log
+
+Append-only. One entry per non-trivial decision made by the agent without operator input. Never edit or remove prior entries.
+
+Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale — files affected`
+
+_Empty at Phase 0._
+
+## Known Limitations
+
+Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
+
+Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — consequence — mitigation-if-any`
+
+_Empty at Phase 0._
+
 ## Exact next task
 
-**Run Phase 0 only: read-only inspect the actual Zorq implementation repository and available deployment environment.** Report repository tree, branch, commit, remotes, existing framework/dependencies/tests, current environment configuration by variable names only, Vercel/Supabase/Render access status, Portaldot testnet RPC/chain-ID reachability and EVM gas-funding blocker. Do not edit files or deploy during Phase 0. Wait for operator approval before Phase 1.
+**Phase 0 (amended) — apply the approved source-document corrections A0–A8, run the read-only repository/environment inspection, produce `PREREQUISITES.md`, and present the Prerequisites Manifest as the final section of the Phase 0 report. Do not begin Phase 1 in the same session. Wait for the operator to fill the manifest and reply 'execute'.**

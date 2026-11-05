@@ -20,11 +20,13 @@ Chain ID / contract address / block / tx evidence (if relevant):
 FL run ID / round snapshot evidence (if relevant):
 Known issues / blockers:
 Secrets and environment safety check:
-Design reference / mockup status:
-Explicit operator approval status:
+Design reference image status:
+Operator approval status (visuals: waived):
 README/docs status:
 Documentation footer URL (verified):
-GitHub footer URL (verified) or approved exception:
-Next single assigned task:
-Operator decision required:
+GitHub footer URL (verified) or documented exception:
+Decisions logged this phase (D-NNN ids):
+New Known Limitations this phase:
+Next phase (automatic):
+Operator decision required (hard blockers only, AGENTS.md §1.1):
 ```

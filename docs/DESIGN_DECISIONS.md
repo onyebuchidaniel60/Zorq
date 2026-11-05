@@ -1,53 +1,57 @@
 # Zorq Visual Design Decision Record
 
-**Status:** NOT STARTED — final aesthetic is intentionally unselected.  
-**Gate:** Phase 6 only, after end-to-end MVP functionality is accepted.  
-**Approval:** Required before Phase 7 implementation.
+**Status:** Awaiting operator reference image.  
+**Design source:** `docs/design/reference/` (operator-supplied; do not fetch, generate or substitute).  
+**Approval loop:** Waived. See `docs/DESIGN_APPROVAL.md`.
 
-## References
+## Reference
 
-No reference has been supplied or approved for Zorq's final UI. During Phase 6:
+| Item | Value |
+|---|---|
+| Reference image path | `docs/design/reference/` — currently missing; operator supply required before Phase 7 |
+| Reference author/source | Operator-supplied |
+| Date received | Not yet received |
+| Screens/states covered | To be recorded at Phase 6 handoff |
+| Screens/states not covered | To be recorded at Phase 6 handoff; propose an extension here and proceed |
 
-1. Collect operator-provided URLs/screenshots/images or propose a small set of candidates for the operator to choose.
-2. Record each reference's URL, accessed date, product/screen, and relevant visual traits.
-3. Record the attributes used (layout, hierarchy, information density, interaction, colour/typography mood, status presentation) and distinguish them from original Zorq decisions.
-4. Do not copy protected logos, proprietary artwork or exact branded layouts.
+## What was adopted verbatim
 
-## Required mockups
+To be recorded in Phase 6/7 after the reference is supplied. Record only visual attributes: composition, navigation hierarchy, spacing rhythm, typography feel, colour treatment, density, surface treatment, motion and status presentation.
 
-- Public landing page.
-- App overview/dashboard.
-- Asset list, registration and detail.
-- Job list, creation and detail.
-- License list and detail/revocation confirmation.
-- Run dashboard, round status and authorization evidence.
-- Wallet connection/wrong-chain/transaction pending/failed/success states.
-- Empty, loading, error, permission denied and not-found states.
-- Desktop and mobile layouts for all primary screen classes.
+## What was adapted
 
-## Design tokens to approve
+To be recorded in Phase 6/7. For each adaptation, state the reference attribute, the product constraint that required adaptation, and the resulting Zorq-specific treatment. Do not copy protected logos, proprietary artwork, presenter likeness or exact branded compositions.
 
-- Colour palette and contrast pairs.
-- Typography families/scale and numeric/data typography.
-- Spacing, page width and responsive breakpoints.
-- Navigation model and footer structure.
-- Buttons, forms, tables, cards, dialogs, badges and status components.
-- Focus, hover, disabled, loading and validation states.
-- Motion/reduced-motion policy and icon style.
+## What remained product-specific
 
-## Reference-to-design mapping
+- Zorq's route structure, role model, license lifecycle, authorization snapshots and all interaction behaviour stay exactly as specified in `PROJECT_SPEC.md`.
+- Data-visibility rules, permission boundaries, API schemas, contract interactions and state transitions are not changed by visual work.
+- Synthetic-demo and testnet-only disclosures remain visible.
+- Accessibility, keyboard operation, focus visibility, reduced-motion support and responsive behaviour remain mandatory.
 
-| Reference | Elements considered | Elements rejected | Zorq-specific adaptation |
-|---|---|---|---|
-| To be populated in Phase 6 | — | — | — |
+## Screen and state coverage
+
+| Screen/state class | Covered by reference? | Notes/extension |
+|---|---|---|
+| Landing page | To be recorded | — |
+| App overview/dashboard | To be recorded | — |
+| Asset list, registration and detail | To be recorded | — |
+| Job list, creation and detail | To be recorded | — |
+| License list and detail/revocation confirmation | To be recorded | — |
+| Run dashboard, rounds and authorization evidence | To be recorded | — |
+| Wallet connect, wrong chain, transaction pending/failed/success | To be recorded | — |
+| Loading, empty, validation, error, permission-denied and not-found | To be recorded | — |
+| Desktop, tablet and mobile layouts | To be recorded | — |
+
+If the reference does not cover a primary screen or state, the agent proposes an extension in this table that stays within the frozen product behaviour and proceeds. No mockup or approval round is required.
+
+## Visual implementation notes
+
+- Phase 7 installs Stageshow only for composition, motion, density and faux-product-UI polish consistent with the reference: `npx skills add benjitaylor/skills --skill stageshow`.
+- Stageshow must not override the reference direction or introduce behaviour changes.
+- If the reference implies a feature the product does not have, record the gap here and implement the closest behaviour-consistent equivalent.
+- If no behaviour-consistent equivalent exists, stop and report the specific blocker under `AGENTS.md` §1.1 and §8.
 
 ## Approval record
 
-- Mockup revision: Not created.
-- Screens presented: None.
-- Operator feedback: Pending.
-- Explicit operator approval: **NOT GRANTED**.
-- Approved date/version: Not applicable.
-- Approved deviations: None.
-
-Phase 7 must remain blocked until the operator explicitly approves this direction. Visual approval does not authorize business logic, API or architecture changes.
+Not applicable. The mockup and approval loop is covered by the operator waiver. This document is a reference-and-adaptation record, not an approval artifact.

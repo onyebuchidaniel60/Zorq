@@ -82,7 +82,7 @@ All of the following must pass on the deployed stable Preview environment, using
 - [ ] access-control/IDOR tests pass
 - [ ] deployed preview route and UI smoke tests pass
 
-No final UI visual design before every blocking criterion passes and operator accepts evidence.
+No final UI visual design before every blocking criterion passes and the evidence is recorded in `AI_HANDOFF.md`.
 
 ## Final frontend quality gate
 
@@ -98,6 +98,10 @@ No final UI visual design before every blocking criterion passes and operator ac
 - [ ] page metadata, favicon/app icon and relevant social metadata
 - [ ] privacy/terms/support destinations accurate and no fabricated contact data
 - [ ] README/docs setup instructions tested by a fresh checkout where possible
+- [ ] Demo video is <= 3:00, uses a free Google AI Studio male voice, contains no presenter name, has no narration/visual drift, and every on-screen claim is verifiable in the recording.
+- [ ] Video file and narration script are committed under `docs/demo/` (or linked from README) and the script is reproducible via `scripts/demo-video/`.
+- [ ] UI implemented from the operator-supplied reference image; no behaviour/API/architecture changes introduced by visual work; all existing E2E tests still pass.
+- [ ] Demo video was produced with the operator-supplied reference video reviewed (or its absence noted); no footage, music, logos or verbatim narration copied from the reference; `docs/demo/REFERENCE_NOTES.md` present.
 
 ## Test evidence format
 

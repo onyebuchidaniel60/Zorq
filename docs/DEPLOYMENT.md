@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | Local | Next dev server | Local Docker Postgres | Hardhat local by default; optional testnet smoke | Local Docker/Python | Seeded synthetic only |
 | Preview/staging | Stable Vercel branch Preview | Separate Supabase staging DB | Portaldot V3 testnet | Render staging service or protected local test service | Synthetic only |
-| Production | Separate Vercel Production project/domain, only if approved | Separate production DB | Initially testnet demo; mainnet excluded absent separate decision | Separate production service if needed | No real datasets in MVP |
+| Production | Out of scope for the MVP | Not provisioned | Not deployed | Not provisioned | No real datasets |
 
 ## Early preview rule
 
@@ -24,7 +24,7 @@ Vercel Preview and Production are separate environments and can have separate en
 4. Connect Git provider and confirm automatic preview deployment for accepted commits.
 5. Deploy Phase 1 shell and verify exact URL/commit/route load.
 6. After each accepted phase, verify the latest preview deployment; update `AI_HANDOFF.md`.
-7. Do not promote to Production without explicit operator instruction.
+7. Production deployment is out of scope for the MVP. Do not promote to Production.
 
 ## Supabase
 
@@ -61,7 +61,7 @@ Do not ask for or log seed phrases/private keys. Store deployment key in secure 
 
 ## Release and rollback
 
-- Phase 9 production deployment requires explicit operator authorization.
+- Production deployment is out of scope for the MVP. The agent completes Phase 9 by deploying to testnet only. Do not deploy to mainnet, do not move real value, do not enable production data.
 - Freeze commits to the release candidate, run all tests, record exact commit and environment.
 - Run migration backup/check, deploy app and services, execute smoke tests, confirm explorer links and monitor logs.
 - For app rollback, revert deployment to last verified commit. For DB changes, use forward migration or tested rollback plan; never drop data blindly.

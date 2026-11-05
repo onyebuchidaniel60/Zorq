@@ -12,11 +12,11 @@ This index is the navigation page for the implementation handoff. It maps the 30
 |---|---|
 | `PROJECT_SPEC.md` | Product definition, scope, roles, flows, functional requirements, business logic, data model, UI routes, APIs, database behaviour, authentication, security, integrations, edge cases and acceptance criteria. |
 | `ARCHITECTURE.md` | Fixed stack, system components, contract design, service boundaries, authorization execution, database/API architecture, auth, deployment, environment variables, repo structure and operations. |
-| `IMPLEMENTATION_PLAN.md` | Phase-by-phase build lifecycle and hard approval gates. |
+| `IMPLEMENTATION_PLAN.md` | Phase-by-phase autonomous build lifecycle and checkpoints. |
 | `AGENTS.md` | Persistent implementation-agent constraints. |
 | `AI_HANDOFF.md` | Verified project state, preview/deployment status, known issues, approvals and exact next task. |
 | `README.md` | Repository landing documentation and developer entry point. |
-| `docs/` | Developer setup, API reference, deployment, security/privacy, user guide, Portaldot validation, tests, design decisions and approval/checkpoint records. |
+| `docs/` | Developer setup, API reference, deployment, security/privacy, user guide, Portaldot validation, tests, design reference, decision log and checkpoint records. |
 
 ## Mapping to requested blueprint order
 
@@ -36,7 +36,7 @@ This index is the navigation page for the implementation handoff. It maps the 30
 | 12. Authentication/authorization | `PROJECT_SPEC.md` §10; `ARCHITECTURE.md` §9 |
 | 13. Security architecture | `PROJECT_SPEC.md` §11; `docs/SECURITY_AND_PRIVACY.md` |
 | 14. UI/UX architecture | `PROJECT_SPEC.md` §7 |
-| 15. Design references/mockups/approval | `IMPLEMENTATION_PLAN.md` Phase 6–7; `docs/DESIGN_DECISIONS.md`; `docs/DESIGN_APPROVAL.md` |
+| 15. Design reference image / visual waiver | `IMPLEMENTATION_PLAN.md` Phase 6–7; `docs/DESIGN_DECISIONS.md`; `docs/DESIGN_APPROVAL.md` |
 | 16. Third-party integrations | `PROJECT_SPEC.md` §12; `ARCHITECTURE.md` §2, §4, §10 |
 | 17. AI architecture | `PROJECT_SPEC.md` §13 — no LLM/AI-agent component in MVP; FL model training is deterministic ML execution |
 | 18. Payment architecture | `PROJECT_SPEC.md` §13 — no product payments/escrow in MVP; users pay their own testnet transaction gas |
@@ -64,7 +64,7 @@ This index is the navigation page for the implementation handoff. It maps the 30
 7. Revocation after a round snapshot does not retroactively cancel that round; the following round excludes the participant.
 8. RPC or authorization uncertainty fails closed.
 9. Flower is the MVP execution adapter using synthetic data. Native Portaldot FL and ZKP are not claimed without a documented and verified external API.
-10. Final UI style is unselected. It is selected through Phase 6 references/mockups and explicit operator approval only.
+10. Final UI style comes from an operator-supplied reference image committed under `docs/design/reference/`; the mockup/approval loop is covered by the explicit waiver, and Phase 7 implements the reference directly with Stageshow.
 
 ## Known facts and unverified dependencies
 
@@ -73,14 +73,16 @@ This index is the navigation page for the implementation handoff. It maps the 30
 - Actual repository URL, Vercel preview URL, deployed commit, contract address and deployment transaction do not exist in this blueprint. `AI_HANDOFF.md` intentionally marks them as unknown/not deployed. Never fabricate values.
 - Hackathon deadline surfaced as 6 November 2026, 04:00 UTC / 05:00 WAT; re-check the official DoraHacks page before submission in case the schedule changes.
 
-## Operator approval gates
+## Operator decision points
 
-- Phase 0 repository inspection is read-only.
-- Phase 1 preview must be visible early and exact URL reported.
-- Phase 5 end-to-end functionality acceptance is required before final visual design.
-- Phase 6 mockups require explicit operator approval before Phase 7.
-- Production deployment requires separate explicit operator authorization.
+The project runs autonomously after prerequisites are supplied. The only operator decision points are:
+
+- Phase 0 Prerequisites Manifest completion (one-time input).
+- Hard blockers defined in `AGENTS.md` §1.1 (missing credential, unavailable external service, Portaldot testnet outage).
+- Production/mainnet deployment is out of scope and not a decision point.
+
+All other decisions are made by the agent, logged in `AI_HANDOFF.md`'s Decision Log, and executed without approval.
 
 ## Current project state
 
-`AI_HANDOFF.md` is the live continuity record. At package creation: pre-implementation, no code written, no repo inspected, no preview deployed, no design references selected, no mockups approved, no contract deployed and no automated tests run.
+`AI_HANDOFF.md` is the live continuity record and `docs/AUTONOMOUS_EXECUTION.md` defines the execution contract. At package creation: pre-implementation, no code written, no repo inspected, no preview deployed, no design reference supplied, no contract deployed and no automated tests run. Phases 1–10 run autonomously after the Phase 0 Prerequisites Manifest is supplied.

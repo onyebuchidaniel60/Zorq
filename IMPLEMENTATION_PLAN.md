@@ -4,31 +4,36 @@
 **Date:** 4 November 2026  
 **Status:** Pre-implementation plan; no application code has been written.
 
-This plan is subordinate to `PROJECT_SPEC.md` and `ARCHITECTURE.md`. The coding agent executes one assigned phase or subtask only, verifies it, records a checkpoint and stops. It does not redesign the product or advance itself to the next phase.
+This plan is subordinate to `PROJECT_SPEC.md` and `ARCHITECTURE.md`. The coding agent executes the phases in order, verifies each, records a checkpoint and continues. It does not redesign the product. The execution model is autonomous as defined in `AGENTS.md` §1.1.
 
-## 0. Non-negotiable sequence and gates
+## 0. Non-negotiable sequence
+
+Phase sequence is strictly ordered. Each phase ends with a commit and an `AI_HANDOFF.md` checkpoint, then the agent proceeds directly to the next phase.
 
 ```text
-Repository inspection
-  → Phase 1: skeletal frontend + first stable preview deployment
-  → Phase 2: backend / database / SIWE foundation
-  → Phase 3: contract + domain APIs + authorization rules
-  → Phase 4: functional frontend + Flower demo integration
-  → Phase 5: end-to-end proof of the MVP; hard functionality gate
-  → Phase 6: approved-reference research + mockups / prototypes
-  → EXPLICIT OPERATOR APPROVAL GATE (STOP)
-  → Phase 7: implement approved final visual direction
-  → Phase 8: full frontend completeness + docs + footer links
-  → Phase 9: security / regression / release approval / monitoring
+Repository inspection + prerequisite manifest (Phase 0)
+  -> Phase 1 skeletal frontend + stable preview
+  -> Phase 2 backend / DB / SIWE
+  -> Phase 3 contract + domain APIs
+  -> Phase 4 functional frontend + Flower demo
+  -> Phase 5 end-to-end MVP completion
+  -> Phase 5.5 first-pass demo video (optional if time-tight)
+  -> Phase 6 reference-image handoff
+  -> Phase 7 approved reference-image implementation with Stageshow
+  -> Phase 8 docs + frontend completeness
+  -> Phase 9 security / regression / testnet release
+  -> Phase 10 demo video final
 ```
 
-The product's UX structure and interaction behaviour are already specified in `PROJECT_SPEC.md`. Final visual design is deliberately not selected. The temporary visual system is plain, consistent, responsive and legible. Final styling must not start before Phase 5 is accepted and must not be implemented before the operator explicitly approves the Phase 6 mockups.
+No phase requires operator approval. The only stops are hard blockers as defined in `AGENTS.md` §1.1.
 
-At every verified phase checkpoint, update the stable preview deployment where applicable and record the exact preview URL, commit SHA, what changed, what remains incomplete, tests and evidence, known issues, design approval status, and docs/footer status in `AI_HANDOFF.md`. A deployment is not a production release.
+The product's UX structure and interaction behaviour are already specified in `PROJECT_SPEC.md`. Final visual direction comes from an operator-supplied reference image implemented in Phase 7. The temporary visual system is plain, consistent, responsive and legible. Final styling must not start before the Phase 5 self-verified functional checkpoint is complete.
 
-## Phase 0 — Read-only repository and environment inspection
+At every verified phase checkpoint, update the stable preview deployment where applicable and record the exact preview URL, commit SHA, what changed, what remains incomplete, tests and evidence, known issues, design reference status, and docs/footer status in `AI_HANDOFF.md`. A deployment is not a production release.
 
-**Objective:** establish the actual state of the target repository and available deployment environment without changing files.
+## Phase 0 — Read-only repository and environment inspection + prerequisite manifest
+
+**Objective:** establish the actual state of the target repository and available deployment environment without changing application files, then produce the exhaustive Prerequisites Manifest.
 
 **Dependencies:** operator supplies repository/workspace and grants appropriate read access; no credentials are pasted into chat or committed.
 
@@ -38,17 +43,29 @@ At every verified phase checkpoint, update the stable preview deployment where a
 3. Check Node/npm, Python/uv, Docker, wallet/RPC reachability and local build capability. Do not print secret values.
 4. Confirm access to Vercel, Supabase, Render and Portaldot testnet, including the correct test-wallet funding route. If access is missing, state exact prerequisites.
 5. Compare the repository against the frozen architecture and list only concrete conflicts.
-6. Return a read-only inspection report. Do not create or edit files in this phase.
+6. Return a read-only inspection report. Do not create or edit application files in this phase.
+7. Record the inspection and Prerequisites Manifest in `AI_HANDOFF.md`.
+8. Produce a Prerequisites Manifest. Write it to `PREREQUISITES.md` at the repository root using the template below. Every entry must be actionable: exact variable name, exact access needed, exact decision required, or exact file/data needed. If a decision can be made by the agent from the source docs, it is not in the manifest. Only list items the agent cannot obtain, decide, or generate itself.
+   Template entries must cover at minimum:
+   - Every credential the agent will need and the exact env var name it belongs in (e.g. `DEPLOYER_PRIVATE_KEY`, `SESSION_SECRET`, `DATABASE_URL`, `FL_SERVICE_SHARED_SECRET`, `RATE_LIMIT_SECRET`, `PORTALDOT_EVM_RPC_URL` if a private endpoint is required).
+   - Every external account/project the agent will need already created with the agent granted access: GitHub repo (URL + push access), Vercel project + stable preview branch, Supabase project + connection details, Render service (or explicit instruction to create one; if creating requires operator payment method, that must be supplied).
+   - Portaldot testnet EVM funding: the agent must specify the exact H160 address it will use as deployer and job creator, confirm this address is funded with testnet POT, and provide the path for how the agent will obtain or be given the private key for that address. If the agent cannot obtain testnet POT itself, the operator must pre-fund a specific address before Phase 3 — the agent states this clearly.
+   - Reference image file (already covered by A6) — agent must state: 'committed to `docs/design/reference/`' or 'missing — Phase 7 will block'.
+   - Reference video file (already covered by A7) — agent must state: 'committed to `docs/demo/reference/`' or 'missing — Phase 5.5 / Phase 10 will proceed without it'.
+   - Any product decisions that `PROJECT_SPEC.md` and `ARCHITECTURE.md` genuinely leave open after the agent has applied `AGENTS.md` §11. These should be rare; the agent must not offload decisions to the operator just for convenience.
+   - Any question about the Portaldot EVM gas-funding path (SS58 to H160 mapping) that requires official confirmation.
+   - Confirmed access status for every external integration listed in `PROJECT_SPEC.md` §12.
+9. Present the Prerequisites Manifest as the FINAL section of the Phase 0 report. Do not begin Phase 1 in the same session. The operator will fill in the manifest and instruct 'execute'; the agent will then run Phases 1 through 10 autonomously, stopping only for hard blockers defined in `AGENTS.md` §1.1.
 
-**Expected output:** repository report with git branch/commit, repo state, stack compatibility, deploy access, secrets presence by variable name only, identified blockers and recommended Phase 1 commands.
+**Expected output:** repository report with git branch/commit, repo state, stack compatibility, deploy access, secrets presence by variable name only, identified blockers, recommended Phase 1 commands and the completed `PREREQUISITES.md` manifest.
 
 **Database/API/UI changes:** none.
 
-**Tests/verification:** read-only commands; no build that mutates tracked files; `git status` unchanged after inspection.
+**Tests/verification:** read-only inspection commands; no build that mutates tracked files; only `PREREQUISITES.md` and `AI_HANDOFF.md` are written.
 
-**Acceptance criteria:** existing structure is understood; no changes; no secret values exposed; every blocker is explicit.
+**Acceptance criteria:** existing structure is understood; no application changes; no secret values exposed; every blocker is explicit; the Prerequisites Manifest is complete and actionable.
 
-**Git checkpoint:** none; no commit.
+**Git checkpoint:** `chore: record Phase 0 amended inspection and prerequisites manifest`.
 
 ## Phase 1 — Repository/platform foundation + skeletal frontend deployment
 
@@ -83,7 +100,7 @@ At every verified phase checkpoint, update the stable preview deployment where a
 
 **Git checkpoint:** `chore: scaffold Zorq app shell and preview deployment`.
 
-**Stop condition:** stop after Phase 1 and report evidence. Do not begin Phase 2 without instruction.
+**Checkpoint:** commit `chore: scaffold Zorq app shell and preview deployment`, update `AI_HANDOFF.md`, then continue to Phase 2 automatically.
 
 ## Phase 2 — Backend, database and authentication foundation
 
@@ -100,7 +117,7 @@ At every verified phase checkpoint, update the stable preview deployment where a
 6. Add Zod schemas and server-side validation for every endpoint introduced.
 7. Add rate limits for nonce and failed signature attempts. If a persistent rate-limit implementation is needed, use the agreed Postgres table; do not add Redis.
 8. Add health and readiness endpoints. Readiness reports sanitized dependency health only; never return config/secrets.
-9. Configure local, Preview and Production environment separation. Keep production values absent until approved.
+9. Configure local, Preview and Production environment separation. Keep production values absent; production is out of scope for the MVP.
 
 **Expected files:** `apps/web/src/server/auth/**`, `apps/web/src/app/api/auth/**`, `packages/db/**`, `packages/validation/**`, migration files, integration tests, `docs/DEVELOPER_SETUP.md` updates.
 
@@ -118,7 +135,7 @@ At every verified phase checkpoint, update the stable preview deployment where a
 
 **Git checkpoint:** `feat: add SIWE authentication and database foundation`.
 
-**Stop condition:** stop, report test evidence and preview commit; do not proceed to Phase 3 automatically.
+**Checkpoint:** commit `feat: add SIWE authentication and database foundation`, update `AI_HANDOFF.md`, then continue to Phase 3 automatically.
 
 ## Phase 3 — Core contract, domain behaviour and APIs
 
@@ -153,7 +170,7 @@ At every verified phase checkpoint, update the stable preview deployment where a
 
 **Git checkpoint:** `feat: add Portaldot DataLicense registry and domain APIs`.
 
-**Stop condition:** stop at accepted checkpoint. Any chain compatibility issue triggers a report and decision, not an autonomous switch to another chain or contract architecture.
+**Checkpoint:** commit `feat: add Portaldot DataLicense registry and domain APIs`, update `AI_HANDOFF.md`, then continue to Phase 4 automatically. Any chain compatibility issue is logged as a Known Limitation; do not switch to another chain or contract architecture.
 
 ## Phase 4 — Functional frontend integration and FL adapter
 
@@ -189,13 +206,13 @@ At every verified phase checkpoint, update the stable preview deployment where a
 
 **Git checkpoint:** `feat: integrate DataLicense authorization with Flower runs`.
 
-**Stop condition:** stop at checkpoint with end-to-end evidence; do not begin visual redesign.
+**Checkpoint:** commit `feat: integrate DataLicense authorization with Flower runs`, update `AI_HANDOFF.md`, then continue to Phase 5 automatically.
 
-## Phase 5 — End-to-end functionality completion (hard gate)
+## Phase 5 — End-to-end functionality completion
 
 **Objective:** complete critical MVP flows and prove them end to end before any final visual design work begins.
 
-**Dependencies:** Phase 4 accepted.
+**Dependencies:** Phase 4 checkpoint complete.
 
 **Tasks:**
 1. Fix functional defects discovered in complete flows without scope expansion.
@@ -204,7 +221,7 @@ At every verified phase checkpoint, update the stable preview deployment where a
 4. Test all edge paths: chain RPC down, stale UI, wallet rejected, chain switch failed, tx pending/reverted, reorg/confirmation mismatch, revoked/expired license, job paused/closed, fewer than two participants, FL service down, callback duplication and browser refresh.
 5. Run complete Playwright E2E suite against deployed Preview, not just local mocks.
 6. Run contract regression and full integration test suite using a fresh synthetic seed.
-7. Demonstrate at least two critical journeys to operator: asset/job/license setup and three-round run with revocation at a round boundary.
+7. Record evidence for at least two critical journeys: asset/job/license setup and three-round run with revocation at a round boundary.
 8. Update `AI_HANDOFF.md` with exact preview URL, deployed commit, test command/results, proof artifacts, known issues and unresolved non-blocking limitations.
 
 **Expected files:** regression test suite, fixtures, test report, updated `docs/TEST_PLAN.md`, `AI_HANDOFF.md`.
@@ -213,129 +230,165 @@ At every verified phase checkpoint, update the stable preview deployment where a
 
 **Tests:** complete unit/contract/integration/E2E/security smoke set; preview smoke and console inspection.
 
-**Acceptance criteria:** every critical MVP user journey passes on preview; no severity-1/2 defects; all known limitations are documented; operator has inspected working flows. Final visual design is still not implemented.
+**Acceptance criteria:** every critical MVP user journey passes on preview; no severity-1/2 defects; all known limitations are documented; evidence is recorded in `AI_HANDOFF.md`. Final visual design is still not implemented.
 
 **Verification procedure:** clean seeded environment, run published scripts, capture results, verify run evidence and contract state, manually inspect preview at desktop and mobile widths.
 
 **Git checkpoint:** `test: accept Zorq MVP functional flows`.
 
-**HARD GATE:** do not enter Phase 6 until the operator accepts functional evidence. If the deadline arrives before completion, preserve the honest functional UI; do not bypass the gate to add superficial visual polish.
+Phase 5 completion is a self-verified checkpoint. The agent runs the full E2E suite against the deployed preview, records pass/fail results and evidence in `AI_HANDOFF.md`, commits, and proceeds to Phase 5.5 / Phase 6. If E2E failures cannot be fixed after three distinct attempts, log them in Known Limitations with evidence and proceed. Do not fabricate passing evidence.
 
-## Phase 6 — Design references, mockups and operator review
+**Checkpoint:** commit `test: accept Zorq MVP functional flows`, update `AI_HANDOFF.md`, then continue to Phase 5.5 / Phase 6 automatically.
 
-**Objective:** create the proposed final visual direction using references selected or approved by the operator.
+### Phase 5.5 — First-pass demo video (recommended if the submission deadline is tight)
 
-**Dependencies:** Phase 5 accepted. No design references or aesthetic has been pre-approved.
+Record a first-pass demo video against the functional, unpolished preview so a submission artifact exists before Phases 7–10. Re-record in Phase 10 if time allows.
+
+If `docs/demo/reference/` contains an operator-supplied reference video, review it first and record adopted/rejected attributes in `docs/demo/REFERENCE_NOTES.md` before scripting. The hard limits in `docs/DEMO_VIDEO.md` take precedence over the reference in every conflict.
+
+**Checkpoint:** commit `docs: add first-pass demo video`, update `AI_HANDOFF.md`, then continue to Phase 6 automatically.
+
+## Phase 6 — Reference-image handoff (operator-supplied)
+
+**Objective:** register the operator-supplied reference image(s) as the authoritative visual source for Phase 7.
+
+**Dependencies:** Phase 5 checkpoint complete.
 
 **Tasks:**
-1. Ask the operator for their references or present a small set of relevant candidate products for selection. Record source URLs/assets and the exact visual attributes considered.
-2. Derive a Zorq-specific direction; do not copy logos, proprietary illustrations or exact branded compositions.
-3. Produce mockups/prototypes for: landing page, app overview, asset list/detail, job detail, license detail, run dashboard, transaction/confirmation states, empty/error states, and responsive desktop/mobile adaptations.
-4. Identify what is borrowed from each reference (e.g. navigation hierarchy, density, typography feel, status treatment) and what is original.
-5. Present clickable prototypes/screenshots and collect explicit operator feedback. Revise until direction is accepted.
-6. Create `docs/DESIGN_DECISIONS.md` and `docs/DESIGN_APPROVAL.md` containing references, approved screens, tokens, component decisions, deviations, accessibility notes, and approval record.
+1. Inspect `docs/design/reference/`. If it is missing or empty, record the specific blocker under `AGENTS.md` §1.1 and do not invent, fetch, generate or substitute a reference image.
+2. Record the image path(s), the screens/states each reference covers, and the screens/states it does not cover in `docs/DESIGN_DECISIONS.md`.
+3. If any primary screen or state is uncovered, propose an extension in `docs/DESIGN_DECISIONS.md` that stays within the existing product behaviour and proceed. Do not create a mockup approval loop; the waiver covers visual direction.
+4. Archive the waiver record in `docs/DESIGN_APPROVAL.md`.
 
-**Expected files:** mockup assets (in `docs/design/`), design comparison notes, approval record.
+**Expected files:** `docs/DESIGN_DECISIONS.md`, `docs/DESIGN_APPROVAL.md`, reference assets under `docs/design/reference/`.
+
+**Database/API/UI changes:** none.
+
+**Tests:** confirm reference files are readable and the coverage inventory is complete.
+
+**Acceptance criteria:** the reference image is present and recorded; covered and uncovered screens/states are explicit; extensions are documented; no mockup or approval loop is introduced.
+
+**Git checkpoint:** `docs: record operator-supplied design reference`.
+
+**Checkpoint:** commit `docs: record operator-supplied design reference`, update `AI_HANDOFF.md`, then continue to Phase 7 automatically.
+
+## Phase 7 — Implement the operator-supplied reference image with Stageshow
+
+**Objective:** implement the UI from the operator-supplied reference image(s) using Stageshow for execution quality, without changing product behaviour, APIs, data model, permissions or architecture.
+
+**Dependencies:** Phase 6 checkpoint complete and reference image present.
+
+**Tasks:**
+1. Before implementing visuals, install and use the Stageshow skill:
+   `npx skills add benjitaylor/skills --skill stageshow`
+   Use it only for composition, motion, density and faux-product-UI polish consistent with the operator-supplied reference image. Do not let it override the reference direction or introduce behaviour changes.
+2. Implement the visual system from the reference image(s): typography, colour tokens, spacing, layout, component surfaces, navigation, forms, tables/cards, status chips, motion and responsive patterns.
+3. Apply the visual system to each existing screen and relevant state; preserve existing route names, APIs, state transitions and permission boundaries.
+4. Replace temporary styling only; do not change business logic or contract interactions.
+5. If the reference implies a feature the product does not have, record the gap in `docs/DESIGN_DECISIONS.md` and implement the closest behaviour-consistent equivalent. If implementing it would require a product-behaviour, API, data-model, permission or architecture change, stop and report the specific blocker under `AGENTS.md` §1.1.
+6. Run all existing E2E tests; they must still pass.
+
+**Expected files:** design tokens, component library, route layouts and screens, `docs/design/` artifacts, `docs/DESIGN_DECISIONS.md` updates.
 
 **Database/API changes:** none.
 
-**UI changes:** mockups only; do not replace the functional temporary system with final visual components.
+**UI changes:** reference-image visuals only.
 
-**Tests:** no feature tests added; verify mockups cover every route class, required state and responsive breakpoint.
+**Tests:** visual regression snapshots where stable; all existing E2E tests must pass; keyboard and responsive checks.
 
-**Acceptance criteria:** operator can inspect all core mockups and understands reference-derived attributes; design decision record is complete; approval is explicit and written.
+**Acceptance criteria:** the implemented UI matches the operator-supplied reference image; no behaviour/API/architecture changes; all critical journeys remain green.
 
-**Verification procedure:** operator reviews desktop/mobile mockups and confirms acceptance in chat or `docs/DESIGN_APPROVAL.md`.
+**Verification procedure:** compare preview at target viewports; run E2E; record reference-to-implementation mapping and gaps.
 
-**Git checkpoint:** `docs: add operator-approved Zorq visual direction` only after approval.
+**Git checkpoint:** `feat: implement operator-supplied Zorq visual reference`.
 
-## Explicit approval gate — STOP
-
-No final visual styling or polished UI implementation is authorized until the operator explicitly says the presented mockups/direction are approved. Silence, an implied preference, or approval of a single screen is not approval of the whole direction. If revisions are requested, remain in Phase 6.
-
-## Phase 7 — Implement approved final visual direction
-
-**Objective:** apply approved design tokens and components to the working product without changing its behaviour or architecture.
-
-**Dependencies:** explicit written operator approval and committed design decision record.
-
-**Tasks:**
-1. Implement approved typography, colour tokens, spacing, layout, component surfaces, navigation, forms, tables/cards, status chips and responsive patterns.
-2. Apply design to each existing screen and relevant state; preserve existing route names, APIs, state transitions and permission boundaries.
-3. Replace temporary styling only; do not change business logic or contract interactions.
-4. If an approved visual reference appears to require a behaviour/API change, stop and request separate approval.
-
-**Expected files:** design tokens, component library, route layouts and screens, docs/design artifacts.
-
-**Database/API changes:** none.
-
-**UI changes:** approved visuals only.
-
-**Tests:** visual regression snapshots where stable; all existing E2E tests must still pass; keyboard and responsive checks.
-
-**Acceptance criteria:** approved mockups are matched; no behaviour/API changes; all critical journeys remain green.
-
-**Verification procedure:** compare preview at approved viewports; run E2E; operator review.
-
-**Git checkpoint:** `feat: implement approved Zorq visual system`.
+**Checkpoint:** commit `feat: implement operator-supplied Zorq visual reference`, update `AI_HANDOFF.md`, then continue to Phase 8 automatically.
 
 ## Phase 8 — Frontend completeness, docs and footer links
 
 **Objective:** ship the complete frontend shell, not just the main dashboard.
 
-**Dependencies:** Phase 7 accepted; real GitHub repository URL exists; public docs destination is deployed/available.
+**Dependencies:** Phase 7 checkpoint complete; real GitHub repository URL exists; public docs destination is deployed/available.
 
 **Tasks:**
 1. Verify all public/app routes, global navigation, footer, metadata, favicon/app icon, Open Graph metadata and not-found/error boundaries.
 2. Complete loading/skeleton, empty, validation, success, error, permission-denied and missing-resource states for every applicable screen.
 3. Verify responsive layouts and accessible labels, semantics, keyboard navigation, focus states, colour contrast and form error announcements.
 4. Publish the actual docs destination (in-app `/docs` and/or repository docs served publicly) and use exact working URL in footer.
-5. Add GitHub footer link only to the actual intended public repository. If repository is private or publicity would expose sensitive code, explain and obtain operator approval for an alternate link or omission. Never invent a repo URL.
+5. Add GitHub footer link only to the actual intended public repository. If repository is private or publicity would expose sensitive code, explain the reason and log the alternate link/omission decision in `AI_HANDOFF.md`'s Decision Log. Never invent a repo URL.
 6. Complete `README.md` and `docs/` contents: developer setup, environment variables, user guide, API reference, architecture, deployment, Portaldot validation, test strategy, security/privacy and troubleshooting.
 7. Validate external links; no dead URLs, `href="#"`, inert controls or unexplained placeholder copy.
-8. Verify `/privacy`, `/terms` and `/support` copy is accurate and not legal advice; link only to real support channel/contact approved by operator.
+8. Verify `/privacy`, `/terms` and `/support` copy is accurate and not legal advice; link only to a real, verified support channel/contact.
 
 **Expected files:** all `docs/**`, README, footer/navigation, metadata/icons, accessibility updates, link tests.
 
-**Database/API changes:** none unless a documented issue requires separate approval.
+**Database/API changes:** none unless a documented issue requires a logged decision.
 
 **UI changes:** complete final frontend inventory.
 
 **Tests:** broken-link checks, route E2E, responsive E2E/screenshot checks, axe/accessibility smoke, keyboard navigation, docs/GitHub footer link checks.
 
-**Acceptance criteria:** all routes and controls have defined behaviour; docs link resolves; GitHub link resolves to actual repo or approved documented exception; no dead links/placeholders; docs pass setup review; responsive/accessibility checks pass.
+**Acceptance criteria:** all routes and controls have defined behaviour; docs link resolves; GitHub link resolves to the actual repo or a documented exception; no dead links/placeholders; docs pass setup review; responsive/accessibility checks pass.
 
 **Verification procedure:** inspect deployed preview, click every footer and navigation link, run automated link and E2E suite, review README/docs as a new developer, test keyboard-only flow.
 
 **Git checkpoint:** `docs: complete Zorq docs and frontend release requirements`.
 
-## Phase 9 — Final regression, security, release and monitoring
+**Checkpoint:** commit `docs: complete Zorq docs and frontend release requirements`, update `AI_HANDOFF.md`, then continue to Phase 9 automatically.
 
-**Objective:** perform final adversarial/operational review and release only when explicitly authorized.
+## Phase 9 — Final regression, security, testnet release and monitoring
 
-**Dependencies:** Phase 8 accepted; Portaldot, Vercel, Supabase and Render configuration stable; contract deployment recorded; production release permission explicitly given.
+**Objective:** perform final adversarial/operational review and complete the testnet release.
+
+**Dependencies:** Phase 8 checkpoint complete; Portaldot, Vercel, Supabase and Render configuration stable; contract deployment recorded.
 
 **Tasks:**
 1. Run full unit/contract/integration/E2E suites from a clean state.
 2. Run security review: SIWE replay, CSRF/origin, IDOR, rate limits, internal service authentication, secrets scan, XSS/injection, contract ownership/reentrancy surface, race and idempotency.
 3. Verify contract bytecode/source and deployment transaction; review role and ownership assumptions.
 4. Verify the coordinator fail-closed behaviour if RPC/Next API fails and that no unauthorised client updates can enter a round.
-5. Verify preview has no production secrets or real data. Ensure Production is a separate environment/database/service.
-6. Obtain explicit operator release authorization before promoting/deploying to production or a final public domain. Hackathon testnet demo is not a mainnet release.
-7. Deploy, smoke-test actual production URL and verify health/readiness, wallet chain, user flows and docs/footer links.
+5. Verify preview has no production secrets or real data. Production is out of scope for the MVP.
+6. Production deployment is out of scope for the MVP. The agent completes Phase 9 by deploying to testnet only, running the full suite, and recording final evidence. Do not deploy to mainnet, do not move real value, do not enable production data. If any of those are required, treat them as out of scope and note in Known Limitations.
+7. Smoke-test the stable preview/testnet deployment and verify health/readiness, wallet chain, user flows and docs/footer links.
 8. Record monitoring/incident instructions, final commit, deployment IDs, contract address, run evidence and known limitations.
 
 **Expected files:** final test/security reports, release notes, runbook updates, `AI_HANDOFF.md`.
 
-**Database/API/UI changes:** only approved bug fixes.
+**Database/API/UI changes:** only bug fixes required by the specification.
 
-**Tests:** full defined suite; secret scanning; dependency audit; production smoke test after authorization.
+**Tests:** full defined suite; secret scanning; dependency audit; testnet deployment smoke test.
 
-**Acceptance criteria:** no open critical/high security defect; all MVP acceptance tests pass; release approved; actual production smoke verified; limitations disclosed; operator receives URL, commit and evidence.
+**Acceptance criteria:** no open critical/high security defect; all MVP acceptance tests pass; testnet deployment smoke verified; limitations disclosed; URL, commit and evidence recorded.
 
-**Verification procedure:** signed-off checklist and production smoke report.
+**Verification procedure:** signed-off checklist and testnet smoke report.
 
-**Git checkpoint:** `release: Zorq MVP testnet demo` or appropriate release tag. Production deploy only after separate authorization.
+**Git checkpoint:** `release: Zorq MVP testnet demo` or appropriate release tag. Testnet only.
+
+**Checkpoint:** commit the testnet release checkpoint, update `AI_HANDOFF.md`, then continue to Phase 10 automatically.
+
+## Phase 10 — Demo video production
+
+**Objective:** produce the final demo video specified in `docs/DEMO_VIDEO.md`.
+
+**Dependencies:** Phase 9 checkpoint complete; functional testnet preview available.
+
+**Tasks:**
+1. Read `docs/DEMO_VIDEO.md` and follow it as the authoritative specification.
+2. If `docs/demo/reference/` contains an operator-supplied reference video, review it first and record adopted/rejected attributes in `docs/demo/REFERENCE_NOTES.md` before scripting. The hard limits in `docs/DEMO_VIDEO.md` take precedence over the reference in every conflict.
+3. Build a single step timeline that drives both the Playwright capture and the narration generation; keep checked-in `narration.md`, `timeline.json` and automation under `scripts/demo-video/`.
+4. Generate narration with a free Google AI Studio male voice (suggested Charon or Orus; Puck only if the tone fits). No cloned voices, no paid tiers, no presenter name.
+5. Capture deterministic UI actions with Playwright and mux audio/video with ffmpeg.
+6. Verify the final video against every gate below and record the result.
+
+**Expected files:** `docs/demo/` video/narration/timeline/reference notes, `scripts/demo-video/`, `AI_HANDOFF.md`.
+
+**Database/API/UI changes:** none.
+
+**Tests:** duration check, narration/visual sync check, on-screen claim verification, reproducible re-render from `scripts/demo-video/`.
+
+**Gate:** video <= 3:00, free Google AI Studio male voice, no presenter name, no narration/visual drift, every on-screen claim verifiable in the recording, reproducible from `scripts/demo-video/`.
+
+**Checkpoint:** commit `docs: add final Zorq demo video`, update `AI_HANDOFF.md`, then produce the final Phase 10 report.
 
 ## Standard checkpoint report (required after every phase)
 
@@ -351,14 +404,16 @@ Test results (pass/fail counts and evidence):
 Manual verification performed:
 Known issues / blockers:
 Security and environment notes:
-Design references/mockups status:
-Operator approval status:
+Design reference image status (supplied / missing / ambiguous):
+Operator approval status (visuals: waived):
 Documentation completeness:
 Docs footer URL (actual or not yet published):
 GitHub URL (actual or not yet created/private with reason):
-Next single task (requires operator instruction):
+Decisions logged this phase (D-NNN ids):
+New Known Limitations this phase:
+Next phase (automatic):
 ```
 
 ## Scope/deadline rule
 
-Hackathon deadlines do not waive the gates. The final submission deadline currently surfaced for the event is 6 November 2026 at 04:00 UTC (05:00 WAT), but verify the official DoraHacks submission page immediately before submission. If the available time is insufficient, prioritise a truthful, functioning testnet core and disclose missing native FL/ZKP integration. Do not fake features or silently bypass the final-design approval process.
+Hackathon deadlines do not waive the hard limits in `docs/DEMO_VIDEO.md` or the test/evidence requirements. The final submission deadline currently surfaced for the event is 6 November 2026 at 04:00 UTC (05:00 WAT), but verify the official DoraHacks submission page immediately before submission. If the available time is insufficient, prioritise a truthful, functioning testnet core and disclose missing native FL/ZKP integration. Do not fake features or bypass the reference-image workflow.

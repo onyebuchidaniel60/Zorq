@@ -10,10 +10,12 @@ Zorq lets a data owner authorize one of their registered data assets to particip
 
 - [`PROJECT_SPEC.md`](./PROJECT_SPEC.md) — product, MVP, user flows, requirements, business rules, data model, APIs, UX and security.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system architecture, smart contract, stack, service boundaries and deployment.
-- [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — phased build sequence and acceptance gates.
+- [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — autonomous phased build sequence and checkpoints.
 - [`AGENTS.md`](./AGENTS.md) — persistent instructions for implementation agents.
 - [`AI_HANDOFF.md`](./AI_HANDOFF.md) — current project phase and verified state.
-- [`docs/`](./docs/) — operator, developer, API, deployment, security, testing and design records.
+- [`PREREQUISITES.md`](./PREREQUISITES.md) — the Phase 0 prerequisites manifest the operator fills before autonomous execution.
+- [`docs/AUTONOMOUS_EXECUTION.md`](./docs/AUTONOMOUS_EXECUTION.md) — the autonomous execution contract for Phases 1–10.
+- [`docs/`](./docs/) — operator, developer, API, deployment, security, testing, demo-video and design records.
 
 ## Status
 
@@ -32,7 +34,7 @@ This package is a pre-implementation blueprint. Application code, contract deplo
 
 ## Architecture and scope authority
 
-`PROJECT_SPEC.md` controls product behaviour and scope. `ARCHITECTURE.md` controls the agreed technical architecture. The agent must not change either without explicit operator approval. When an external integration is undocumented, report the gap and preserve the adapter boundary; do not invent APIs.
+`PROJECT_SPEC.md` controls product behaviour and scope. `ARCHITECTURE.md` controls the agreed technical architecture. Deviations are permitted only when unavoidable, logged in `AI_HANDOFF.md`'s Decision Log, and committed separately. When an external integration is undocumented, report the gap and preserve the adapter boundary; do not invent APIs.
 
 ## Development setup
 
@@ -46,13 +48,13 @@ See [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md) and `ARCHITECTURE.md`
 
 See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). Every phase follows:
 
-`IMPLEMENT ONE PHASE → TEST → INSPECT → FIX → COMMIT → CHECKPOINT → STOP`.
+`IMPLEMENT → TEST → INSPECT → FIX → COMMIT → CHECKPOINT → CONTINUE`.
 
 Do not claim a test passed unless it was executed and the actual output supports that claim. Critical end-to-end flows must pass on the deployed preview before final visual-design work.
 
 ## Deployment
 
-See [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md). The skeletal frontend must deploy to a stable Vercel Preview URL in Phase 1 and remain updated at verified checkpoints. Preview deployments use synthetic test data and testnet/sandbox integrations only. Production deployment requires separate operator authorization.
+See [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md). The skeletal frontend must deploy to a stable Vercel Preview URL in Phase 1 and remain updated at verified checkpoints. Preview deployments use synthetic test data and testnet/sandbox integrations only. Production deployment is out of scope for the MVP.
 
 ## Privacy and safety
 
