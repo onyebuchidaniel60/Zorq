@@ -19,7 +19,13 @@ Zorq lets a data owner authorize one of their registered data assets to particip
 
 ## Status
 
-This package is a pre-implementation blueprint. Application code, contract deployment, preview URL and test evidence do not exist yet. Follow `IMPLEMENTATION_PLAN.md` starting with Phase 0 read-only repository inspection. Do not assume a deployment URL, contract address or GitHub URL.
+**Phase 1 complete — navigable app shell deployed to a stable Vercel Preview.**
+
+- Stable preview: <https://zorq-preview-uhhh2.vercel.app>
+- The current preview is a shell: wallet authentication, database, contract calls and Flower training are delivered in Phases 2–4. Unfinished controls are disabled and labelled; they never imply a successful action.
+- Portaldot V3 EVM testnet chain ID `420420777` is verified live. The contract is not deployed yet.
+- Design reference images and a reference video are committed under `docs/design/reference/` and `docs/demo/reference/`. They are not used for styling until Phase 7 and demo production.
+- Source documents remain authoritative. See [`AI_HANDOFF.md`](./AI_HANDOFF.md) for current verification evidence, decisions and known limitations.
 
 ## Agreed MVP
 
@@ -38,7 +44,28 @@ This package is a pre-implementation blueprint. Application code, contract deplo
 
 ## Development setup
 
-The exact setup is documented in [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md). The selected stack is Node.js 22.13+, npm workspaces, Python 3.12/uv, Docker, Hardhat 3, Next.js, Postgres and Flower. Exact compatible dependency versions must be pinned in lockfiles during Phase 1 after repository inspection. Do not silently upgrade major versions.
+The exact setup is documented in [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md). The implemented stack is Node.js `22.23.4` (pinned in `.nvmrc`), npm workspaces, Python 3.12 with `uv`, Hardhat 3, Next.js 16.4.5, Postgres and Flower. Docker is not required locally: local Postgres parity uses `psql`, staging uses Neon via the Vercel integration, and Render builds the FL Dockerfile remotely. See Decision D-001 in `AI_HANDOFF.md`.
+
+Quick start:
+
+```bash
+nvm use
+npm install
+npm run dev -- --port 3100
+```
+
+Checks:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run test
+npx playwright install chromium
+npm run test:e2e
+```
+
+Exact compatible dependency versions are pinned in `package-lock.json`. Do not silently upgrade major versions.
 
 ## Environment configuration
 
@@ -62,6 +89,6 @@ See [`docs/SECURITY_AND_PRIVACY.md`](./docs/SECURITY_AND_PRIVACY.md). No raw dat
 
 ## Links
 
-- **Documentation:** `/docs` (must be a working in-app documentation destination once Phase 8 is complete).
-- **GitHub:** not listed until the actual repository URL is read from the real git remote and confirmed public/approved. Never invent a destination or expose a private repository.
+- **Documentation:** `/docs` (working in-app destination in the current preview).
+- **GitHub:** <https://github.com/onyebuchidaniel60/Zorq> (actual public repository, read from the git remote).
 - **Portaldot explorer:** `https://scanner-testnet-v3.portaldot.dev/` (verify the relevant transaction/contract URL before linking it).

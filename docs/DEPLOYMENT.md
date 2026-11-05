@@ -6,9 +6,11 @@
 
 | Environment | Web | Database | Chain | FL service | Data |
 |---|---|---|---|---|---|
-| Local | Next dev server | Local Docker Postgres | Hardhat local by default; optional testnet smoke | Local Docker/Python | Seeded synthetic only |
-| Preview/staging | Stable Vercel branch Preview | Separate Supabase staging DB | Portaldot V3 testnet | Render staging service or protected local test service | Synthetic only |
+| Local | Next dev server | Local Postgres via `psql` (no Docker) | Hardhat local by default; optional testnet smoke | Local Python/uv | Seeded synthetic only |
+| Preview/staging | Stable Vercel Preview (`https://zorq-preview-uhhh2.vercel.app`) | Neon Postgres via Vercel integration | Portaldot V3 testnet | Render staging service | Synthetic only |
 | Production | Out of scope for the MVP | Not provisioned | Not deployed | Not provisioned | No real datasets |
+
+Docker is intentionally not installed or used locally (Decision D-001). Local Postgres parity uses `psql`; the FL service's Dockerfile is built by Render remotely. The managed Postgres provider is Neon via the Vercel integration rather than Supabase (Decision D-002).
 
 ## Early preview rule
 
@@ -26,14 +28,17 @@ Vercel Preview and Production are separate environments and can have separate en
 6. After each accepted phase, verify the latest preview deployment; update `AI_HANDOFF.md`.
 7. Production deployment is out of scope for the MVP. Do not promote to Production.
 
-## Supabase
+Phase 1 created project `uhhh2/zorq`, linked to the public GitHub repository, with root directory `apps/web`, framework `nextjs`, Node `22.x`. The stable preview alias is `https://zorq-preview-uhhh2.vercel.app`. Deployment protection is disabled because this is a public synthetic-data testnet preview. `main` is the Vercel production branch by project default; publish checkpoint commits to `main` and alias a fresh preview deployment to the stable preview URL, or use the dedicated `preview` branch once Vercel preview detection is confirmed.
 
-- Create/identify a dedicated staging project.
-- Keep DB connection string server-only.
-- Use transaction pooler mode for serverless if suitable; configure Postgres.js with prepared statements disabled when required.
-- Run versioned migrations; never edit production schema manually without migration.
+## Supabase → Neon substitution
+
+- Use the Neon resource provisioned through the Vercel integration as the staging/preview Postgres database.
+- Keep the pooled `DATABASE_URL` server-only; configure Postgres.js with `prepare: false` for pooler compatibility.
+- Run versioned migrations from a developer/CI environment; never edit schema manually in a deployed environment.
 - Backup/export only synthetic data for MVP.
 - Restrict DB network/service credentials to backend; browser never receives direct DB privileges.
+
+Supabase remains the provider named in the frozen `ARCHITECTURE.md`; the substitution to Neon is a hosting/provider decision forced by the operator's provisioning instruction and is logged as D-002.
 
 ## Render FL service
 

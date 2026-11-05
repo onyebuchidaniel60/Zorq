@@ -26,6 +26,20 @@ A Portaldot developer announcement reports that V3 testnet RPC endpoints were up
 | ZKP | Older overview advertises ZKP | No confirmed proof generation/verification API suitable for this workflow; no ZKP claim in MVP |
 | Native gas | Network distribution instructions mention native SS58 funding address | Verify H160 funding/mapping before test transaction |
 
+## Phase 1 preflight evidence (5 November 2026)
+
+| Check | Result |
+|---|---|
+| `eth_chainId` | `0x190f1ca9` = `420420777` |
+| `eth_blockNumber` | advanced from `0x50f52` over the preflight window |
+| Deployer keypair | SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` (sr25519, prefix 42) |
+| Chain runtime H160 mapping | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` via `twinkey_identity` (`reviveApi.address` runtime API) |
+| Native/EVM balance | `0` — awaiting operator funding at <https://pot-starter-hub.vercel.app> |
+| Write path | `twinkey-provider` translates writes to sr25519-signed `revive.call` extrinsics; direct EOA sends are not supported |
+| Contract deployment | Pending funding; no transaction sent |
+
+The deployer seed is stored outside version control at `.secrets/deployer.json` with mode `0600`. Only public SS58/H160 values are reported.
+
 ## Phase 0/3 live preflight checklist
 
 - [ ] Fetch `eth_chainId`; verify `420420777`.

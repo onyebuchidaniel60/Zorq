@@ -4,13 +4,13 @@
 
 ## Prerequisites
 
-- Node.js 22.13.0 or later (pin an exact Node 22 patch in `.nvmrc`).
-- npm version bundled with the selected Node release; use the root committed `package-lock.json`.
+- Node.js 22.23.4 (exact patch pinned in `.nvmrc`).
+- npm 10.9.x bundled with Node 22.23.4; use the root committed `package-lock.json`.
 - Python 3.12 and `uv`.
-- Docker Desktop / Docker Engine for local Postgres and FL-service parity.
-- A supported EVM wallet for testnet interaction.
+- `psql` for optional local Postgres parity. Docker is not used locally (Decision D-001).
+- A supported Substrate wallet for testnet interaction; the EVM H160 identity is derived from the SS58 key.
 - Access to a Portaldot V3 test account and verified EVM gas funding.
-- Vercel, Supabase and Render access for deployment phases; not required for local-only unit tests.
+- Vercel, Neon (via Vercel) and Render access for deployment phases; not required for local-only unit tests.
 
 ## Repository layout
 
@@ -18,16 +18,16 @@ See `ARCHITECTURE.md` section 12. The monorepo contains `apps/web`, `apps/fl-ser
 
 ## Initial setup sequence
 
-The agent must implement and test actual scripts before documenting them as ready. Expected sequence:
+The agent must implement and test actual scripts before documenting them as ready. Verified Phase 1 sequence:
 
 1. Clone the actual repository URL supplied by the operator. Do not guess it.
 2. Check out the agreed development branch and inspect `git status`.
-3. Install Node dependencies with `npm ci` from repository root.
-4. Install Python dependencies using `uv sync` in `apps/fl-service`.
+3. Install Node 22.23.4 (`nvm use`) and install dependencies with `npm ci` from repository root.
+4. Install Python dependencies using `uv sync` in `apps/fl-service` (Phase 4).
 5. Copy `.env.example` to `.env.local` for web and the FL service's local env file. Populate only local test values.
-6. Start local Postgres and FL service with the implemented Docker Compose configuration.
-7. Apply database migrations with the documented script.
-8. Start Next.js development server and the FL service using documented commands.
+6. Start local Postgres with `psql`/a host service if local parity is needed; staging uses Neon via Vercel.
+7. Apply database migrations with the documented script (Phase 2).
+8. Start Next.js with `npm run dev -- --port 3100`; start the FL service using its documented command (Phase 4).
 9. Run lint, typecheck, unit, contract and integration tests.
 
 Do not claim these commands are executable until implemented and verified. During Phase 0 inspect existing commands and keep README accurate to the actual repository.
