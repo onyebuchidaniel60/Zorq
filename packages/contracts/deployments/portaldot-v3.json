@@ -1,0 +1,20 @@
+{
+  "network": "Portaldot V3 Testnet",
+  "chainId": 420420777,
+  "contractName": "ZorqRegistry",
+  "contractAddress": "0xa9ab18d404e2cd19c23f30e7d78a740b562685ff",
+  "initialOwner": "0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf",
+  "deployerH160": "0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf",
+  "deployerSs58": "5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F",
+  "deploymentTx": "0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834",
+  "blockNumber": 337014,
+  "blockHash": "0xb4aa259a6a45fa225dcdb2e8c5eb6fbcfb2f822afc04c24ef0606cebff1c6088",
+  "compiler": "solc 0.8.24",
+  "optimizer": {
+    "enabled": true,
+    "runs": 1,
+    "viaIR": true
+  },
+  "constructorArgs": "0x000000000000000000000000fb7e252fae2d9e5a849361c22d7e4f8be2bb32bf",
+  "deployedAt": "2026-11-05T16:31:54.842Z"
+}

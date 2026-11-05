@@ -1,10 +1,13 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
+  smallint,
   timestamp,
   uniqueIndex,
   varchar,
@@ -100,3 +103,135 @@ export const rateLimitBuckets = pgTable(
 export type User = typeof users.$inferSelect;
 export type AuthNonce = typeof authNonces.$inferSelect;
 export type RateLimitBucket = typeof rateLimitBuckets.$inferSelect;
+
+export const dataAssets = pgTable(
+  "data_assets",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    chainAssetId: varchar("chain_asset_id", { length: 66 }).notNull().unique(),
+    ownerWallet: varchar("owner_wallet", { length: 42 }).notNull(),
+    displayName: varchar("display_name", { length: 80 }).notNull(),
+    description: varchar("description", { length: 500 }),
+    demoPartitionId: smallint("demo_partition_id").notNull(),
+    metadataCommitment: varchar("metadata_commitment", { length: 66 }).notNull(),
+    metadataSalt: varchar("metadata_salt", { length: 66 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("draft"),
+    chainTxHash: varchar("chain_tx_hash", { length: 66 }),
+    chainBlockNumber: bigint("chain_block_number", { mode: "number" }),
+    chainBlockHash: varchar("chain_block_hash", { length: 66 }),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+    deactivatedAt: timestamptz("deactivated_at"),
+  },
+  (table) => [
+    index("data_assets_owner_status_idx").on(table.ownerWallet, table.status),
+    uniqueIndex("data_assets_active_partition_idx")
+      .on(table.demoPartitionId)
+      .where(sql`${table.status} = 'active'`),
+  ],
+);
+
+export const flJobs = pgTable(
+  "fl_jobs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    chainJobId: varchar("chain_job_id", { length: 66 }).notNull().unique(),
+    creatorWallet: varchar("creator_wallet", { length: 42 }).notNull(),
+    title: varchar("title", { length: 100 }).notNull(),
+    description: varchar("description", { length: 1000 }),
+    purposeText: varchar("purpose_text", { length: 500 }).notNull(),
+    purposeHash: varchar("purpose_hash", { length: 66 }).notNull(),
+    modelKey: varchar("model_key", { length: 64 }).notNull(),
+    modelConfig: jsonb("model_config").$type<Record<string, unknown>>().notNull(),
+    modelConfigHash: varchar("model_config_hash", { length: 66 }).notNull(),
+    minParticipants: smallint("min_participants").notNull().default(2),
+    maxParticipants: smallint("max_participants").notNull(),
+    maxRounds: smallint("max_rounds").notNull().default(3),
+    startsAt: timestamptz("starts_at").notNull(),
+    endsAt: timestamptz("ends_at").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("draft"),
+    chainTxHash: varchar("chain_tx_hash", { length: 66 }),
+    chainBlockNumber: bigint("chain_block_number", { mode: "number" }),
+    chainBlockHash: varchar("chain_block_hash", { length: 66 }),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("fl_jobs_status_window_idx").on(table.status, table.startsAt, table.endsAt),
+    index("fl_jobs_creator_idx").on(table.creatorWallet, table.createdAt),
+  ],
+);
+
+export const licenses = pgTable(
+  "licenses",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    tokenId: numeric("token_id", { precision: 78, scale: 0 }).unique(),
+    assetId: varchar("asset_id", { length: 36 }).notNull(),
+    jobId: varchar("job_id", { length: 36 }).notNull(),
+    assetOwnerWallet: varchar("asset_owner_wallet", { length: 42 }).notNull(),
+    revision: integer("revision").notNull(),
+    validFrom: timestamptz("valid_from").notNull(),
+    validUntil: timestamptz("valid_until").notNull(),
+    statusMirror: varchar("status_mirror", { length: 20 }).notNull().default("pending_chain"),
+    revokedAt: timestamptz("revoked_at"),
+    chainTxHash: varchar("chain_tx_hash", { length: 66 }),
+    chainBlockNumber: bigint("chain_block_number", { mode: "number" }),
+    chainBlockHash: varchar("chain_block_hash", { length: 66 }),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("licenses_asset_job_revision_idx").on(table.assetId, table.jobId, table.revision),
+    index("licenses_job_status_idx").on(table.jobId, table.statusMirror),
+    index("licenses_asset_idx").on(table.assetId, table.createdAt),
+    index("licenses_owner_status_idx").on(table.assetOwnerWallet, table.statusMirror),
+  ],
+);
+
+export const chainTransactions = pgTable(
+  "chain_transactions",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    txHash: varchar("tx_hash", { length: 66 }).notNull().unique(),
+    chainId: bigint("chain_id", { mode: "number" }).notNull(),
+    entityType: varchar("entity_type", { length: 20 }).notNull(),
+    entityId: varchar("entity_id", { length: 36 }).notNull(),
+    senderWallet: varchar("sender_wallet", { length: 42 }).notNull(),
+    eventName: varchar("event_name", { length: 64 }).notNull(),
+    blockNumber: bigint("block_number", { mode: "number" }).notNull(),
+    blockHash: varchar("block_hash", { length: 66 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("confirmed"),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("chain_transactions_entity_idx").on(table.entityType, table.entityId),
+    index("chain_transactions_sender_idx").on(table.senderWallet),
+  ],
+);
+
+export const jobParticipants = pgTable(
+  "job_participants",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    jobId: varchar("job_id", { length: 36 }).notNull(),
+    assetId: varchar("asset_id", { length: 36 }).notNull(),
+    licenseId: varchar("license_id", { length: 36 }).notNull(),
+    ownerWallet: varchar("owner_wallet", { length: 42 }).notNull(),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("job_participants_job_license_idx").on(table.jobId, table.licenseId),
+    uniqueIndex("job_participants_job_asset_license_idx").on(
+      table.jobId,
+      table.assetId,
+      table.licenseId,
+    ),
+  ],
+);
+
+export type DataAsset = typeof dataAssets.$inferSelect;
+export type FlJob = typeof flJobs.$inferSelect;
+export type License = typeof licenses.$inferSelect;
+export type ChainTransaction = typeof chainTransactions.$inferSelect;

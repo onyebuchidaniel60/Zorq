@@ -14,6 +14,12 @@ export type ApiErrorCode =
   | "RATE_LIMITED"
   | "IDEMPOTENCY_CONFLICT"
   | "DATABASE_UNAVAILABLE"
+  | "TX_NOT_FOUND"
+  | "TX_REVERTED"
+  | "TX_WRONG_CHAIN"
+  | "TX_WRONG_CONTRACT"
+  | "TX_WRONG_SENDER"
+  | "TX_EVENT_MISMATCH"
   | "INTERNAL_ERROR";
 
 export class ApiError extends Error {

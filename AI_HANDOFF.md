@@ -3,22 +3,25 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 3 in progress — `ZorqRegistry` implemented and all 11 contract tests pass; Portaldot deployment is blocked by the protocol-level code storage deposit, which is far larger than the faucet funding.
-**Current phase:** Phase 3 contract implementation complete. The deployer holds 543.52 tPOTv3; dry-run binary probing places the exact instantiation requirement between 560 and 570 tPOTv3, so a further ~30 tPOTv3 is required.
+**Project state:** Phase 3 contract deployed and verified; asset/job/license APIs and receipt verifier implemented. Testnet asset and job creation succeeded; license issuance is blocked by the per-call storage deposit exceeding the remaining balance.
+**Current phase:** Phase 3 APIs implemented; testnet license execution awaits a small top-up. Phase 4 FL service work can proceed in parallel.
 
-## Phase 3 funding preflight (current blocker)
+## Phase 3 deployment evidence
 
 | Check | Result |
 |---|---|
-| SS58 address | `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` |
-| Chain runtime H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
-| Current free balance | `543.5169` tPOTv3 (`54351690311742542` native base units) |
-| Chain `revive.depositPerByte` | `6,000,000,000,000` native base units = `0.06` tPOTv3 per byte |
-| Probe contract (116 runtime bytes) | Required deposit `22.1580` tPOTv3 |
-| `ZorqRegistry` runtime code | 6,861 bytes |
-| Implied code deposit | approximately 543 tPOTv3 plus the fixed base deposit |
-| Measured total requirement | between 560 and 570 tPOTv3 (dry-run transition) |
-| Last on-chain effect | Failed deployment attempts consumed fees only; no contract was created. A 500 tPOTv3 top-up brought the balance to 544.32; the actual requirement is ~565. |
+| Contract address | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
+| Deployment extrinsic | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` |
+| Block | `337014` / `0xb4aa259a6a45fa225dcdb2e8c5eb6fbcfb2f822afc04c24ef0606cebff1c6088` |
+| Deployer H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
+| Initial owner | `0xFb7E252faE2D9e5A849361C22d7E4F8be2BB32Bf` (deployer) |
+| Runtime code on chain | `6,861` bytes (`eth_getCode`) |
+| `owner()` | `0xFb7E252faE2D9e5A849361C22d7E4F8be2BB32Bf` |
+| `supportsInterface(0x80ac58cd)` | `true` |
+| `name()` / `symbol()` | `Zorq DataLicense` / `ZORQ` |
+| `creationPaused()` | `false` |
+| Balance after deployment | `29.0077` tPOTv3; after testnet asset/job calls and fees: `19.5` tPOTv3 |
+| Explorer route | `https://scanner-testnet-v3.portaldot.dev/address/0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` (SPA responds 200; EVM rendering not independently asserted) |
 
 ## Product in one paragraph
 
@@ -79,8 +82,8 @@ Current network references recorded in `ARCHITECTURE.md`:
 | Production URL | Out of scope for the MVP; `main` is the Vercel default production branch by project convention |
 | Database | Neon project `zorq-db` (`still-bonus-67603921`), branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1 — connected |
 | Render FL service | Not provisioned yet — Phase 4 |
-| Portaldot contract address | Not deployed — Phase 3; deployer funded |
-| Contract deployment transaction | Not available |
+| Portaldot contract address | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
+| Contract deployment transaction | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block `337014`) |
 
 ## Functional status
 
@@ -112,7 +115,8 @@ Current network references recorded in `ARCHITECTURE.md`:
 
 ## Known issues / risks / blockers
 
-1. **Hard blocker — Portaldot code storage deposit:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `543.5169` tPOTv3. Dry-run probing places the exact requirement between 560 and 570 tPOTv3. A further ~30 tPOTv3 top-up is required before deployment can succeed.
+1. **Resolved — Portaldot contract deployment:** `ZorqRegistry` deployed successfully at `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` in block `337014`.
+2. **Current — license issuance storage deposit:** testnet asset registration and job creation succeeded, but each storage-creating contract call requires roughly 11–22 tPOTv3. The deployer now holds ~19.5 tPOTv3; a ~10 tPOTv3 top-up is requested for the license/revocation flow.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -184,8 +188,7 @@ Compiler: solc 0.8.24, optimizer enabled, runs 1, viaIR true
 Runtime code: 6,861 bytes; creation code: 7,872 bytes
 Contract tests: 11/11 passing via `npx hardhat test`
 Coverage: registration/deactivation, job windows and state transitions, license issuance/revocation/revision, participant cohort cap, soulbound transfers/approvals, deterministic authorization reasons, creation pause, non-owner rejection.
-Deployment: not yet performed. Current balance 543.5169 tPOTv3. Dry-run probing places the exact instantiation requirement between 560 and 570 tPOTv3.
-No contract address or deployment transaction exists yet.
+Deployment: **complete**. Contract `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`, extrinsic `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834`, block `337014`. Read verification passed for `owner`, `supportsInterface`, `name`, `symbol` and `creationPaused`; `eth_getCode` returns 6,861 bytes.
 ```
 
 ## Phase 2 completion report
