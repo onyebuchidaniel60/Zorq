@@ -4,7 +4,7 @@
 
 **Last updated:** 5 November 2026
 **Project state:** Phase 3 in progress — `ZorqRegistry` implemented and all 11 contract tests pass; Portaldot deployment is blocked by the protocol-level code storage deposit, which is far larger than the faucet funding.
-**Current phase:** Phase 3 contract implementation complete. The deployer holds 44.15 tPOTv3, but the chain charges roughly 0.06 tPOTv3 per byte of runtime code plus a fixed base deposit; even a 116-byte contract requires 22.158 tPOTv3.
+**Current phase:** Phase 3 contract implementation complete. The deployer holds 543.52 tPOTv3; dry-run binary probing places the exact instantiation requirement between 560 and 570 tPOTv3, so a further ~30 tPOTv3 is required.
 
 ## Phase 3 funding preflight (current blocker)
 
@@ -12,13 +12,13 @@
 |---|---|
 | SS58 address | `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` |
 | Chain runtime H160 | `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` |
-| Current free balance | `44.1499` tPOTv3 (`4414992233161136` native base units) |
+| Current free balance | `543.5169` tPOTv3 (`54351690311742542` native base units) |
 | Chain `revive.depositPerByte` | `6,000,000,000,000` native base units = `0.06` tPOTv3 per byte |
 | Probe contract (116 runtime bytes) | Required deposit `22.1580` tPOTv3 |
 | `ZorqRegistry` runtime code | 6,861 bytes |
-| Implied code deposit | approximately 412 tPOTv3 plus the fixed base deposit |
-| Estimated total requirement | approximately 430–500 tPOTv3 |
-| Last on-chain effect | Failed deployment attempts consumed fees only; no contract was created. The deploy script refuses to send when the estimate exceeds the balance. |
+| Implied code deposit | approximately 543 tPOTv3 plus the fixed base deposit |
+| Measured total requirement | between 560 and 570 tPOTv3 (dry-run transition) |
+| Last on-chain effect | Failed deployment attempts consumed fees only; no contract was created. A 500 tPOTv3 top-up brought the balance to 544.32; the actual requirement is ~565. |
 
 ## Product in one paragraph
 
@@ -112,7 +112,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 
 ## Known issues / risks / blockers
 
-1. **Hard blocker — Portaldot code storage deposit:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `44.1499` tPOTv3. The chain charges `0.06` tPOTv3 per byte (`revive.depositPerByte` = `6e12` native); a 116-byte probe needs `22.158` tPOTv3, and the 6,861-byte `ZorqRegistry` is estimated at 430–500 tPOTv3. The 10-tPOT faucet cannot fund this. Options: a funded account with ~500 tPOTv3, a larger official faucet, or an explicit operator decision to demo on a local chain and document the limitation.
+1. **Hard blocker — Portaldot code storage deposit:** deployer SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` / H160 `0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf` holds `543.5169` tPOTv3. Dry-run probing places the exact requirement between 560 and 570 tPOTv3. A further ~30 tPOTv3 top-up is required before deployment can succeed.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -184,7 +184,7 @@ Compiler: solc 0.8.24, optimizer enabled, runs 1, viaIR true
 Runtime code: 6,861 bytes; creation code: 7,872 bytes
 Contract tests: 11/11 passing via `npx hardhat test`
 Coverage: registration/deactivation, job windows and state transitions, license issuance/revocation/revision, participant cohort cap, soulbound transfers/approvals, deterministic authorization reasons, creation pause, non-owner rejection.
-Deployment: not yet performed. Current balance 44.1499 tPOTv3. A dry-run probe with a 116-byte contract proved the chain requires 22.1580 tPOTv3 for instantiation; the chain's per-byte code deposit puts `ZorqRegistry` at approximately 430–500 tPOTv3. The 10-tPOT faucet is structurally insufficient.
+Deployment: not yet performed. Current balance 543.5169 tPOTv3. Dry-run probing places the exact instantiation requirement between 560 and 570 tPOTv3.
 No contract address or deployment transaction exists yet.
 ```
 
@@ -269,4 +269,4 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 ## Exact next task
 
-**Operator decision required — Portaldot deployment economics.** Provide a deployer account funded with approximately 500 tPOTv3 (or confirm a larger official faucet path), or explicitly authorize the documented fallback: run the full application against a local Hardhat EVM and record the Portaldot testnet deployment as a Known Limitation. Do not send more 10-tPOT faucet claims to this address; they only pay fees, not the code storage deposit.
+**Send ~30 tPOTv3 more to the deployer, then deploy.** The measured requirement is 560–570 tPOTv3; the account holds 543.52. Send testnet tPOTv3 to SS58 `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F`, reply `topped up`, and the agent will immediately rerun the deployment and continue Phase 3 APIs.
