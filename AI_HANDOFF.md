@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 3 contract deployed and verified; testnet asset and job creation confirmed. Phase 4 Flower/FastAPI FL service implemented and tested locally; Render deployment is in progress. Testnet license issuance is blocked by the per-call storage deposit (balance 19.1 tPOTv3 vs >19 required).
-**Current phase:** Phase 3 APIs complete except a funded testnet license/revocation run; Phase 4 service code complete, Render build in progress.
+**Project state:** Phase 3 contract/ APIs and Phase 4 FL service are deployed. Testnet asset and job are confirmed; the Render FL service is live and fail-closed integration is verified. A successful three-round run needs two distinct on-chain licenses, which are blocked by the per-call storage deposit.
+**Current phase:** Phase 4 service complete and deployed; successful run + remaining UI wiring pending funding for two licenses/second asset.
 
 ## Phase 3 deployment evidence
 
@@ -81,7 +81,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 | Deployment ID | `dpl_3YQiqPcZbkk4YnCZZrCM4D5JR54d` |
 | Production URL | Out of scope for the MVP; `main` is the Vercel default production branch by project convention |
 | Database | Neon project `zorq-db` (`still-bonus-67603921`), branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1 — connected |
-| Render FL service | `https://zorq-fl-service.onrender.com` (service `srv-dbmbfht9fdbs73ccvj5g`, build in progress) |
+| Render FL service | `https://zorq-fl-service.onrender.com` (service `srv-dbmbfht9fdbs73ccvj5g`, live, health/ready 200) |
 | Portaldot contract address | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
 | Contract deployment transaction | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block `337014`) |
 | Testnet asset transaction | `0x2befac3470e0cfa45667266275624428f7b553e20dd98b03811ba56c34303fb0` (block `337097`) |
@@ -119,7 +119,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 ## Known issues / risks / blockers
 
 1. **Resolved — Portaldot contract deployment:** `ZorqRegistry` deployed successfully at `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` in block `337014`.
-2. **Current — license issuance storage deposit:** testnet asset registration and job creation succeeded, but a license mint needs more storage than the remaining ~19.1 tPOTv3. A ~10 tPOTv3 top-up completes the license/revocation flow; all other Phase 3 functionality is implemented.
+2. **Current — successful FL run funding:** testnet asset registration and job creation succeeded, but a license mint needs more storage than the remaining ~19.1 tPOTv3. A successful run needs a second active asset plus two licenses; approximate total additional funding is 70–100 tPOTv3. The Render FL service fail-closed path is verified; the authorized path is blocked on these licenses.
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -259,6 +259,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-011 — 2026-11-05 — Phase 4 — Render Docker service uses the free plan, Oregon region, one instance and `/health`.** Env vars are set from the generated local secret; the service is deployed from `apps/fl-service` on `main`. Files: `apps/fl-service/Dockerfile`, `AI_HANDOFF.md`.
 
+**D-012 — 2026-11-05 — Phase 4 — Render build uses CPU-only PyTorch and no Ray.** `torch==2.9.1+cpu` is resolved from the PyTorch CPU index; the Flower Ray simulation extra was removed because the service uses in-process NumPyClient/FedAvg. This keeps the free-plan image within disk/memory limits. Files: `apps/fl-service/pyproject.toml`, `apps/fl-service/uv.lock`, `apps/fl-service/Dockerfile`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
@@ -281,6 +283,8 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-008 — 2026-11-05 — Phase 3 — Testnet license mint exceeds the remaining deployer balance.** The deployer holds ~19.1 tPOTv3 after contract deployment and successful asset/job creation; the license mint's storage deposit is higher than that. Consequence: the testnet license/revocation leg cannot be completed without another small top-up, although the API and contract paths are implemented and contract-tested. Mitigation: top up ~10 tPOTv3 and rerun `tests/integration/license-flow.ts`; the local contract tests cover the same rules. Files: `apps/web/tests/integration/license-flow.ts`, `AI_HANDOFF.md`.
 
+**L-009 — 2026-11-05 — Phase 4 — Successful three-round FL run needs funded assets and licenses.** The MVP requires two distinct authorized assets. The deployer holds one active testnet asset and an open job, but lacks the storage deposit for a second asset and two licenses. The Render FL service is live and its fail-closed path is verified; the authorized training path cannot be demonstrated on testnet until approximately 70–100 tPOTv3 is supplied or the operator authorizes a local-chain fallback. Files: `AI_HANDOFF.md`, `apps/fl-service/**`.
+
 ## Exact next task
 
-**Await Render build, verify `/health` and `/ready`, then complete a funded testnet license/revocation run.** The Render service is `https://zorq-fl-service.onrender.com`; Vercel Preview has `ZORQ_CONTRACT_ADDRESS`, `FL_SERVICE_URL` and the shared token. A ~10 tPOTv3 top-up to `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F` completes the license leg; after that, run the FL service against the confirmed job and report Phase 4/5 evidence.
+**Fund ~100 tPOTv3 to the deployer or authorize the local-chain fallback.** If funded: create a second active asset, issue two licenses, start a three-round Flower run, verify round snapshots and revocation exclusion, then wire the remaining UI forms and record Phase 4/5 evidence. If local fallback: deploy `ZorqRegistry` to a local Hardhat node, run the same APIs/Flower service locally and clearly label the demo as local-chain. Deployer: `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F`.
