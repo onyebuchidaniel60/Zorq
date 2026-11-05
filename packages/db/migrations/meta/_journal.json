@@ -15,6 +15,13 @@
       "when": 1793896415265,
       "tag": "0001_remarkable_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793898193568,
+      "tag": "0002_mute_annihilus",
+      "breakpoints": true
     }
   ]
 }

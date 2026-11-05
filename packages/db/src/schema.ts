@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   index,
   integer,
   jsonb,
@@ -235,3 +236,74 @@ export type DataAsset = typeof dataAssets.$inferSelect;
 export type FlJob = typeof flJobs.$inferSelect;
 export type License = typeof licenses.$inferSelect;
 export type ChainTransaction = typeof chainTransactions.$inferSelect;
+
+export const trainingRuns = pgTable(
+  "training_runs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    jobId: varchar("job_id", { length: 36 }).notNull(),
+    requestedByWallet: varchar("requested_by_wallet", { length: 42 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("queued"),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    totalRounds: smallint("total_rounds").notNull().default(3),
+    currentRound: smallint("current_round").notNull().default(0),
+    finalModelHash: varchar("final_model_hash", { length: 66 }),
+    aggregateMetrics: jsonb("aggregate_metrics").$type<Record<string, unknown>>(),
+    failureCode: varchar("failure_code", { length: 64 }),
+    failureMessage: varchar("failure_message", { length: 500 }),
+    startedAt: timestamptz("started_at"),
+    completedAt: timestamptz("completed_at"),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("training_runs_idempotency_idx").on(
+      table.requestedByWallet,
+      table.idempotencyKey,
+    ),
+    uniqueIndex("training_runs_one_active_per_job_idx")
+      .on(table.jobId)
+      .where(sql`${table.status} in ('queued', 'preflight', 'running')`),
+    index("training_runs_job_created_idx").on(table.jobId, table.createdAt),
+  ],
+);
+
+export const trainingRounds = pgTable(
+  "training_rounds",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    runId: varchar("run_id", { length: 36 }).notNull(),
+    roundNumber: smallint("round_number").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("authorizing"),
+    snapshotBlockNumber: bigint("snapshot_block_number", { mode: "number" }),
+    snapshotBlockHash: varchar("snapshot_block_hash", { length: 66 }),
+    snapshotBlockTimestamp: timestamptz("snapshot_block_timestamp"),
+    authorizedCount: smallint("authorized_count"),
+    aggregatedCount: smallint("aggregated_count"),
+    aggregateMetrics: jsonb("aggregate_metrics").$type<Record<string, unknown>>(),
+    startedAt: timestamptz("started_at"),
+    completedAt: timestamptz("completed_at"),
+    createdAt: timestamptz("created_at").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("training_rounds_run_round_idx").on(table.runId, table.roundNumber)],
+);
+
+export const authorizationChecks = pgTable(
+  "authorization_checks",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    runId: varchar("run_id", { length: 36 }).notNull(),
+    roundId: varchar("round_id", { length: 36 }).notNull(),
+    licenseId: varchar("license_id", { length: 36 }).notNull(),
+    participantWallet: varchar("participant_wallet", { length: 42 }).notNull(),
+    allowed: boolean("allowed").notNull(),
+    reasonCode: varchar("reason_code", { length: 64 }).notNull(),
+    snapshotBlockNumber: bigint("snapshot_block_number", { mode: "number" }).notNull(),
+    snapshotBlockHash: varchar("snapshot_block_hash", { length: 66 }).notNull(),
+    checkedAt: timestamptz("checked_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("authorization_checks_round_license_idx").on(table.roundId, table.licenseId),
+    index("authorization_checks_run_allowed_idx").on(table.runId, table.allowed),
+  ],
+);

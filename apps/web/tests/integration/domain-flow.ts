@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
@@ -107,7 +106,7 @@ async function apiJson<T>(pathname: string, init?: RequestInit): Promise<T> {
 }
 
 async function waitForConfirmations(blockNumber: bigint): Promise<void> {
-  const client = createPublicClient({ chain, transport: custom(provider) });
+  const client = createPublicClient({ chain, transport: http() });
   const target = blockNumber + 1n;
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
