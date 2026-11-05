@@ -38,3 +38,9 @@ Thumbs.db
 # Local artifacts
 *.tmp
 tmp/
+
+# Environment files (the template is committed)
+.env
+.env.local
+.env.*.local
+!.env.example

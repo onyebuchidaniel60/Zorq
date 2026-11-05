@@ -1,0 +1,21 @@
+{
+  "name": "zorq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zorq — programmable authorization for federated machine learning",
+  "engines": {
+    "node": "22.x"
+  },
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @zorq/web",
+    "build": "npm run build --workspace @zorq/web",
+    "lint": "npm run lint --workspace @zorq/web",
+    "typecheck": "npm run typecheck --workspace @zorq/web",
+    "test": "npm run test --workspace @zorq/web",
+    "test:e2e": "npm run test:e2e --workspace @zorq/web"
+  }
+}
