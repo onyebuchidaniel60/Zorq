@@ -492,13 +492,14 @@ Verification steps:
 
 ```text
 Assigned phase/task: Phase 10 post-handoff — ghost draft/pending cleanup, optimistic pending-to-active lists, and back navigation
-Commit SHA: 51f5151 (code/docs); this report is committed immediately after
+Commit SHA: 51f5151 + d88f167 (code/docs); report b02d803
 Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
-Deployed commit/deployment ID: Vercel auto-deploy from 51f5151. Both aliases were observed serving the new `Back to assets` markup on /app/assets/new. The dashboard deployment ID is not exposed by the deployment headers from this environment (L-001).
+Deployed commit/deployment ID: Vercel auto-deploy from the pushed commits. Both aliases were observed serving the new `Back to assets` markup on /app/assets/new. The dashboard deployment ID is not exposed by the deployment headers from this environment (L-001).
 Changes visible:
 - Drafts are excluded from asset, job and license lists.
 - Failed/rejected/insufficient-tPOT transactions delete the unsubmitted draft; ambiguous timeouts keep it hidden for the 30-minute cleanup.
 - Successful inclusion redirects to the parent list, shows a pending badge, and polls /confirm every 4 seconds until active/open.
+- Pending jobs are visible only to their creator until published.
 - ← Back links on asset, job, license and run detail/creation pages.
 Intentionally incomplete areas:
 - Live wallet-level checks with a real extension, a 0-tPOT account and a funded successful transaction remain operator-owned (L-013). No automated test fabricates a wallet signature or transaction.
