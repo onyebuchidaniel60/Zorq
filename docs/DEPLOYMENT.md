@@ -87,7 +87,8 @@ Do not ask for or log seed phrases/private keys. Store deployment key in secure 
 
 | Item | Value |
 |---|---|
-| Vercel project | `uhhh2/zorq`; stable preview `https://zorq-preview-uhhh2.vercel.app` |
+| Vercel project | `uhhh2/zorq`; new UI production `https://zorq-six.vercel.app`; preview branch `https://zorq-git-preview-uhhh2.vercel.app` |
+| Custom preview alias | `https://zorq-preview-uhhh2.vercel.app` — previous build until re-aliased (L-012) |
 | Contract | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` on Portaldot V3 testnet |
 | Deployment tx | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block 337014) |
 | Render service | `https://zorq-fl-service.onrender.com` (`srv-dbmbfht9fdbs73ccvj5g`) |

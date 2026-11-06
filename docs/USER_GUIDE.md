@@ -91,7 +91,7 @@ Use only the actual support link published in the deployed app. This guide does 
 
 ## Current testnet workflow
 
-1. Open `https://zorq-preview-uhhh2.vercel.app/app` with a Substrate wallet extension (polkadot.js, Talisman or SubWallet).
+1. Open `https://zorq-git-preview-uhhh2.vercel.app/app` with a Substrate wallet extension (polkadot.js, Talisman or SubWallet).
 2. Connect the wallet and sign the SIWE message; this creates an eight-hour session.
 3. Register a synthetic asset (partition 0–4). The wallet signs `registerAsset`.
 4. Create a job with a public purpose and a 2–5 asset cohort cap. The wallet signs `createJob`.
