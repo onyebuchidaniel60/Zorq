@@ -5,6 +5,7 @@ import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { Icon } from "@/components/ui-icon";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { getAssetForOwner } from "@/server/domain/assets";
 
@@ -108,8 +109,18 @@ export default async function AssetDetailPage({
                 <dd>
                   <code>{asset!.chainTxHash}</code>
                   <span className="mt-1 block text-[10px] text-[#727969]">
-                    Block {asset!.chainBlockNumber}
+                    {asset!.chainBlockNumber
+                      ? `Block ${asset!.chainBlockNumber}`
+                      : "Awaiting confirmation"}
                   </span>
+                  <div className="mt-2">
+                    <ExplorerTxLink
+                      txHash={asset!.chainTxHash}
+                      confirmed={asset!.status === "active" || asset!.status === "deactivated"}
+                      label="View on explorer"
+                      description="Open asset registration transaction in the Portaldot explorer"
+                    />
+                  </div>
                 </dd>
               </div>
             ) : null}

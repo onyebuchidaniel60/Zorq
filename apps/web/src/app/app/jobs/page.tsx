@@ -5,6 +5,7 @@ import { BackLink } from "@/components/back-link";
 import { PendingSync } from "@/components/pending-sync";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { listJobs } from "@/server/domain/jobs";
 
@@ -84,12 +85,20 @@ export default async function JobsPage() {
                 {jobs.map((job) => (
                   <tr key={job.id} className="z-table-row-link">
                     <td>
-                      <Link
-                        href={`/app/jobs/${job.id}`}
-                        className="block text-[#f3f5ed] font-semibold"
-                      >
-                        {job.title}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/app/jobs/${job.id}`}
+                          className="block text-[#f3f5ed] font-semibold"
+                        >
+                          {job.title}
+                        </Link>
+                        <ExplorerTxLink
+                          txHash={job.chainTxHash}
+                          confirmed={job.status !== "pending_chain" && job.status !== "draft"}
+                          label={`Open ${job.title} creation transaction in the Portaldot explorer`}
+                          compact
+                        />
+                      </div>
                       <span className="mt-0.5 block max-w-[24rem] truncate text-[11px] text-[#727969]">
                         {job.purposeText}
                       </span>

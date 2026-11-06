@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
+import { Spinner } from "@/components/spinner";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   discardDraft,
@@ -163,7 +164,7 @@ export function JobActions({ job }: { job: Job }) {
         throw new Error("The license draft response was incomplete. Nothing was submitted.");
       }
 
-      setStatus("Confirm the transaction in your wallet…");
+      setStatus("Waiting for wallet…");
       let txHash: `0x${string}`;
       let blockHash: `0x${string}`;
       try {
@@ -186,7 +187,7 @@ export function JobActions({ job }: { job: Job }) {
         throw cause;
       }
 
-      setStatus("Recording the submitted transaction…");
+      setStatus("Confirming on chain…");
       const pendingResponse = await fetchWithAuth(
         `/api/licenses/${draft.licenseId}/pending`,
         {
@@ -206,7 +207,7 @@ export function JobActions({ job }: { job: Job }) {
         );
       }
 
-      setStatus("Submitted. Confirming on-chain…");
+      setStatus("Confirming on chain…");
       router.push("/app/licenses");
     });
   }
@@ -286,8 +287,15 @@ export function JobActions({ job }: { job: Job }) {
             <span className="z-chip z-chip-lime">Owner</span>
           </div>
           <div className="z-button-stack">
-            <button type="button" onClick={() => void startRun()} className="z-button z-button-full">
-              Start three-round run
+            <button type="button" onClick={() => void startRun()} className="z-button z-button-full" disabled={status === "Starting the run…"} aria-busy={status === "Starting the run…"}>
+              {status === "Starting the run…" ? (
+                <>
+                  <Spinner />
+                  <span>Starting run…</span>
+                </>
+              ) : (
+                "Start three-round run"
+              )}
             </button>
             <div className="z-button-row">
               {job.status === "open" ? (
@@ -375,8 +383,15 @@ export function JobActions({ job }: { job: Job }) {
                 />
               </div>
             </div>
-            <button type="submit" className="z-button z-button-full" disabled={Boolean(status)}>
-              {status ?? "Issue DataLicense"}
+            <button type="submit" className="z-button z-button-full" disabled={Boolean(status)} aria-busy={Boolean(status)}>
+              {status ? (
+                <>
+                  <Spinner />
+                  <span>{status}</span>
+                </>
+              ) : (
+                "Issue DataLicense"
+              )}
             </button>
           </form>
         )}

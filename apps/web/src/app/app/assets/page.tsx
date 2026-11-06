@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { PendingSync } from "@/components/pending-sync";
 import { BackLink } from "@/components/back-link";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { listAssets } from "@/server/domain/assets";
 
@@ -99,9 +100,17 @@ export default async function AssetsPage() {
                       </StatusBadge>
                     </td>
                     <td>
-                      <code className="font-mono text-[10px] text-[#9aa08f]">
-                        {asset.chainAssetId.slice(0, 10)}…{asset.chainAssetId.slice(-6)}
-                      </code>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="font-mono text-[10px] text-[#9aa08f]">
+                          {asset.chainAssetId.slice(0, 10)}…{asset.chainAssetId.slice(-6)}
+                        </code>
+                        <ExplorerTxLink
+                          txHash={asset.chainTxHash}
+                          confirmed={asset.status !== "pending_chain" && asset.status !== "draft"}
+                          label={`Open ${asset.displayName} registration transaction in the Portaldot explorer`}
+                          compact
+                        />
+                      </span>
                     </td>
                     <td>
                       <Link className="z-link text-xs" href={`/app/assets/${asset.id}`}>

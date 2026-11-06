@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { PendingSync } from "@/components/pending-sync";
 import { BackLink } from "@/components/back-link";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { listLicenses } from "@/server/domain/licenses";
 
@@ -82,12 +83,23 @@ export default async function LicensesPage() {
                 {rows.map((license) => (
                   <tr key={license.id} className="z-table-row-link">
                     <td>
-                      <Link
-                        href={`/app/licenses/${license.id}`}
-                        className="block text-[#f3f5ed] font-semibold"
-                      >
-                        License #{license.tokenId ?? "pending"}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/app/licenses/${license.id}`}
+                          className="block text-[#f3f5ed] font-semibold"
+                        >
+                          License #{license.tokenId ?? "pending"}
+                        </Link>
+                        <ExplorerTxLink
+                          txHash={license.chainTxHash}
+                          confirmed={
+                            license.statusMirror !== "pending_chain" &&
+                            license.statusMirror !== "draft"
+                          }
+                          label={`Open license ${license.tokenId ?? ""} issuance transaction in the Portaldot explorer`}
+                          compact
+                        />
+                      </div>
                       <span className="mt-0.5 block font-mono text-[10px] text-[#727969]">
                         asset {license.assetId.slice(0, 8)}…
                       </span>

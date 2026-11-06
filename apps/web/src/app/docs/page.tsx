@@ -125,7 +125,7 @@ const sections: DocsSection[] = [
     points: [
       "Solidity tests: 11/11",
       "FL service tests: 7/7",
-      "Web unit and scaffold tests: 27/27 + 4/4",
+      "Web unit and scaffold tests: 31/31 + 4/4",
       "Playwright desktop + mobile: 40/40",
       "Deployed sign-in and data-page smoke: pass",
     ],
@@ -134,6 +134,33 @@ const sections: DocsSection[] = [
     id: "limitations",
     title: "Scope and limitations",
     body: "This deployment uses evaluation data only. It does not accept uploads or real regulated data. Flower is an execution adapter, not native Portaldot FL. No ZKP, HE, differential-privacy or secure-aggregation claim is made. Preview deployments are testnet-only and noindex.",
+  },
+];
+
+const quickStartSteps = [
+  {
+    title: "Connect wallet and sign in.",
+    body: "Open the app, choose Connect wallet and use polkadot.js, Talisman or SubWallet on chain 420420777. Sign the SIWE message. This is a signature, not a transfer.",
+  },
+  {
+    title: "Register a data asset.",
+    body: "Open Assets, choose Register asset, select an unused Demo Partition (0–4) and sign registerAsset. The asset appears as pending, then active.",
+  },
+  {
+    title: "Create a training job.",
+    body: "Open Jobs, create a job with a clear purpose and valid window, then sign createJob. The fixed three-round classifier configuration is applied automatically.",
+  },
+  {
+    title: "Issue DataLicenses.",
+    body: "Open the job, choose License an asset and sign issueLicense. Repeat for a second distinct asset because a run needs at least two authorized assets. For the revocation demonstration, license a third.",
+  },
+  {
+    title: "Start the federated learning run.",
+    body: "As the job creator, choose Start three-round run. The coordinator reads a fresh contract authorization snapshot for every round.",
+  },
+  {
+    title: "Revoke mid-run to see exclusion.",
+    body: "Open one license and choose Revoke. Revoking after round 1 or 2 excludes that token at the next snapshot while the remaining two assets continue.",
   },
 ];
 
@@ -148,10 +175,51 @@ export default function DocsPage() {
         variant="public"
       />
 
+      <section className="doc-quickstart" aria-labelledby="quick-start">
+        <p className="z-eyebrow">Start here</p>
+        <h2 id="quick-start">Quick Start</h2>
+        <p className="doc-quickstart-intro">
+          Test the complete lifecycle on the Portaldot V3 testnet. The explorer
+          icon beside a confirmed asset, job or license opens its transaction
+          record in the Portaldot scanner.
+        </p>
+        <ol>
+          {quickStartSteps.map((step) => (
+            <li key={step.title}>
+              <strong>{step.title}</strong> {step.body}
+            </li>
+          ))}
+        </ol>
+        <div className="doc-quickstart-note">
+          <strong>Testnet tPOT is required.</strong> Portaldot charges gas and,
+          for contract writes that add storage, a storage deposit. A zero-balance
+          wallet cannot register an asset, publish a job or issue a license.
+          Fund the EVM-mapped account through the official testnet method before
+          starting; asset and job registration require materially more than a
+          simple transfer.
+        </div>
+        <div className="doc-quickstart-actions">
+          <Link href="/app" className="z-button">
+            Open the app
+          </Link>
+          <a
+            className="z-button-secondary"
+            href="https://github.com/onyebuchidaniel60/Zorq#quick-start"
+            rel="noreferrer"
+            target="_blank"
+          >
+            README quick start
+          </a>
+        </div>
+      </section>
+
       <div className="doc-layout">
         <nav aria-label="Documentation sections" className="doc-nav">
           <p className="z-eyebrow">On this page</p>
           <ul className="mt-3 space-y-1">
+            <li>
+              <a href="#quick-start">Quick Start</a>
+            </li>
             {sections.map((section) => (
               <li key={section.id}>
                 <a href={`#${section.id}`}>{section.title}</a>

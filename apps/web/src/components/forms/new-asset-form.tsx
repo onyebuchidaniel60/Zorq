@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
+import { Spinner } from "@/components/spinner";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   discardDraft,
@@ -109,7 +110,7 @@ export function NewAssetForm({
       }
       draftId = draft.assetId;
 
-      setStatus("Confirm the transaction in your wallet…");
+      setStatus("Waiting for wallet…");
       let txHash: `0x${string}`;
       let blockHash: `0x${string}`;
       try {
@@ -127,7 +128,7 @@ export function NewAssetForm({
         throw cause;
       }
 
-      setStatus("Recording the submitted transaction…");
+      setStatus("Confirming on chain…");
       const pendingResponse = await fetchWithAuth(
         `/api/assets/${draft.assetId}/pending`,
         {
@@ -147,7 +148,7 @@ export function NewAssetForm({
         );
       }
 
-      setStatus("Submitted. Confirming on-chain…");
+      setStatus("Confirming on chain…");
       router.push("/app/assets");
     } catch (cause) {
       logClientError("asset.register", cause);
@@ -342,9 +343,19 @@ export function NewAssetForm({
                 Boolean(status) ||
                 (dataSource === "demo" && freeCount === 0)
               }
+              aria-busy={Boolean(status)}
               className="z-button"
             >
-              {status ?? (user ? "Register asset" : "Sign in and register")}
+              {status ? (
+                <>
+                  <Spinner />
+                  <span>{status}</span>
+                </>
+              ) : user ? (
+                "Register asset"
+              ) : (
+                "Sign in and register"
+              )}
             </button>
             <p className="z-help">
               The wallet signs one on-chain registration. No dataset leaves the

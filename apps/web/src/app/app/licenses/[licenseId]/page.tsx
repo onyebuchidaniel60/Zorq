@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { RevokeLicenseButton } from "@/components/licenses/revoke-license-button";
 import { Icon } from "@/components/ui-icon";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { getLicense } from "@/server/domain/licenses";
 
@@ -100,8 +101,21 @@ export default async function LicenseDetailPage({
                 <dd>
                   <code>{license.chainTxHash}</code>
                   <span className="mt-1 block text-[10px] text-[#727969]">
-                    Block {license.chainBlockNumber}
+                    {license.chainBlockNumber
+                      ? `Block ${license.chainBlockNumber}`
+                      : "Awaiting confirmation"}
                   </span>
+                  <div className="mt-2">
+                    <ExplorerTxLink
+                      txHash={license.chainTxHash}
+                      confirmed={
+                        license.statusMirror !== "pending_chain" &&
+                        license.statusMirror !== "draft"
+                      }
+                      label="View on explorer"
+                      description="Open license issuance transaction in the Portaldot explorer"
+                    />
+                  </div>
                 </dd>
               </div>
             ) : null}

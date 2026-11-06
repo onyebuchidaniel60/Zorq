@@ -5,6 +5,7 @@ import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { JobActions } from "@/components/jobs/job-actions";
+import { ExplorerTxLink } from "@/components/explorer-tx-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { getJob } from "@/server/domain/jobs";
 
@@ -100,6 +101,29 @@ export default async function JobDetailPage({
                   <code>{job.modelConfigHash}</code>
                 </dd>
               </div>
+              {job.chainTxHash ? (
+                <div className="sm:col-span-2">
+                  <dt>Creation transaction</dt>
+                  <dd>
+                    <code>{job.chainTxHash}</code>
+                    <span className="mt-1 block text-[10px] text-[#727969]">
+                      {job.chainBlockNumber
+                        ? `Block ${job.chainBlockNumber}`
+                        : "Awaiting confirmation"}
+                    </span>
+                    <div className="mt-2">
+                      <ExplorerTxLink
+                        txHash={job.chainTxHash}
+                        confirmed={
+                          job.status !== "pending_chain" && job.status !== "draft"
+                        }
+                        label="View on explorer"
+                        description="Open job creation transaction in the Portaldot explorer"
+                      />
+                    </div>
+                  </dd>
+                </div>
+              ) : null}
             </dl>
           </section>
 

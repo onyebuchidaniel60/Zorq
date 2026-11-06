@@ -8,6 +8,21 @@ The reference deployment demonstrates the complete lifecycle on Portaldot V3 tes
 
 > **Scope:** this is a testnet deployment using generated evaluation data and a Flower demonstration adapter. It does not accept real personal, medical, financial or customer data. It does not claim native Portaldot FL, ZKP, homomorphic-encryption, differential-privacy or secure-aggregation integration.
 
+## Quick Start
+
+Test the core lifecycle on the Portaldot V3 testnet:
+
+1. **Connect wallet and sign in.** Open <https://zorq-six.vercel.app/app> with polkadot.js, Talisman or SubWallet. Switch to chain ID `420420777` and sign the SIWE message. Sign-in does not send a transaction.
+2. **Register a data asset.** Open **Assets → Register asset**, select an unused **Demo Partition** (0–4), and sign `registerAsset`. The new row shows **pending**, then **active** after confirmation.
+3. **Create a training job.** Open **Jobs → Create job**, enter a purpose and a valid window, and sign `createJob`. The three-round binary-classifier configuration is fixed.
+4. **Issue a DataLicense.** Open the job, choose **License an asset**, and sign `issueLicense`. Repeat for a second distinct asset because a run requires at least two authorized assets. For the revocation demonstration, license a third asset.
+5. **Start the federated learning run.** As the job creator, choose **Start three-round run**. The coordinator reads a fresh contract authorization snapshot for every round.
+6. **Revoke the license mid-run.** Open one license and sign `revokeLicense` after round 1 or 2. The next snapshot excludes that token while the other two assets continue. With only two licenses, the next round fails closed because fewer than two authorized assets remain.
+
+> **Testnet tPOT is required.** Portaldot charges gas and, for contract writes that add storage, a storage deposit. A zero-balance wallet cannot register an asset, publish a job or issue a license. Fund the EVM-mapped account through the official testnet method before starting; asset and job registration require materially more than a simple transfer.
+
+Confirmed assets, jobs and licenses include an external-link icon that opens the transaction in the [Portaldot scanner](https://scanner-testnet-v3.portaldot.dev/).
+
 ## Project overview
 
 - **Data owners** register an opaque asset commitment and issue a job-scoped DataLicense.
@@ -194,8 +209,9 @@ See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). The current suite covers:
 - Solidity unit and integration tests (`11/11`)
 - FL simulation, external-data and contract-boundary tests (`7/7`)
 - SIWE authentication, replay rejection, origin checks and rate limits
-- Unit tests for domain formatting, SIWE construction, origin validation and safe client parsing
+- Unit tests for domain formatting, SIWE construction, origin validation, explorer URL construction and safe client parsing
 - Playwright desktop + mobile route/state coverage (`40/40`)
+- Explorer deep links verified against the scanner's `#/extrinsics/<hash>` route
 - Deployed-preview sign-in and data-page verification
 - Ghost-record cleanup verified against the live test database: three `pending_chain` license rows had no transaction hash and `latestLicenseId` returned `0` for each, proving no on-chain mint; they and one stale draft asset were removed. Active assets and the open job were retained.
 - Final live wallet-level testnet verification is being completed manually by the operator in a real browser. The agent's code/build checks are complete; live wallet checks remain operator-owned.

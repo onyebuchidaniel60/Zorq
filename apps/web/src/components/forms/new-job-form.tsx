@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
+import { Spinner } from "@/components/spinner";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   discardDraft,
@@ -103,7 +104,7 @@ export function NewJobForm() {
       }
       draftId = draft.jobId;
 
-      setStatus("Confirm the transaction in your wallet…");
+      setStatus("Waiting for wallet…");
       let txHash: `0x${string}`;
       let blockHash: `0x${string}`;
       try {
@@ -128,7 +129,7 @@ export function NewJobForm() {
         throw cause;
       }
 
-      setStatus("Recording the submitted transaction…");
+      setStatus("Confirming on chain…");
       const pendingResponse = await fetchWithAuth(
         `/api/jobs/${draft.jobId}/pending`,
         {
@@ -148,7 +149,7 @@ export function NewJobForm() {
         );
       }
 
-      setStatus("Submitted. Confirming on-chain…");
+      setStatus("Confirming on chain…");
       router.push("/app/jobs");
     } catch (cause) {
       logClientError("job.publish", cause);
@@ -281,9 +282,19 @@ export function NewJobForm() {
             <button
               type="submit"
               disabled={Boolean(status)}
+              aria-busy={Boolean(status)}
               className="z-button"
             >
-              {status ?? (user ? "Publish job" : "Sign in and publish")}
+              {status ? (
+                <>
+                  <Spinner />
+                  <span>{status}</span>
+                </>
+              ) : user ? (
+                "Publish job"
+              ) : (
+                "Sign in and publish"
+              )}
             </button>
             <p className="z-help">
               Publishing signs one transaction. The purpose, configuration and

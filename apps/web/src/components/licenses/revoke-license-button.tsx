@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
+import { Spinner } from "@/components/spinner";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   fetchWithAuth,
@@ -45,14 +46,14 @@ export function RevokeLicenseButton({
         activeWallet = await ensureWallet();
       }
 
-      setStatus("Confirm the revocation in your wallet…");
+      setStatus("Waiting for wallet…");
       const { hash, blockHash } = await submitContractTransaction(
         activeWallet,
         "revokeLicense",
         [BigInt(tokenId)],
         { waitForConfirmations: 8 },
       );
-      setStatus("Waiting for block confirmation…");
+      setStatus("Confirming on chain…");
       const response = await fetchWithAuth(
         `/api/licenses/${licenseId}/revoke/confirm`,
         {
@@ -82,8 +83,15 @@ export function RevokeLicenseButton({
 
   return (
     <div className="z-button-stack">
-      <button type="button" onClick={() => void revoke()} className="z-button-secondary z-button-full">
-        {status ?? "Revoke license"}
+      <button type="button" onClick={() => void revoke()} className="z-button-secondary z-button-full" disabled={Boolean(status)} aria-busy={Boolean(status)}>
+        {status ? (
+          <>
+            <Spinner />
+            <span>{status}</span>
+          </>
+        ) : (
+          "Revoke license"
+        )}
       </button>
       {error ? (
         <p role="alert" className="z-alert z-alert-danger z-alert-compact">

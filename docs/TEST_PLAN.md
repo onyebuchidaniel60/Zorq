@@ -185,6 +185,24 @@ PREVIEW_ORIGIN=http://127.0.0.1:3100 npm run test:auth-state
 
 The list pages now poll `/confirm` every four seconds for rows with a submitted transaction hash. Confirmation updates `pending_chain` to `active` (or `open`) through the same receipt/event verification used by the synchronous path.
 
+## Explorer links, button states and Quick Start (6 November 2026)
+
+| Check | Result |
+|---|---|
+| Web unit/scaffold | 31/31 Vitest + 4/4 scaffold |
+| Typecheck / lint / build | Pass |
+| Local Playwright | 40/40 desktop + mobile |
+| Explorer route | Browser-opened `https://scanner-testnet-v3.portaldot.dev/#/extrinsics/<deployment-tx>` rendered the extrinsic detail, including hash, block, module and call |
+| Explorer URL builder | Unit tests cover the hash route, trailing-slash normalisation and malformed-hash rejection |
+| Authenticated list render | Local deployer session rendered the jobs list with the external-link icon and the expected scanner href |
+| `/docs` Quick Start | Visually inspected at 1440px; six-step checklist, tPOT warning and action buttons render cleanly |
+
+The scanner is a hash-router SPA. The app uses `/#/extrinsics/<txHash>` rather than `/tx/<txHash>` because the latter resolves to the scanner home shell. Confirmed rows only render the link; pending/draft rows do not.
+
+---
+
+
+
 ## Operator manual verification (6 November 2026)
 
 The final live testnet asset -> job -> license flow is being verified manually by the operator in a real browser after funding the deployer wallet. Live wallet-level checks remain operator-owned. The automated suites and the post-handoff ghost reconciliation in this document are the recorded evidence for the code, contract, FL service, database cleanup and deployed sign-in paths.

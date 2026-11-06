@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, and the demo video re-rendered at 2:02. A post-handoff hardening pass removed ghost draft/pending rows, added optimistic pending-to-active lists and back navigation, and cleaned three unsubmitted license ghosts plus one stale asset draft from the test database. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
-**Current phase:** Phase 10 and final polish complete. Post-handoff transaction UX hardening is complete; the operator owns live wallet verification.
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, and the demo video re-rendered at 2:02. A post-handoff hardening pass removed ghost draft/pending rows, added optimistic pending-to-active lists and back navigation, and cleaned three unsubmitted license ghosts plus one stale asset draft from the test database. A final UX pass added Portaldot explorer transaction links, button hover/pressed/loading states, and Quick Start guides in the README and `/docs`. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
+**Current phase:** Phase 10 and final polish complete. Post-handoff transaction UX and onboarding polish are complete; the operator owns live wallet verification.
 
 ## Phase 3 deployment evidence
 
@@ -292,6 +292,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-022 — 2026-11-06 — Post-handoff UX — Transaction submission resolves at inclusion and confirmation is polled from the list page.** `submitContractTransaction()` returns as soon as the transaction is in a block (or final) instead of blocking for eight confirmations. Asset, job and license forms call `/pending` and navigate immediately; `PendingSync` polls `/confirm` every four seconds and refreshes the server-rendered list when the contract event is accepted. Revoke and job-state actions pass `waitForConfirmations: 8` to preserve their existing synchronous confirmation contract. Backend confirmation remains receipt/event-verified and fail-closed; only the client wait point changed. Cleanup also removes `pending_chain` rows with no transaction hash and drafts older than 30 minutes. Files: `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/pending-sync.tsx`, `apps/web/src/app/app/{assets,jobs,licenses}/page.tsx`, `apps/web/src/server/domain/{assets,jobs,licenses}.ts`.
 
+**D-023 — 2026-11-06 — Final UX — Confirmed records link to the Portaldot scanner through its hash route, and primary submit buttons expose explicit busy states.** The scanner is a hash-router SPA; `/tx/<hash>` renders the home shell, while `/#/extrinsics/<hash>` resolves the extrinsic detail. `explorerTxUrl()` builds the hash route from `NEXT_PUBLIC_PORTALDOT_EXPLORER_URL`, validates the 32-byte hash, and is unit-tested. List and detail pages render the link only for confirmed statuses (`active`/`deactivated`, `open`/`paused`/`closed`, `active`/`revoked`/`expired`), never for `draft` or `pending_chain`. Primary buttons retain hover/pressed feedback and now show a spinner with disabled `aria-busy` states during wallet and chain operations. Quick Start checklists were added to README and `/docs` with the tPOT storage-deposit warning. No contract, API, schema or authorization semantics changed. Files: `apps/web/src/lib/explorer.ts`, `apps/web/src/components/explorer-tx-link.tsx`, `apps/web/src/components/spinner.tsx`, `apps/web/src/app/globals.css`, `apps/web/src/app/{app,docs}/**`, `README.md`.
+
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
 **D-015 — 2026-11-06 — Final polish — Reference image 3 becomes the definitive UI direction.** The dark near-black canvas, lime accent, dot grid, metric cards, icon rail and dense table language replace the earlier light dashboard. Public pages reuse the same palette with dark content cards. The implementation follows Stageshow craft rules but does not copy the kit or reference assets. No route, permission, contract, database or API behaviour changes. Files: `apps/web/src/app/globals.css`, `apps/web/src/components/**`, `apps/web/src/app/**/page.tsx`, `docs/DESIGN_DECISIONS.md`.
@@ -454,7 +456,7 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 22 (D-001 … D-022)
+Total decisions logged: 23 (D-001 … D-023)
 Total known limitations: 13 (L-001 … L-013)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
@@ -487,6 +489,16 @@ Verification steps:
 8. Play docs/demo/zorq-demo.mp4; confirm duration 2:02 and the dark evidence end card.
 9. Read AI_HANDOFF.md Decision Log and Known Limitations before submission.
 ```
+
+## Explorer links, button states and Quick Start (6 November 2026)
+
+- **Explorer links:** Confirmed assets, jobs and licenses now show an external-link icon in their list rows and detail pages. The link is built by `explorerTxUrl()` and points to `NEXT_PUBLIC_PORTALDOT_EXPLORER_URL/#/extrinsics/<txHash>`. The scanner is a hash-router SPA; a browser check against the deployment extrinsic confirmed that `/#/extrinsics/<hash>` renders the extrinsic detail, while `/tx/<hash>` falls back to the home shell.
+- **Visibility rule:** The icon appears only when the row has a transaction hash and a confirmed status. `draft` and `pending_chain` rows do not render it. Jobs add a creation-transaction block on their detail page; assets and licenses reuse their existing transaction block with a labelled “View on explorer” link.
+- **Button interaction:** Primary buttons now have pointer cursors, a lifted/darker hover state, a pressed scale state, disabled styling and an `aria-busy` spinner state. “Register asset”, “Publish job”, “Issue DataLicense”, “Revoke license” and “Start three-round run” show “Waiting for wallet…”, “Confirming on chain…” or “Starting run…” while the action is in progress.
+- **Quick Start:** A numbered six-step checklist is now at the top of `README.md` and in a prominent dark card on `/docs`. Both cover wallet sign-in, demo asset registration, job creation, licensing at least two assets (three for the revocation demo), starting the run, and revoking mid-run. Both warn that tPOT is required for gas and storage deposits.
+- **Docs refresh:** `/docs` testing counts updated to 31/31 + 4/4.
+
+**Verification:** `npm run typecheck`, `npm run lint` and `npm run build` pass. Web unit/scaffold is 31/31 + 4/4. Playwright is 40/40 desktop + mobile. The explorer hash route was opened in a real browser against the deployment extrinsic and rendered the extrinsic detail. An authenticated local browser session rendered the jobs list with the new explorer icon and the `/docs` Quick Start card was visually inspected. Live wallet-level testing remains operator-owned (L-013).
 
 ## Post-handoff hardening completion report
 
