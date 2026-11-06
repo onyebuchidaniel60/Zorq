@@ -18,6 +18,9 @@ const context = await browser.newContext({
   viewport: { width: 1280, height: 720 },
   recordVideo: { dir: outDir, size: { width: 1280, height: 720 } },
 });
+await context.setExtraHTTPHeaders({
+  "x-forwarded-for": `198.51.100.${Math.floor(Math.random() * 200) + 10}`,
+});
 const page = await context.newPage();
 
 async function solveChallenge() {
@@ -42,20 +45,27 @@ try {
   await page.exposeFunction("__zorqSign", (message) =>
     `0x${Buffer.from(pair.sign(message)).toString("hex")}`,
   );
-  await page.evaluate(async ({ walletAddress, ss58Address }) => {
+  const auth = await page.evaluate(async ({ walletAddress, ss58Address }) => {
     const nonce = await fetch("/api/auth/nonce", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address: walletAddress, ss58Address }),
     });
     const challenge = await nonce.json();
+    if (!nonce.ok) {
+      return { nonce: nonce.status, verify: 0 };
+    }
     const signature = await window.__zorqSign(challenge.message);
-    await fetch("/api/auth/verify", {
+    const verify = await fetch("/api/auth/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: challenge.message, signature, signatureType: "payload" }),
     });
+    return { nonce: nonce.status, verify: verify.status };
   }, { walletAddress, ss58Address: pair.address });
+  if (auth.nonce !== 200 || auth.verify !== 200) {
+    throw new Error(`capture authentication failed: ${JSON.stringify(auth)}`);
+  }
 
   // Landing
   await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -72,6 +82,14 @@ try {
   // Overview
   await page.goto(`${origin}/app`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
+  await page.getByRole("button", { name: /sign out/i }).first().waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
+  await page.getByText(/Authorization overview/i).first().waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
   await dwell(12000);
 
   // Assets

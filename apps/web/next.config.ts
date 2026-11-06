@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(currentDir, "../.."),
   poweredByHeader: false,
   reactStrictMode: true,
+  devIndicators: false,
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   transpilePackages: ["@zorq/db"],
   async headers() {

@@ -1,6 +1,6 @@
 Post-Phase 10 sign-in verification
-Date: 2026-11-06T03:03Z
-New UI commit: f6258e1
+Date: 2026-11-06T05:31Z
+Final UI/auth commit: e5ae994
 
 Production alias:
 Origin: https://zorq-six.vercel.app
@@ -10,15 +10,18 @@ RESULT: verify status 200
 RESULT: SIGN-IN UI PASSED 0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf
 Screenshot: docs/evidence/signin-zorq-six.png
 
-Preview branch alias:
-Origin: https://zorq-git-preview-uhhh2.vercel.app
-Command: PREVIEW_ORIGIN=https://zorq-git-preview-uhhh2.vercel.app xvfb-run -a node apps/web/tests/preview-signin-hotfix.mjs
-RESULT: nonce status 200
-RESULT: verify status 200
-RESULT: SIGN-IN UI PASSED 0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf
-Screenshot: docs/evidence/signin-preview.png
+Auth-state regression:
+Command: PREVIEW_ORIGIN=http://localhost:3100 node apps/web/tests/auth-state-smoke.mjs
+RESULT: session nonce/verify 200
+RESULT: 401 draft triggers one SIWE prompt and one retry
+RESULT: stale “Connect and sign in” error not rendered
+RESULT: AUTH STATE SMOKE PASSED
 
-The stable custom alias https://zorq-preview-uhhh2.vercel.app still serves the
-previous build because Vercel CLI alias mutation remains challenge-blocked in
-this environment. The new UI is live on the production alias and the preview
-branch alias above.
+Data-page smoke:
+Command: PREVIEW_ORIGIN=https://zorq-six.vercel.app xvfb-run -a node apps/web/tests/preview-data-smoke.mjs
+RESULT: overview, assets, asset registration, jobs, job detail, run monitor, revocation evidence and licenses all pass.
+
+The custom https://zorq-preview-uhhh2.vercel.app alias remains on the previous
+build because Vercel CLI alias mutation is challenge-blocked (L-012). The new
+UI is live on the production alias above and the preview branch alias
+https://zorq-git-preview-uhhh2.vercel.app.

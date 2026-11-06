@@ -54,6 +54,7 @@ try {
   }
   await open("/app","Authorization overview");
   await open("/app/assets","Data assets");
+  await open("/app/assets/new","Data Partition");
   await open("/app/jobs","Training jobs");
   await open(`/app/jobs/${jobId}`,"Job controls");
   await open(`/app/runs/${runId}`,"Round snapshots");

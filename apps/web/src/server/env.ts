@@ -106,5 +106,12 @@ export function allowedBrowserOrigins(): Set<string> {
     origins.add("http://127.0.0.1:3100");
   }
 
+  // Local production-build checks run without VERCEL_ENV. Hosted deployments
+  // always set VERCEL_ENV, so this never widens a Vercel origin allowlist.
+  if (!process.env.VERCEL_ENV) {
+    origins.add("http://localhost:3100");
+    origins.add("http://127.0.0.1:3100");
+  }
+
   return origins;
 }

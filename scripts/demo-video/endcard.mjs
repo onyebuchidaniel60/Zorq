@@ -27,7 +27,7 @@ const html = `<!doctype html>
     <div class="top"><div class="brand"><span class="mark">Z</span>Zorq</div><span class="chip">Portaldot V3 testnet · chain 420420777</span></div>
     <p class="eyebrow" style="margin-top:28px">Execution evidence</p>
     <h1>Execution-scoped authorization, proven at a <em>round boundary</em>.</h1>
-    <p class="sub">Synthetic-data prototype · non-transferable DataLicense · one confirmed snapshot per federated round.</p>
+    <p class="sub">Evaluation deployment · non-transferable DataLicense · one confirmed snapshot per federated round.</p>
     <div class="grid">
       <div class="card"><div class="label">Contract</div><div class="value">0xa9ab18d404e2cd19c23f30e7d78a740b562685ff</div></div>
       <div class="card"><div class="label">Deployment transaction</div><div class="value">0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834 · block 337014</div></div>

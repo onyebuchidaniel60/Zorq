@@ -396,6 +396,7 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 - **Logo:** a new geometric Zorq SVG mark is used in the header, footer, app rail and favicon.
 - **Documentation:** `README.md` now includes a project overview, Mermaid architecture diagram, repository layout, local setup, environment variable table, Portaldot deployment evidence and testing/security guidance. `/docs` now covers architecture, lifecycle, snapshots, auth, APIs, local development, deployment and testing.
 - **Declutter:** removed `.next`, Playwright reports, test results, TypeScript build info, demo raw captures and log artifacts from the working tree; tightened `.gitignore`; no temporary debugging scripts remain under `scripts/`.
+- **Video:** re-rendered against the final logo and enterprise copy at 122.5s; the capture aborts on failed auth and the evidence card was updated to evaluation-deployment wording.
 - **Verification:** web unit/scaffold 21/21 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 3/3; typecheck/lint/build pass.
 
 ## Phase 8/9/10 completion report

@@ -91,12 +91,25 @@ try {
 
   await page.goto(`${origin}/app/assets/new`, { waitUntil: "domcontentloaded" });
   await page.getByText(/Signed in|Sign out/i).first().waitFor({ state: "visible", timeout: 30_000 });
+  await page.getByText(/Data Partition/i).first().waitFor({ state: "visible", timeout: 30_000 });
+  await page.waitForTimeout(750);
 
-  await page.getByLabel("Display name").fill("Auth state verification");
-  await page.getByLabel("Description").fill("Session and wallet hydration check.");
+  const nameInput = page.locator("#asset-name");
+  await nameInput.fill("Auth state verification");
+  await page.locator("#asset-description").fill("Session and wallet hydration check.");
+  if ((await nameInput.inputValue()) !== "Auth state verification") {
+    throw new Error("display name input did not retain its value");
+  }
   await page.getByRole("button", { name: /register asset/i }).click();
 
-  await page.getByText("SESSION_RETRY_REACHED").waitFor({ state: "visible", timeout: 30_000 });
+  try {
+    await page.getByText("SESSION_RETRY_REACHED").waitFor({ state: "visible", timeout: 30_000 });
+  } catch {
+    console.error("draftCalls", draftCalls, "authPrompts", authPrompts);
+    console.error((await page.locator("body").innerText()).slice(-1500));
+    await page.screenshot({ path: "/tmp/opencode/auth-state-failure.png", fullPage: true });
+    throw new Error("retry marker did not render");
+  }
   if (draftCalls !== 2) throw new Error(`expected 2 draft attempts, got ${draftCalls}`);
   if (authPrompts < 1) throw new Error("expected an automatic SIWE prompt after 401");
   const body = await page.locator("body").innerText();
