@@ -1,50 +1,92 @@
 "use client";
 
+import { Icon } from "@/components/ui-icon";
 import { useWallet } from "./wallet-context";
 
 function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+function initials(address: string): string {
+  return address.replace(/^0x/, "").slice(0, 2);
+}
+
 export function WalletPanel() {
-  const { wallet, user, busy, error, connect, signIn, logout, clearError } = useWallet();
+  const { wallet, user, sessionReady, busy, error, connect, signIn, logout, clearError } =
+    useWallet();
 
   return (
-    <div className="flex flex-col items-stretch gap-2 sm:items-end">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {user ? (
+    <div className="wallet-panel">
+      <div className="wallet-row">
+        {!sessionReady ? (
+          <span className="wallet-identity">
+            <span className="wallet-avatar wallet-avatar-muted" aria-hidden="true">
+              …
+            </span>
+            <span className="wallet-address">Checking session…</span>
+          </span>
+        ) : user ? (
           <>
-            <span className="mint-chip">Signed in · {shortAddress(user.walletAddress)}</span>
-            <button type="button" onClick={() => void logout()} disabled={busy} className="pill-button-secondary">
+            <span className="wallet-identity" title="Signed in">
+              <span className="wallet-avatar" aria-hidden="true">
+                {initials(user.walletAddress)}
+              </span>
+              <span className="wallet-status" aria-hidden="true" />
+              <span className="wallet-address">{shortAddress(user.walletAddress)}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              disabled={busy}
+              className="z-button-ghost"
+            >
+              <Icon name="logout" className="size-3.5" />
               {busy ? "Signing out…" : "Sign out"}
             </button>
           </>
         ) : wallet ? (
           <>
-            <span className="rounded-full bg-[#f4f4f5] px-3 py-1.5 font-mono text-xs text-[#6f6f74]">
-              {shortAddress(wallet.walletAddress)}
+            <span className="wallet-identity">
+              <span className="wallet-avatar" aria-hidden="true">
+                {initials(wallet.walletAddress)}
+              </span>
+              <span className="wallet-address">{shortAddress(wallet.walletAddress)}</span>
             </span>
-            <button type="button" onClick={() => void signIn()} disabled={busy} className="pill-button">
+            <button
+              type="button"
+              onClick={() => void signIn()}
+              disabled={busy}
+              className="z-button"
+            >
+              <Icon name="wallet" className="size-3.5" />
               {busy ? "Waiting for wallet…" : "Sign in"}
             </button>
           </>
         ) : (
-          <button type="button" onClick={() => void connect()} disabled={busy} className="pill-button">
+          <button
+            type="button"
+            onClick={() => void connect()}
+            disabled={busy}
+            className="z-button"
+          >
+            <Icon name="wallet" className="size-3.5" />
             {busy ? "Connecting…" : "Connect wallet"}
           </button>
         )}
       </div>
+
       {error ? (
-        <div role="alert" className="max-w-sm rounded-2xl bg-[#f8ecec] px-3 py-2 text-xs leading-5 text-[#7a2626]">
-          {error}
-          <button type="button" onClick={clearError} className="ml-2 font-semibold underline underline-offset-2">
+        <div role="alert" className="z-alert z-alert-danger z-alert-compact max-w-sm">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={clearError}
+            className="ml-2 font-semibold underline underline-offset-2"
+          >
             Dismiss
           </button>
         </div>
       ) : null}
-      <p className="text-[10px] text-[#9a9aa0]">
-        polkadot.js · Talisman · SubWallet
-      </p>
     </div>
   );
 }

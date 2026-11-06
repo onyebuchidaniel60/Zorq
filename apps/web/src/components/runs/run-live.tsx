@@ -23,9 +23,25 @@ type Round = {
   aggregatedCount: number | null;
   aggregateMetrics: Record<string, unknown> | null;
 };
-type Check = { roundId: string; licenseId: string; allowed: boolean; reasonCode: string; snapshotBlockNumber: number };
+type Check = {
+  roundId: string;
+  licenseId: string;
+  allowed: boolean;
+  reasonCode: string;
+  snapshotBlockNumber: number;
+};
 
-export function RunLive({ runId, initialRun, initialRounds, initialChecks }: { runId: string; initialRun: Run; initialRounds: Round[]; initialChecks: Check[] }) {
+export function RunLive({
+  runId,
+  initialRun,
+  initialRounds,
+  initialChecks,
+}: {
+  runId: string;
+  initialRun: Run;
+  initialRounds: Round[];
+  initialChecks: Check[];
+}) {
   const [run, setRun] = useState(initialRun);
   const [rounds, setRounds] = useState(initialRounds);
   const [checks, setChecks] = useState(initialChecks);
@@ -34,63 +50,151 @@ export function RunLive({ runId, initialRun, initialRounds, initialChecks }: { r
     if (["completed", "failed"].includes(run.status)) return;
     const timer = setInterval(() => {
       fetch(`/api/runs/${runId}`, { cache: "no-store" })
-        .then((r) => r.json())
+        .then((response) => response.json())
         .then((data: { run: Run; rounds: Round[]; checks: Check[] }) => {
-          setRun(data.run); setRounds(data.rounds); setChecks(data.checks);
+          if (!data?.run || !Array.isArray(data.rounds) || !Array.isArray(data.checks)) {
+            return;
+          }
+          setRun(data.run);
+          setRounds(data.rounds);
+          setChecks(data.checks);
         })
         .catch(() => undefined);
     }, 3000);
     return () => clearInterval(timer);
   }, [runId, run.status]);
 
-  const tone = run.status === "completed" ? "success" : run.status === "failed" ? "danger" : "warning";
+  const tone =
+    run.status === "completed" ? "success" : run.status === "failed" ? "danger" : "warning";
+  const accuracy = run.aggregateMetrics?.accuracy;
+  const loss = run.aggregateMetrics?.loss;
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="z-stack">
+      <section className="z-card z-detail-card">
+        <div className="z-card-header z-card-header-tight">
           <div>
-            <p className="text-xs text-[#8a8a8f]">Run status</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">{run.status}</p>
+            <p className="z-eyebrow">Federated run</p>
+            <h2 className="z-title-lg">{run.status}</h2>
+            <p className="z-copy mt-1">
+              One confirmed authorization snapshot per round. Only the returned
+              allowlist trains and aggregates.
+            </p>
           </div>
-          <StatusBadge tone={tone}>{run.status === "completed" ? "3 rounds complete" : run.status}</StatusBadge>
+          <StatusBadge tone={tone}>
+            {run.status === "completed" ? "3 rounds complete" : run.status}
+          </StatusBadge>
         </div>
+
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl bg-[#f7f7f8] p-4"><p className="text-xs text-[#8a8a8f]">Round</p><p className="mt-1 text-xl font-semibold">{run.currentRound} / {run.totalRounds}</p></div>
-          <div className="rounded-2xl bg-[#f7f7f8] p-4"><p className="text-xs text-[#8a8a8f]">Final model hash</p><p className="mt-1 break-all font-mono text-[10px]">{run.finalModelHash ?? "Not available"}</p></div>
-          <div className="rounded-2xl bg-[#f7f7f8] p-4"><p className="text-xs text-[#8a8a8f]">Aggregate accuracy</p><p className="mt-1 text-xl font-semibold">{run.aggregateMetrics?.accuracy ? `${(Number(run.aggregateMetrics.accuracy) * 100).toFixed(1)}%` : "—"}</p></div>
+          <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
+            <p className="z-eyebrow">Progress</p>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#f3f5ed]">
+              {run.currentRound}
+              <span className="text-sm font-normal text-[#727969]"> / {run.totalRounds}</span>
+            </p>
+          </div>
+          <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
+            <p className="z-eyebrow">Accuracy</p>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#d9ff63]">
+              {accuracy ? `${(Number(accuracy) * 100).toFixed(1)}%` : "—"}
+            </p>
+          </div>
+          <div className="rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
+            <p className="z-eyebrow">Loss</p>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#f3f5ed]">
+              {loss ? Number(loss).toFixed(4) : "—"}
+            </p>
+          </div>
         </div>
-        {run.failureCode ? <p className="mt-4 rounded-2xl bg-[#f8ecec] px-4 py-3 text-sm text-[#7a2626]">{run.failureCode}: {run.failureMessage}</p> : null}
+
+        {run.finalModelHash ? (
+          <div className="mt-4 rounded-[12px] border border-white/10 bg-black/20 p-3">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-[#727969]">
+              Final model hash
+            </p>
+            <p className="mt-1 break-all font-mono text-[10px] text-[#c9cec0]">
+              {run.finalModelHash}
+            </p>
+          </div>
+        ) : null}
+
+        {run.failureCode ? (
+          <div className="z-alert z-alert-danger mt-4">
+            <span className="z-alert-mark">!</span>
+            <p>
+              {run.failureCode}: {run.failureMessage}
+            </p>
+          </div>
+        ) : null}
       </section>
 
-      <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
-        <h2 className="text-base font-semibold">Round snapshots</h2>
-        <ol className="mt-4 space-y-3">
-          {rounds.length === 0 ? <li className="text-sm text-[#6f6f74]">No rounds recorded yet.</li> : rounds.map((round) => {
-            const roundChecks = checks.filter((check) => check.roundId === round.id);
-            return (
-              <li key={round.id} className="rounded-3xl bg-[#f7f7f8] p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold">Round {round.roundNumber}</p>
-                  <StatusBadge tone={round.status === "completed" ? "success" : "warning"}>{round.status}</StatusBadge>
-                </div>
-                <div className="mt-3 grid gap-2 text-xs text-[#6f6f74] sm:grid-cols-2">
-                  <p>Snapshot block: <span className="font-mono">{round.snapshotBlockNumber ?? "—"}</span></p>
-                  <p className="break-all font-mono text-[10px]">{round.snapshotBlockHash ?? "—"}</p>
-                  <p>Authorized: {round.authorizedCount ?? 0} · Aggregated: {round.aggregatedCount ?? 0}</p>
-                  <p>Loss {round.aggregateMetrics?.loss ? Number(round.aggregateMetrics.loss).toFixed(4) : "—"} · Accuracy {round.aggregateMetrics?.accuracy ? `${(Number(round.aggregateMetrics.accuracy) * 100).toFixed(1)}%` : "—"}</p>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {roundChecks.map((check) => (
-                    <span key={check.licenseId} className={check.allowed ? "mint-chip" : "rounded-full bg-[#f8ecec] px-3 py-1.5 text-[11px] font-semibold text-[#7a2626]"}>
-                      {check.licenseId.slice(0, 8)}… · {check.reasonCode}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+      <section className="z-card z-detail-card">
+        <div className="z-card-header z-card-header-tight">
+          <div>
+            <p className="z-eyebrow">Authorization evidence</p>
+            <h2 className="z-title-md">Round snapshots</h2>
+          </div>
+          <span className="z-chip z-chip-muted">{rounds.length} rounds recorded</span>
+        </div>
+
+        {rounds.length === 0 ? (
+          <p className="z-copy">
+            No rounds recorded yet. The coordinator is preparing the first
+            authorization snapshot.
+          </p>
+        ) : (
+          <div>
+            {rounds.map((round) => {
+              const roundChecks = checks.filter((check) => check.roundId === round.id);
+              return (
+                <article key={round.id} className="z-round-card">
+                  <div className="z-round-head">
+                    <p className="z-round-title">Round {round.roundNumber}</p>
+                    <StatusBadge tone={round.status === "completed" ? "success" : "warning"}>
+                      {round.status}
+                    </StatusBadge>
+                  </div>
+                  <div className="z-round-grid">
+                    <p>
+                      Snapshot block{" "}
+                      <code>{round.snapshotBlockNumber ?? "—"}</code>
+                    </p>
+                    <p className="break-all">
+                      Hash <code>{round.snapshotBlockHash ?? "—"}</code>
+                    </p>
+                    <p>
+                      Authorized <strong className="text-[#f3f5ed]">{round.authorizedCount ?? 0}</strong>{" "}
+                      · Aggregated{" "}
+                      <strong className="text-[#f3f5ed]">{round.aggregatedCount ?? 0}</strong>
+                    </p>
+                    <p>
+                      Loss{" "}
+                      {round.aggregateMetrics?.loss
+                        ? Number(round.aggregateMetrics.loss).toFixed(4)
+                        : "—"}{" "}
+                      · Accuracy{" "}
+                      {round.aggregateMetrics?.accuracy
+                        ? `${(Number(round.aggregateMetrics.accuracy) * 100).toFixed(1)}%`
+                        : "—"}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {roundChecks.map((check) => (
+                      <span
+                        key={check.licenseId}
+                        className={`z-check ${check.allowed ? "z-check-allow" : "z-check-deny"}`}
+                      >
+                        {check.allowed ? "ALLOWED" : "DENIED"} · {check.licenseId.slice(0, 8)}… ·{" "}
+                        {check.reasonCode}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

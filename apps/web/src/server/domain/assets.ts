@@ -244,6 +244,15 @@ export async function listAssets(walletAddress: string) {
     .where(eq(dataAssets.ownerWallet, walletAddress));
 }
 
+export async function listReservedPartitions(): Promise<number[]> {
+  const db = getDb();
+  const rows = await db
+    .selectDistinct({ demoPartitionId: dataAssets.demoPartitionId })
+    .from(dataAssets)
+    .where(inArray(dataAssets.status, ["draft", "pending_chain", "active"]));
+  return rows.map((row) => row.demoPartitionId);
+}
+
 export async function getAssetForOwner(assetId: string, walletAddress: string) {
   const db = getDb();
   const [asset] = await db

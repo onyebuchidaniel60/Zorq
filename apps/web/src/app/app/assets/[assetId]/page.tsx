@@ -3,25 +3,39 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
+import { Icon } from "@/components/ui-icon";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { getAssetForOwner } from "@/server/domain/assets";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Asset detail" };
 
-export default async function AssetDetailPage({ params }: { params: Promise<{ assetId: string }> }) {
+export default async function AssetDetailPage({
+  params,
+}: {
+  params: Promise<{ assetId: string }>;
+}) {
   const session = await getSessionFromCookies();
   const { assetId } = await params;
   if (!session) {
     return (
       <>
-        <PageHeader eyebrow="Data asset" title="Asset detail" description="Connect your wallet to view owner-only asset metadata." />
+        <PageHeader
+          eyebrow="Data asset"
+          title="Asset detail"
+          description="Connect your wallet to view owner-only asset metadata."
+        />
         <SignedOutCard feature="Asset detail" />
       </>
     );
   }
+
   let asset;
-  try { asset = await getAssetForOwner(assetId, session.walletAddress); } catch { notFound(); }
+  try {
+    asset = await getAssetForOwner(assetId, session.walletAddress);
+  } catch {
+    notFound();
+  }
 
   return (
     <>
@@ -29,20 +43,78 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ as
         eyebrow="Data asset"
         title={asset!.displayName}
         description={asset!.description ?? "Owner-only synthetic asset metadata."}
-        actions={<StatusBadge tone={asset!.status === "active" ? "success" : "neutral"}>{asset!.status}</StatusBadge>}
+        actions={
+          <StatusBadge tone={asset!.status === "active" ? "success" : "neutral"}>
+            {asset!.status}
+          </StatusBadge>
+        }
       />
-      <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
-        <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <div><dt className="text-xs text-[#8a8a8f]">Synthetic partition</dt><dd className="mt-1">{asset!.demoPartitionId}</dd></div>
-          <div><dt className="text-xs text-[#8a8a8f]">Registered</dt><dd className="mt-1">{new Date(asset!.createdAt).toLocaleString()}</dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs text-[#8a8a8f]">On-chain asset ID</dt><dd className="mt-1 break-all font-mono text-xs">{asset!.chainAssetId}</dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs text-[#8a8a8f]">Metadata commitment</dt><dd className="mt-1 break-all font-mono text-xs">{asset!.metadataCommitment}</dd></div>
-          {asset!.chainTxHash ? <div className="sm:col-span-2"><dt className="text-xs text-[#8a8a8f]">Registration transaction</dt><dd className="mt-1 break-all font-mono text-xs">{asset!.chainTxHash} · block {asset!.chainBlockNumber}</dd></div> : null}
-        </dl>
-        <p className="mt-6 rounded-2xl bg-[#f7f7f8] p-4 text-xs leading-5 text-[#6f6f74]">
-          A commitment is integrity evidence, not encryption. The raw synthetic partition never leaves the worker runtime.
-        </p>
-      </section>
+      <div className="z-detail-grid">
+        <section className="z-card z-detail-card">
+          <div className="z-card-header z-card-header-tight">
+            <div>
+              <p className="z-eyebrow">Commitment record</p>
+              <h2 className="z-title-md">Asset metadata</h2>
+            </div>
+            <span className="z-chip z-chip-muted">On-chain</span>
+          </div>
+          <dl className="z-kv">
+            <div>
+              <dt>Synthetic partition</dt>
+              <dd>Partition {asset!.demoPartitionId}</dd>
+            </div>
+            <div>
+              <dt>Registered</dt>
+              <dd>{new Date(asset!.createdAt).toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt>On-chain asset ID</dt>
+              <dd>
+                <code>{asset!.chainAssetId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Metadata commitment</dt>
+              <dd>
+                <code>{asset!.metadataCommitment}</code>
+              </dd>
+            </div>
+            {asset!.chainTxHash ? (
+              <div>
+                <dt>Registration transaction</dt>
+                <dd>
+                  <code>{asset!.chainTxHash}</code>
+                  <span className="mt-1 block text-[10px] text-[#727969]">
+                    Block {asset!.chainBlockNumber}
+                  </span>
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        </section>
+
+        <aside className="z-stack">
+          <section className="z-card z-card-lime z-side-card">
+            <div className="z-icon-tile">
+              <Icon name="shield" className="size-4" />
+            </div>
+            <h2 className="z-title-md z-text-dark">Commitment, not encryption</h2>
+            <p className="z-copy z-text-dark-soft">
+              A commitment is integrity evidence. The raw synthetic partition never
+              leaves the worker runtime and is never stored by Zorq.
+            </p>
+          </section>
+          <section className="z-card z-side-card">
+            <p className="z-eyebrow">Owner</p>
+            <p className="mt-2 break-all font-mono text-[11px] text-[#c9cec0]">
+              {session.walletAddress}
+            </p>
+            <p className="z-help mt-2">
+              Asset names and descriptions are visible only to the owning wallet.
+            </p>
+          </section>
+        </aside>
+      </div>
     </>
   );
 }

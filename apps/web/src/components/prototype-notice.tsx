@@ -1,10 +1,19 @@
+import { Icon } from "@/components/ui-icon";
+
 export function PrototypeNotice() {
   return (
     <aside
       aria-label="Prototype status"
-      className="rounded-full border border-black/5 bg-[#f7f7f8] px-4 py-2.5 text-xs leading-5 text-[#6f6f74]"
+      className="flex flex-wrap items-center gap-2.5 rounded-[12px] border border-white/10 bg-white/[0.025] px-3 py-2 text-[10px] leading-5 text-[#9aa08f]"
     >
-      <span className="font-semibold text-black">Testnet prototype.</span> Synthetic data only. Wallet-signed actions use Portaldot V3. Features stay labelled where incomplete.
+      <span className="inline-flex items-center gap-1.5 font-semibold text-[#d9ff63]">
+        <Icon name="shield" className="size-3.5" />
+        Testnet prototype
+      </span>
+      <span className="h-3 w-px bg-white/10" aria-hidden="true" />
+      <span>Synthetic data only.</span>
+      <span className="hidden sm:inline">Wallet-signed actions use Portaldot V3.</span>
+      <span className="hidden md:inline">Incomplete features stay labelled.</span>
     </aside>
   );
 }

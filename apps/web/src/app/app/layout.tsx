@@ -3,40 +3,83 @@ import { AppNav } from "@/components/app-nav";
 import { PrototypeNotice } from "@/components/prototype-notice";
 import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { WalletProvider } from "@/components/wallet/wallet-context";
+import { Icon } from "@/components/ui-icon";
+import { getSessionFromCookies } from "@/server/auth/session";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const session = await getSessionFromCookies();
+  const initialUser = session
+    ? {
+        walletAddress: session.walletAddress,
+        ss58Address: session.ss58Address,
+        displayName: null,
+      }
+    : null;
+
   return (
-    <WalletProvider>
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-5 lg:grid-cols-[72px_1fr]">
-          <aside className="hidden lg:flex lg:flex-col lg:items-center lg:justify-between lg:rounded-full lg:bg-white lg:py-5">
+    <WalletProvider initialUser={initialUser}>
+      <div className="app-stage">
+        <div className="app-frame">
+          <aside className="app-rail">
             <Link
               href="/"
               aria-label="Zorq home"
-              className="grid size-9 place-items-center rounded-full bg-black text-sm font-bold text-white"
+              className="grid size-9 place-items-center rounded-[10px] bg-[#d9ff63] text-[13px] font-extrabold tracking-[-0.05em] text-[#11140a]"
             >
               Z
             </Link>
+
             <AppNav />
-            <span className="size-2 rounded-full bg-[#2d6a4a]" aria-hidden="true" />
+
+            <div className="app-rail-bottom">
+              <Link
+                href="/docs"
+                title="Documentation"
+                aria-label="Documentation"
+                className="app-rail-link"
+              >
+                <Icon name="link" className="size-[18px]" />
+              </Link>
+              <div className="app-rail-meta">
+                <span className="status-dot" aria-hidden="true" />
+                <span>testnet</span>
+              </div>
+            </div>
           </aside>
 
-          <div className="min-w-0 space-y-5">
-            <div className="flex flex-col gap-4 rounded-[1.75rem] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="lg:hidden">
-                  <AppNav />
-                </div>
+          <div className="app-main">
+            <header className="app-topbar">
+              <div className="app-topbar-title">
+                <span className="hidden size-8 place-items-center rounded-[9px] bg-[#d9ff63] text-[11px] font-extrabold text-[#11140a] sm:grid lg:hidden">
+                  Z
+                </span>
                 <div>
-                  <p className="text-sm font-semibold tracking-tight">Zorq workspace</p>
-                  <p className="text-xs text-[#8a8a8f]">Job-scoped DataLicenses · Portaldot testnet</p>
+                  <h2>Dashboard</h2>
+                  <p>Job-scoped DataLicenses · polkadot.js / Talisman / SubWallet</p>
                 </div>
               </div>
-              <WalletPanel />
-            </div>
 
-            <PrototypeNotice />
-            {children}
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <span className="hidden items-center gap-1.5 rounded-[9px] border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[10px] font-semibold text-[#c9cec0] sm:inline-flex">
+                  <Icon name="clock" className="size-3.5 text-[#727969]" />
+                  {today}
+                </span>
+                <span className="z-chip z-chip-lime">Testnet</span>
+                <WalletPanel />
+              </div>
+            </header>
+
+            <AppNav variant="mobile" />
+
+            <main className="app-content">
+              <PrototypeNotice />
+              {children}
+            </main>
           </div>
         </div>
       </div>

@@ -1,63 +1,66 @@
 # Zorq Visual Design Decision Record
 
-**Status:** Implemented from operator-supplied references.
-**Design source:** `docs/design/reference/reference1.webp` and `reference2.webp`.
+**Status:** Final polish implemented from operator-supplied references.
+**Primary design source:** `docs/design/reference/reference3.webp`.
+**Supporting context:** `docs/design/reference/reference1.webp` and `reference2.webp`.
 **Approval loop:** Waived. See `docs/DESIGN_APPROVAL.md`.
 
 ## Reference inventory
 
 | Item | Value |
 |---|---|
-| Reference image 1 | `docs/design/reference/reference1.webp` — full desktop dashboard, 16:9 |
-| Reference image 2 | `docs/design/reference/reference2.webp` — close-up of the right-hand card stack |
-| Relationship | Image 1 sets composition and hierarchy; image 2 defines surface, spacing, type scale and control treatment at detail level |
-| Precedence if they conflict | Image 2 wins for component-level treatment (radii, spacing, type weight, pill/button shapes); image 1 wins for page composition and navigation |
-| Date received | Supplied before Phase 1; applied in Phase 7 |
+| Reference image 1 | `docs/design/reference/reference1.webp` — earlier light dashboard composition |
+| Reference image 2 | `docs/design/reference/reference2.webp` — close-up of light card surfaces and controls |
+| Reference image 3 | `docs/design/reference/reference3.webp` — definitive dark dashboard with lime accent |
+| Precedence | Image 3 is the primary source of truth. Images 1 and 2 are context for density, radii and card composition. |
+| Date received | Image 3 supplied during final polish; applied as a full visual overhaul. |
 
 ## What was adopted
 
-- Light warm-grey page background with large white surfaces and generous `28px`-class corner radii.
-- Thin, icon-only left navigation rail; small black circular brand mark; content starts in a wide card column.
-- Black primary pill action; pale grey secondary pills; mint-tinted status chips for healthy/positive states.
-- Quiet typography: near-black headings with tight tracking, small muted labels with wide tracking, restrained body copy.
-- Dashboard composition: a wide primary card, a stack of narrower cards on the right, large numeric values, subtle divider lines and a vertical rhythm built from 20–24px gaps.
-- Card-internal rows with a label, muted metadata, and a right-aligned value or action.
-- Rounded profile/session surface in the header area; compact icon controls.
+- Near-black dashboard canvas with a soft lime outer field and a subtle dot grid.
+- One strong acid-lime accent (`#d9ff63`) used for primary actions, active navigation, key metrics and status.
+- Compact left icon rail, top dashboard bar, date/status controls and a wallet identity chip.
+- Large dashboard greeting, three lime metric cards and a quieter fourth metric.
+- Rounded 16–28px surfaces with restrained borders; depth from surface steps rather than heavy shadows.
+- Dense but legible data tables, row lists, status pills, monospace identifiers and small uppercase labels.
+- Muted olive-gray secondary text and one clear accent per view.
+- Public pages reuse the same language: lime ground, near-black content cards, lime links and a dark footer.
 
 ## What was adapted
 
-- The reference is a fitness/profile dashboard. Zorq maps its composition to authorization: assets, jobs, licenses and run snapshots replace health metrics and goals.
-- Health toggles and target rows become license/state actions and round-status rows.
-- The reference's photographic profile is replaced with a wallet identity chip and connection state; no personal likeness is copied.
-- The black brand mark is Zorq's own "Z" mark, not the reference logo.
-- Tables collapse to stacked cards on mobile; the reference only shows desktop.
-- Added explicit testnet/synthetic-data disclosure, which the reference does not contain.
-- Motion is limited to short hover translation and colour transitions; reduced-motion is respected.
+- The reference is a security-operations dashboard. Zorq maps its composition to authorization: assets, jobs, licenses, round snapshots and network state.
+- Charts in the reference become real round-progress and snapshot evidence; no fabricated chart data was introduced.
+- The reference's alert queue becomes the recent-runs table and participant lists.
+- The profile/avatar becomes a wallet identity chip; no personal likeness is copied.
+- The reference logo is replaced by Zorq's own wordmark and “Z” mark.
+- Mobile tables collapse their least important columns and keep the primary link on the first cell.
+- Testnet, synthetic-data and no-native-FL/ZKP disclosures remain visible.
+
+## Stageshow execution notes
+
+- Applied Stageshow's craft rules: one neutral family plus one accent, clear hierarchy, restrained real strings, consistent icon family at one stroke weight, 12px insets, aligned values, no empty bands, no placeholder-looking controls.
+- Stageshow's faux-UI kit was not copied into the product; the live app uses its own React components and CSS tokens.
+- The reference imagery, logos, likeness and verbatim text were not copied.
 
 ## What remained product-specific
 
-- Route structure, role model, license lifecycle, authorization snapshots, permissions and all interaction behaviour remain exactly as specified in `PROJECT_SPEC.md`.
-- No reference feature was invented as a product capability. The UI only exposes implemented APIs; incomplete actions remain labelled.
-- Synthetic-demo and testnet-only disclosures remain visible.
-- Accessibility, keyboard operation, focus visibility, reduced-motion support and responsive behaviour remain mandatory.
+- All routes, permissions, license lifecycle, authorization snapshots, API calls, contract interactions and database schemas are unchanged.
+- The UI only exposes implemented behavior; no reference feature was invented as a product capability.
+- Empty, loading, error, permission-denied and not-found states use the same visual system.
+- Keyboard access, focus visibility, reduced-motion support and semantic structure remain mandatory.
 
 ## Screen and state coverage
 
-| Screen/state class | Covered by reference? | Notes/extension |
+| Screen/state | Reference coverage | Notes |
 |---|---|---|
-| Landing page | Composition only | Extended with Zorq proposition, testnet disclosure and three summary stats |
-| App overview/dashboard | Yes — primary reference screen | Mapped to asset/job/license/run summary cards and recent runs |
-| Asset list, registration and detail | Partial — list/detail card language | Extended with owner-only metadata and on-chain evidence |
-| Job list, creation and detail | Partial | Extended with purpose/model commitments and creator controls |
-| License list and detail/revocation | Partial | Extended with validity windows, soulbound notice and terminal revocation |
-| Run dashboard, rounds and authorization evidence | Not covered | Extended with a round timeline, snapshot block evidence and allow/deny chips |
-| Wallet connect, wrong chain, transaction pending/failed/success | Not covered | Extended with a compact session surface and explicit pending/error copy |
-| Loading, empty, validation, error, permission-denied and not-found | Not covered | Extended with white card states consistent with the reference |
-| Desktop, tablet and mobile layouts | Desktop only | Tablet/mobile use stacked cards, a horizontal nav and full-width controls |
-
-## Visual implementation notes
-
-- Phase 7 installed and used the Stageshow skill for composition and faux-product-UI polish only.
-- Reference imagery was not copied; no footage, logos, likeness or verbatim text is reused.
-- The implementation uses system fonts, CSS gradients and simple SVG icons; it introduces no remote asset or tracking dependency.
-- If the reference implied a feature the product does not have, the closest behaviour-consistent equivalent was implemented and recorded above.
+| Landing | Composition and palette | Dark hero, lime stat cards, license binding card |
+| App overview | Primary reference screen | Greeting, three lime stats, round activity, recent runs, network card |
+| Assets | Table language | Portfolio table, partition states, owner-only metadata |
+| Jobs | Table language | Job registry, status, window, cohort, detail actions |
+| Licenses | Table language | Token state, validity, revision, revocation detail |
+| Run monitor | Extended | Round progress, snapshot blocks, allow/deny evidence, final hash |
+| Forms | Component language | Dark fields, inline help, readable empty/error/rejection states |
+| Wallet | Top-bar identity | Connect, sign-in, signed-in and error states |
+| Public docs/legal | Palette only | Dark document cards on lime ground, readable headers |
+| Loading/error/404 | Extended | Same card and lime system |
+| Mobile | Not covered | Stacked cards, compact table columns, horizontal nav |

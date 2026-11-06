@@ -1,66 +1,66 @@
 {
   "video": {
-    "targetDurationSeconds": 131,
+    "targetDurationSeconds": 123,
     "hardLimitSeconds": 180,
     "width": 1280,
     "height": 720,
     "fps": 30,
-    "actualDurationSeconds": 131
+    "actualDurationSeconds": 123
   },
   "segments": [
     {
       "start": 0,
-      "end": 15,
+      "end": 14,
       "visual": "Landing page",
-      "narration": "Problem and product one-liner"
+      "narration": "Privacy bottleneck and Zorq one-liner"
     },
     {
-      "start": 15,
+      "start": 14,
       "end": 30,
       "visual": "Landing license binding card",
-      "narration": "What a DataLicense binds"
+      "narration": "What a DataLicense binds and who controls it"
     },
     {
       "start": 30,
-      "end": 45,
+      "end": 44,
       "visual": "App overview",
-      "narration": "Execution-scoped workspace"
+      "narration": "Execution-scoped workspace and live network state"
     },
     {
-      "start": 45,
-      "end": 58,
+      "start": 44,
+      "end": 56,
       "visual": "Asset list",
-      "narration": "Synthetic assets and commitments"
+      "narration": "Synthetic assets and on-chain commitments"
     },
     {
-      "start": 58,
+      "start": 56,
       "end": 72,
       "visual": "Job detail",
-      "narration": "Job, participants and creator controls"
+      "narration": "Job definition, participants and creator controls"
     },
     {
       "start": 72,
-      "end": 92,
+      "end": 94,
       "visual": "Run monitor",
-      "narration": "Three rounds and snapshot evidence"
+      "narration": "Three rounds, snapshots and the revocation cutoff"
     },
     {
-      "start": 92,
-      "end": 102,
+      "start": 94,
+      "end": 104,
       "visual": "Revoked license detail",
-      "narration": "Terminal revocation"
+      "narration": "Terminal revocation and next-round exclusion"
     },
     {
-      "start": 102,
-      "end": 112,
-      "visual": "Docs",
-      "narration": "Limits and documentation"
+      "start": 104,
+      "end": 114,
+      "visual": "Documentation",
+      "narration": "Limits, documentation and testnet-only scope"
     },
     {
-      "start": 112,
-      "end": 120,
+      "start": 114,
+      "end": 123,
       "visual": "Evidence end card",
-      "narration": "Contract, chain ID and repository"
+      "narration": "Contract, run evidence and public repository"
     }
   ]
 }

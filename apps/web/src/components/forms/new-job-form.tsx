@@ -4,6 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { contractAddress, getContractClients } from "@/lib/wallet-client";
+import {
+  readApiError,
+  readJsonObject,
+  transactionHash,
+  userFacingError,
+} from "@/lib/client-api";
 import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 
 type Draft = {
@@ -16,7 +22,21 @@ type Draft = {
 
 function localInput(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function isDraft(value: Draft): boolean {
+  if (
+    typeof value.jobId !== "string" ||
+    typeof value.chainJobId !== "string" ||
+    typeof value.purposeHash !== "string" ||
+    typeof value.modelConfigHash !== "string" ||
+    !Array.isArray(value.args) ||
+    value.args.length !== 6
+  ) {
+    return false;
+  }
+  return value.args.slice(3).every((item) => Number.isFinite(Number(item)));
 }
 
 export function NewJobForm() {
@@ -26,112 +46,278 @@ export function NewJobForm() {
   const [description, setDescription] = useState("");
   const [purposeText, setPurposeText] = useState("");
   const [startsAt, setStartsAt] = useState(() => localInput(new Date(Date.now() - 60_000)));
-  const [endsAt, setEndsAt] = useState(() => localInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)));
+  const [endsAt, setEndsAt] = useState(() =>
+    localInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+  );
   const [maxParticipants, setMaxParticipants] = useState(3);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!user || !wallet) { setError("Connect and sign in with your wallet first."); return; }
+    if (!user || !wallet) {
+      setError("Connect and sign in with your wallet first.");
+      return;
+    }
     setError(null);
+
     try {
-      setStatus("Creating job draft…");
+      setStatus("Preparing the job draft…");
       const response = await fetch("/api/jobs/drafts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title, description, purposeText,
+          title,
+          description,
+          purposeText,
           startsAt: new Date(startsAt).toISOString(),
           endsAt: new Date(endsAt).toISOString(),
           maxParticipants,
           idempotencyKey: crypto.randomUUID(),
         }),
       });
-      if (!response.ok) throw new Error((await response.json()).error?.message ?? "Job draft failed");
-      const draft = (await response.json()) as Draft;
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "The job draft could not be created."));
+      }
+      const draft = await readJsonObject<Draft>(
+        response,
+        "The job draft response was empty. Nothing was submitted.",
+      );
+      if (!isDraft(draft)) {
+        throw new Error("The job draft response was incomplete. Nothing was submitted.");
+      }
 
-      setStatus("Waiting for wallet signature…");
+      setStatus("Confirm the transaction in your wallet…");
       const { walletClient, publicClient } = await getContractClients(wallet);
-      const hash = await walletClient.writeContract({
-        address: contractAddress(),
-        abi: ZORQ_REGISTRY_ABI,
-        functionName: "createJob",
-        args: [draft.chainJobId, draft.purposeHash, draft.modelConfigHash, BigInt(draft.args[3]), BigInt(draft.args[4]), draft.args[5]],
-        account: wallet.walletAddress as `0x${string}`,
-        chain: null,
+      const hash = transactionHash(
+        await walletClient.writeContract({
+          address: contractAddress(),
+          abi: ZORQ_REGISTRY_ABI,
+          functionName: "createJob",
+          args: [
+            draft.chainJobId,
+            draft.purposeHash,
+            draft.modelConfigHash,
+            BigInt(Math.trunc(Number(draft.args[3]))),
+            BigInt(Math.trunc(Number(draft.args[4]))),
+            Number(draft.args[5]),
+          ],
+          account: wallet.walletAddress as `0x${string}`,
+          chain: null,
+        }),
+      );
+
+      setStatus("Waiting for block confirmation…");
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+        timeout: 120_000,
       });
-      setStatus("Waiting for confirmation…");
-      const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
       const confirm = await fetch(`/api/jobs/${draft.jobId}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
       });
-      if (!confirm.ok) throw new Error((await confirm.json()).error?.message ?? "Confirmation failed");
+      if (!confirm.ok) {
+        throw new Error(await readApiError(confirm, "The job confirmation failed."));
+      }
       router.push(`/app/jobs/${draft.jobId}`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The job could not be created.");
+      setError(
+        userFacingError(
+          cause,
+          "The job could not be published. No transaction was confirmed.",
+        ),
+      );
       setStatus(null);
     }
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <div className="rounded-[1.75rem] bg-white p-6 sm:p-8">
-        <div className="space-y-5">
+    <form onSubmit={(event) => void submit(event)} className="z-form-layout">
+      <section className="z-card z-form-card">
+        <div className="z-card-header">
           <div>
-            <label htmlFor="job-title" className="block text-sm font-medium">Title</label>
-            <input id="job-title" value={title} onChange={(e)=>setTitle(e.target.value)} required minLength={3} maxLength={100} className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black" />
+            <p className="z-eyebrow">Job definition</p>
+            <h2 className="z-title-lg">Publish a federated job</h2>
           </div>
-          <div>
-            <label htmlFor="job-description" className="block text-sm font-medium">Public description</label>
-            <textarea id="job-description" value={description} onChange={(e)=>setDescription(e.target.value)} rows={3} maxLength={1000} className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black" />
-          </div>
-          <div>
-            <label htmlFor="job-purpose" className="block text-sm font-medium">Purpose statement</label>
-            <textarea id="job-purpose" value={purposeText} onChange={(e)=>setPurposeText(e.target.value)} rows={3} required minLength={20} maxLength={500} placeholder="State the public purpose of this training computation." className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black" />
-            <p className="mt-1 text-xs text-[#8a8a8f]">Normalized and hashed; the hash is published on-chain.</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="job-start" className="block text-sm font-medium">Starts at</label>
-              <input id="job-start" type="datetime-local" value={startsAt} onChange={(e)=>setStartsAt(e.target.value)} className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black" />
-            </div>
-            <div>
-              <label htmlFor="job-end" className="block text-sm font-medium">Ends at</label>
-              <input id="job-end" type="datetime-local" value={endsAt} onChange={(e)=>setEndsAt(e.target.value)} className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black" />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="job-max" className="block text-sm font-medium">Maximum participant cohort</label>
-            <select id="job-max" value={maxParticipants} onChange={(e)=>setMaxParticipants(Number(e.target.value))} className="mt-2 w-full rounded-2xl border border-[#e3e3e5] bg-[#f7f7f8] px-4 py-3 text-sm outline-none focus:border-black">
-              {[2,3,4,5].map((n)=><option key={n} value={n}>{n} distinct assets</option>)}
-            </select>
-            <p className="mt-1 text-xs text-[#8a8a8f]">Lifetime distinct-asset cap. Revocation does not free a slot for another asset.</p>
-          </div>
-          {!user ? <button type="button" onClick={() => void connect()} className="pill-button">Connect wallet</button> : (
-            <button type="submit" disabled={Boolean(status && status !== "Published")} className="pill-button">{status ?? "Publish job"}</button>
-          )}
-          {error ? <p role="alert" className="rounded-2xl bg-[#f8ecec] px-4 py-3 text-sm text-[#7a2626]">{error}</p> : null}
+          <span className="z-chip z-chip-lime">3 rounds</span>
         </div>
-      </div>
-      <aside className="space-y-4">
-        <div className="rounded-[1.75rem] bg-white p-6">
-          <h2 className="text-base font-semibold">Fixed configuration</h2>
-          <dl className="mt-3 space-y-2 text-xs">
+
+        <div className="z-form-fields">
+          <div className="z-field">
+            <label htmlFor="job-title" className="z-label">
+              Title
+            </label>
+            <input
+              id="job-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+              minLength={3}
+              maxLength={100}
+              placeholder="Synthetic binary classification"
+              className="z-input"
+            />
+          </div>
+
+          <div className="z-field">
+            <label htmlFor="job-description" className="z-label">
+              Public description
+            </label>
+            <textarea
+              id="job-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={3}
+              maxLength={1000}
+              placeholder="What the job trains and why it exists."
+              className="z-textarea"
+            />
+          </div>
+
+          <div className="z-field">
+            <label htmlFor="job-purpose" className="z-label">
+              Purpose statement
+            </label>
+            <textarea
+              id="job-purpose"
+              value={purposeText}
+              onChange={(event) => setPurposeText(event.target.value)}
+              rows={3}
+              required
+              minLength={20}
+              maxLength={500}
+              placeholder="State the public purpose of this training computation."
+              className="z-textarea"
+            />
+            <p className="z-help">
+              Normalized and hashed. The purpose hash is fixed once the job is
+              published.
+            </p>
+          </div>
+
+          <div className="z-field-grid">
+            <div className="z-field">
+              <label htmlFor="job-start" className="z-label">
+                Starts at
+              </label>
+              <input
+                id="job-start"
+                type="datetime-local"
+                value={startsAt}
+                onChange={(event) => setStartsAt(event.target.value)}
+                className="z-input"
+              />
+            </div>
+            <div className="z-field">
+              <label htmlFor="job-end" className="z-label">
+                Ends at
+              </label>
+              <input
+                id="job-end"
+                type="datetime-local"
+                value={endsAt}
+                onChange={(event) => setEndsAt(event.target.value)}
+                className="z-input"
+              />
+            </div>
+          </div>
+
+          <div className="z-field">
+            <label htmlFor="job-max" className="z-label">
+              Maximum participant cohort
+            </label>
+            <select
+              id="job-max"
+              value={maxParticipants}
+              onChange={(event) => setMaxParticipants(Number(event.target.value))}
+              className="z-select"
+            >
+              {[2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n} distinct assets
+                </option>
+              ))}
+            </select>
+            <p className="z-help">
+              Lifetime distinct-asset cap. Revocation does not free a slot for a
+              different asset.
+            </p>
+          </div>
+
+          <div className="z-form-actions">
+            {!user ? (
+              <button type="button" onClick={() => void connect()} className="z-button">
+                Connect wallet
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={Boolean(status && status !== "Published")}
+                className="z-button"
+              >
+                {status ?? "Publish job"}
+              </button>
+            )}
+            <p className="z-help">
+              Publishing signs one transaction. The purpose, configuration and
+              cohort cap cannot be changed later.
+            </p>
+          </div>
+
+          {error ? (
+            <div role="alert" className="z-alert z-alert-danger">
+              <span className="z-alert-mark">!</span>
+              <p>{error}</p>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <aside className="z-aside-stack">
+        <section className="z-card z-card-lime z-side-card">
+          <p className="z-eyebrow z-eyebrow-dark">Fixed configuration</p>
+          <h2 className="z-title-md z-text-dark">synthetic-binary-classifier-v1</h2>
+          <dl className="z-config-list">
             {[
-              ["Model", "synthetic-binary-classifier-v1"],
               ["Architecture", "Linear(8, 1)"],
               ["Loss / optimiser", "BCEWithLogitsLoss / SGD 0.05"],
               ["Local training", "Batch 32 · 2 epochs"],
-              ["Rounds", "3 · FedAvg"],
-            ].map(([k,v]) => <div key={k}><dt className="font-medium text-[#8a8a8f]">{k}</dt><dd className="font-mono text-[#3f3f45]">{v}</dd></div>)}
+              ["Aggregation", "3 rounds · FedAvg"],
+            ].map(([key, value]) => (
+              <div key={key} className="z-config-row z-config-row-dark">
+                <dt>{key}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
           </dl>
-        </div>
-        <div className="rounded-[1.75rem] bg-[#f7f7f8] p-6 text-sm leading-6 text-[#6f6f74]">
-          Purpose and configuration hashes are fixed when the job is published and cannot be tuned later.
-        </div>
+        </section>
+
+        <section className="z-card z-side-card">
+          <div className="z-icon-tile">
+            <span aria-hidden="true">02</span>
+          </div>
+          <h2 className="z-title-md">Immutable by design</h2>
+          <p className="z-copy">
+            The purpose and model-configuration hashes are committed on-chain when
+            the job is published. The coordinator cannot tune them between rounds.
+          </p>
+        </section>
+
+        <section className="z-card z-side-card">
+          <div className="z-side-row">
+            <span className="z-muted">Cohort cap</span>
+            <span className="z-side-value">{maxParticipants} assets</span>
+          </div>
+          <div className="z-side-row">
+            <span className="z-muted">Rounds</span>
+            <span className="z-side-value">3</span>
+          </div>
+          <div className="z-side-row">
+            <span className="z-muted">Chain</span>
+            <span className="z-side-value">420420777</span>
+          </div>
+        </section>
       </aside>
     </form>
   );

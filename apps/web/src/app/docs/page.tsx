@@ -39,59 +39,50 @@ const sections = [
 
 export default function DocsPage() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="public-page">
       <PageHeader
         eyebrow="Documentation"
         title="How Zorq works"
         description="A concise guide to the authorization model, round snapshots and the limits of this testnet prototype."
         actions={<StatusBadge tone="warning">Living prototype docs</StatusBadge>}
-      />
+        variant="public"
+        />
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[220px_1fr]">
-        <nav aria-label="Documentation sections" className="lg:sticky lg:top-6 lg:self-start">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            On this page
-          </p>
-          <ul className="mt-3 space-y-2 text-sm">
+      <div className="doc-layout">
+        <nav aria-label="Documentation sections" className="doc-nav">
+          <p className="z-eyebrow">On this page</p>
+          <ul className="mt-3 space-y-1">
             {sections.map((section) => (
               <li key={section.id}>
-                <a className="text-slate-600 hover:text-accent-strong" href={`#${section.id}`}>
-                  {section.title}
-                </a>
+                <a href={`#${section.id}`}>{section.title}</a>
               </li>
             ))}
             <li>
-              <Link className="text-slate-600 hover:text-accent-strong" href="/app">
-                Open the app
-              </Link>
+              <Link href="/app">Open the app</Link>
             </li>
           </ul>
         </nav>
 
-        <div className="space-y-8">
+        <div>
           {sections.map((section) => (
-            <section
-              key={section.id}
-              id={section.id}
-              className="scroll-mt-6 rounded-xl border border-border bg-surface p-6"
-            >
-              <h2 className="text-xl font-semibold tracking-tight">{section.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-muted">{section.body}</p>
+            <section key={section.id} id={section.id} className="doc-section">
+              <h2>{section.title}</h2>
+              <p>{section.body}</p>
             </section>
           ))}
 
-          <section className="rounded-xl border border-border bg-slate-50 p-6">
-            <h2 className="text-lg font-semibold">Prototype status</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">
+          <section className="doc-section">
+            <h2>Prototype status</h2>
+            <p>
               Asset registration, job creation, license issuance/revocation and
               the three-round Flower demonstration are live on the Portaldot V3
               testnet. Only synthetic data is used. Wallet-signed actions require
               a Substrate extension and testnet POT for gas/storage deposits.
             </p>
-            <p className="mt-3 text-sm leading-6 text-muted">
+            <p>
               Project source and issue tracking:{" "}
               <a
-                className="font-medium text-accent-strong underline underline-offset-2"
+                className="z-link"
                 href="https://github.com/onyebuchidaniel60/Zorq"
                 rel="noreferrer"
                 target="_blank"

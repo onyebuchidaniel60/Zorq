@@ -24,6 +24,7 @@ export type SessionUser = {
 type WalletContextValue = {
   wallet: ConnectedWallet | null;
   user: SessionUser | null;
+  sessionReady: boolean;
   busy: boolean;
   error: string | null;
   connect: () => Promise<void>;
@@ -47,26 +48,49 @@ async function readError(response: Response): Promise<string> {
   }
 }
 
-export function WalletProvider({ children }: { children: ReactNode }) {
+export function WalletProvider({
+  children,
+  initialUser = null,
+}: {
+  children: ReactNode;
+  initialUser?: SessionUser | null;
+}) {
   const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(initialUser);
+  const [sessionReady, setSessionReady] = useState(Boolean(initialUser));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) {
-          return;
+    async function loadSession() {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const response = await fetch("/api/auth/me", { cache: "no-store" });
+          if (response.ok) {
+            const body = (await response.json()) as { user?: SessionUser };
+            if (!cancelled && body?.user?.walletAddress) {
+              setUser(body.user);
+            }
+            break;
+          }
+          if (response.status === 401 || attempt === 1) {
+            break;
+          }
+        } catch {
+          if (attempt === 1) {
+            break;
+          }
         }
-        const body = (await response.json()) as { user: SessionUser };
-        if (!cancelled) {
-          setUser(body.user);
-        }
-      })
-      .catch(() => undefined);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      if (!cancelled) {
+        setSessionReady(true);
+      }
+    }
+
+    void loadSession();
 
     return () => {
       cancelled = true;
@@ -114,8 +138,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
 
       const challenge = (await nonceResponse.json()) as {
-        message: string;
+        message?: unknown;
       };
+      if (typeof challenge?.message !== "string" || !challenge.message.trim()) {
+        setError("The sign-in challenge was empty. Retry once.");
+        return;
+      }
 
       const signed = await signSiweMessage(wallet, challenge.message);
 
@@ -134,7 +162,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const verified = (await verifyResponse.json()) as { user: SessionUser };
+      const verified = (await verifyResponse.json()) as { user?: SessionUser };
+      if (!verified?.user?.walletAddress) {
+        setError("The sign-in response was incomplete. Request a new challenge.");
+        return;
+      }
       setUser(verified.user);
     } catch (cause) {
       setError(
@@ -164,6 +196,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     () => ({
       wallet,
       user,
+      sessionReady,
       busy,
       error,
       connect,
@@ -171,7 +204,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       logout,
       clearError: () => setError(null),
     }),
-    [wallet, user, busy, error, connect, signIn, logout],
+    [wallet, user, sessionReady, busy, error, connect, signIn, logout],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

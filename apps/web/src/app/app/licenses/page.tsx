@@ -30,31 +30,73 @@ export default async function LicensesPage() {
       {!session ? (
         <SignedOutCard feature="License management" />
       ) : rows.length === 0 ? (
-        <section className="rounded-[1.75rem] bg-white p-8">
-          <h2 className="text-xl font-semibold tracking-tight">No licenses yet</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[#6f6f74]">
-            Open a job and issue a license for one of your active synthetic assets.
-            Revocation is terminal for that token.
-          </p>
-          <Link href="/app/jobs" className="pill-button mt-5">Browse jobs</Link>
+        <section className="z-card z-side-card">
+          <div className="z-empty">
+            <h2 className="z-title-md">No licenses yet</h2>
+            <p className="z-copy max-w-xl">
+              Open a job and issue a license for one of your active synthetic assets.
+              Revocation is terminal for that token.
+            </p>
+            <Link href="/app/jobs" className="z-button mt-2">
+              Browse jobs
+            </Link>
+          </div>
         </section>
       ) : (
-        <div className="grid gap-3">
-          {rows.map((license) => (
-            <Link key={license.id} href={`/app/licenses/${license.id}`} className="rounded-[1.75rem] bg-white p-5 transition-transform hover:-translate-y-0.5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold">License #{license.tokenId ?? "pending"} · revision {license.revision}</p>
-                  <p className="mt-1 text-xs text-[#8a8a8f]">
-                    {new Date(license.validFrom).toLocaleDateString()} → {new Date(license.validUntil).toLocaleDateString()}
-                  </p>
-                </div>
-                <StatusBadge tone={tone(license.statusMirror)}>{license.statusMirror.replace("_", " ")}</StatusBadge>
-              </div>
-              <p className="mt-3 break-all font-mono text-[10px] text-[#9a9aa0]">asset {license.assetId}</p>
-            </Link>
-          ))}
-        </div>
+        <section className="z-card">
+          <div className="z-card-header">
+            <div>
+              <p className="z-eyebrow">Rights registry</p>
+              <h2 className="z-title-md">Issued licenses</h2>
+            </div>
+            <span className="z-chip z-chip-muted">{rows.length} tokens</span>
+          </div>
+          <div className="z-table-wrap">
+            <table className="z-table">
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Status</th>
+                  <th>Validity</th>
+                  <th>Revision</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((license) => (
+                  <tr key={license.id} className="z-table-row-link">
+                    <td>
+                      <Link
+                        href={`/app/licenses/${license.id}`}
+                        className="block text-[#f3f5ed] font-semibold"
+                      >
+                        License #{license.tokenId ?? "pending"}
+                      </Link>
+                      <span className="mt-0.5 block font-mono text-[10px] text-[#727969]">
+                        asset {license.assetId.slice(0, 8)}…
+                      </span>
+                    </td>
+                    <td>
+                      <StatusBadge tone={tone(license.statusMirror)}>
+                        {license.statusMirror.replace("_", " ")}
+                      </StatusBadge>
+                    </td>
+                    <td className="text-[11px]">
+                      {new Date(license.validFrom).toLocaleDateString()} →{" "}
+                      {new Date(license.validUntil).toLocaleDateString()}
+                    </td>
+                    <td>{license.revision}</td>
+                    <td>
+                      <Link className="z-link text-xs" href={`/app/licenses/${license.id}`}>
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </>
   );

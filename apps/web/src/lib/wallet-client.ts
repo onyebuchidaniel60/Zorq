@@ -51,6 +51,11 @@ export function hasInjectedWallet(): boolean {
 
 export async function connectSubstrateWallet(): Promise<ConnectedWallet> {
   const { injected, address, signer } = await fromExtension();
+  if (!injected || !address || !signer) {
+    throw new Error(
+      "The wallet connected without an account or signer. Unlock the wallet and try again.",
+    );
+  }
   const wallet: ConnectedWallet = {
     ss58Address: address,
     walletAddress: ss58ToH160(address).toLowerCase(),
@@ -63,6 +68,15 @@ export async function connectSubstrateWallet(): Promise<ConnectedWallet> {
 
 export function getActiveWallet(): ConnectedWallet | undefined {
   return activeWallet;
+}
+
+function validSignature(value: unknown): value is string {
+  return typeof value === "string" && /^0x[0-9a-fA-F]{128}$/.test(value);
+}
+
+function walletRejected(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /reject|declined|cancel|denied|4001/i.test(message);
 }
 
 export async function signSiweMessage(
@@ -78,20 +92,27 @@ export async function signSiweMessage(
 
   const data = messageHex(message);
 
+  async function sign(type: "payload" | "bytes"): Promise<string> {
+    const result = await signer!.signRaw!({
+      address: wallet.ss58Address,
+      data,
+      type,
+    });
+    if (!result || !validSignature(result.signature)) {
+      throw new Error(
+        "The wallet returned an empty signature. Unlock the wallet, reconnect and try again.",
+      );
+    }
+    return result.signature;
+  }
+
   try {
-    const result = await signer.signRaw({
-      address: wallet.ss58Address,
-      data,
-      type: "payload",
-    });
-    return { signature: result.signature, signatureType: "payload" };
-  } catch {
-    const result = await signer.signRaw({
-      address: wallet.ss58Address,
-      data,
-      type: "bytes",
-    });
-    return { signature: result.signature, signatureType: "bytes" };
+    return { signature: await sign("payload"), signatureType: "payload" };
+  } catch (cause) {
+    if (walletRejected(cause)) {
+      throw cause;
+    }
+    return { signature: await sign("bytes"), signatureType: "bytes" };
   }
 }
 
@@ -111,6 +132,11 @@ export const zorqChain = defineChain({
 });
 
 export async function getContractClients(wallet: ConnectedWallet) {
+  if (!wallet.signer) {
+    throw new Error(
+      "The wallet signer is unavailable. Disconnect, reconnect and approve the transaction again.",
+    );
+  }
   const api = await getApi();
   const provider = createTwinKeyProvider({
     signer: wallet.signer as Parameters<typeof createTwinKeyProvider>[0]["signer"],

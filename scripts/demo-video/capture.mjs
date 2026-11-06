@@ -64,23 +64,27 @@ try {
   await dwell(9000);
   await page.mouse.wheel(0, 520);
   await dwell(5000);
+  await page.mouse.wheel(0, 280);
+  await dwell(8000);
+  await page.mouse.wheel(0, 280);
+  await dwell(8000);
 
   // Overview
   await page.goto(`${origin}/app`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
-  await dwell(10000);
+  await dwell(12000);
 
   // Assets
   await page.goto(`${origin}/app/assets`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
   await page.mouse.move(640, 520, { steps: 10 });
-  await dwell(9000);
+  await dwell(10000);
 
   // Job
   await page.goto(`${origin}/app/jobs/a37f6074-bd7d-44fc-a00c-c737b8a78b77`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
   await page.mouse.wheel(0, 380);
-  await dwell(10000);
+  await dwell(12000);
 
   // Run monitor
   await page.goto(`${origin}/app/runs/e18c1749-21f4-4cf4-b74a-2ed107f5d6cf`, { waitUntil: "domcontentloaded" });
@@ -94,13 +98,13 @@ try {
   // Revoked license
   await page.goto(`${origin}/app/licenses/88a3af2f-58ba-4092-b900-3ffa0b0294ed`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
-  await dwell(9000);
+  await dwell(10000);
 
   // Docs
   await page.goto(`${origin}/docs`, { waitUntil: "domcontentloaded" });
   await solveChallenge();
   await page.mouse.wheel(0, 350);
-  await dwell(8000);
+  await dwell(10000);
 
   const video = page.video();
   await context.close();
