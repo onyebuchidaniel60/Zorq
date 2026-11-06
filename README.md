@@ -19,7 +19,7 @@ Zorq lets a data owner authorize one of their registered data assets to particip
 
 ## Status
 
-**Testnet MVP complete — Portaldot contract deployed, three-round Flower run completed, revocation exclusion proven, and the reference-image UI implemented.**
+**Testnet MVP complete — Portaldot contract deployed, three-round Flower run completed, revocation exclusion proven, and the definitive reference-image UI implemented.**
 
 - Stable preview: <https://zorq-preview-uhhh2.vercel.app>
 - Portaldot V3 testnet contract: `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`
@@ -82,7 +82,7 @@ See [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md) and `ARCHITECTURE.md`
 
 ## Demo video
 
-[`docs/demo/zorq-demo.mp4`](./docs/demo/zorq-demo.mp4) — 2:11 screen-recorded testnet walkthrough. Narration and timeline are in `docs/demo/`; capture scripts are in `scripts/demo-video/`.
+[`docs/demo/zorq-demo.mp4`](./docs/demo/zorq-demo.mp4) — 2:02 screen-recorded testnet walkthrough. Narration and timeline are in `docs/demo/`; capture scripts are in `scripts/demo-video/`.
 
 ## Testing
 

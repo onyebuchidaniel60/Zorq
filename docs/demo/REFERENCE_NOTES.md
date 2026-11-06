@@ -28,4 +28,4 @@
 
 ## Precedence and limits
 
-The hard limits in `docs/DEMO_VIDEO.md` override the reference: maximum 3:00, free Google AI Studio male voice, no presenter name, every claim demonstrable. The final video is 2:11 and uses a free male neural voice; the Google AI Studio voice requirement is recorded as a Known Limitation because no Google AI Studio credential was supplied.
+The hard limits in `docs/DEMO_VIDEO.md` override the reference: maximum 3:00, free Google AI Studio male voice, no presenter name, every claim demonstrable. The final video is 2:02 and uses a free male neural voice; the Google AI Studio voice requirement is recorded as a Known Limitation because no Google AI Studio credential was supplied.

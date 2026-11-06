@@ -10,6 +10,7 @@
 - **No narration/visual drift:** narration is generated from the same step timeline that drives the Playwright capture. If a narration line runs long, time the UI action to it.
 - **No dead air:** no pause longer than 1.2 seconds without narration or a visible action; cuts at 0.4 seconds or shorter; no dead air at the start or end.
 - **No undemonstrable claim:** every scripted claim must be visible or verifiable in the recording.
+- **No hex recital:** narration refers to the deployed contract, deployer wallet and contract state contextually. Long hex addresses, transaction hashes, block heights and long numeric IDs are shown on screen, not spelled aloud.
 
 ## Narration and sync model
 
@@ -20,18 +21,18 @@ The source of truth is one checked-in step timeline. The timeline drives both:
 
 Speech and action therefore cannot drift independently. If a narration line is longer than its planned action window, extend the action or slow the UI interaction to match the narration; do not speed up or cut the audio arbitrarily.
 
-## Structure target (~2:45)
+## Structure target (~2:02)
 
 | Time | Segment | Content |
 |---|---|---|
-| 0:00–0:20 | Problem | Why broad data access and disconnected permission are insufficient for collaborative ML. |
-| 0:20–0:45 | Product one-liner + license primitive | Zorq's job-specific, time-bounded, non-transferable DataLicense and what it binds. |
-| 0:45–1:45 | Live demo | Asset -> job -> license -> three-round FL run -> revoke -> next-round exclusion. |
-| 1:45–2:15 | Architecture and Portaldot-native evidence | Chain ID `420420777`, deployed contract address, a real transaction, and the round snapshot block. |
-| 2:15–2:40 | Differentiator + limitations | Execution-scoped authorization, fail-closed snapshots, Flower demo adapter, synthetic data, no native FL/ZKP claim. |
-| 2:40–2:55 | Close + repo/docs | What Zorq is, where the repository and documentation are, and the testnet-only status. |
+| 0:00–0:14 | Problem | Why broad, indefinite data access blocks collaborative ML. |
+| 0:14–0:40 | Product one-liner + license primitive | Zorq's job-specific, time-bounded, non-transferable DataLicense and what it binds. |
+| 0:40–1:10 | Live demo | Asset -> job -> license -> three-round FL run -> revoke -> next-round exclusion. |
+| 1:10–1:37 | Architecture and Portaldot-native evidence | The deployed contract, authoritative chain state and the round snapshot boundary. |
+| 1:37–1:54 | Differentiator + limitations | Execution-scoped authorization, fail-closed snapshots, Flower demo adapter, synthetic data, no native FL/ZKP claim. |
+| 1:54–2:02 | Close + repo/docs | What Zorq is, where the repository and documentation are, and the testnet-only status. |
 
-The target is approximately 2:45, leaving headroom below the hard 3:00 limit.
+The target is approximately 2:02, leaving ample headroom below the hard 3:00 limit.
 
 ## Hackathon alignment
 
@@ -90,6 +91,7 @@ The video passes only when all of the following are true:
 - [ ] No pause > 1.2s without narration or visible action; no dead air at start or end.
 - [ ] Every on-screen claim is verifiable in the recording.
 - [ ] Chain ID, contract address, transaction and snapshot block evidence are visible where claimed.
+- [ ] Narration does not spell out long hex, block heights or long numeric IDs.
 - [ ] No prohibited content or copied reference material.
 - [ ] Reproducible from `scripts/demo-video/`.
 - [ ] `docs/demo/narration.md`, `docs/demo/timeline.json` and `docs/demo/REFERENCE_NOTES.md` are present (or the absence is recorded).

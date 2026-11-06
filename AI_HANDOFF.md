@@ -2,9 +2,9 @@
 
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
-**Last updated:** 5 November 2026
-**Project state:** Phases 1–10 complete. Portaldot contract, three assets, three licenses, completed three-round Flower run and revocation exclusion are live; reference UI, docs and demo video are committed.
-**Current phase:** Phase 10 complete. Final handoff below.
+**Last updated:** 6 November 2026
+**Project state:** Phases 1–10 complete plus a final-polish pass: partition and null-response bugs fixed, the definitive dark/lime reference UI implemented across all routes, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build; the new UI is verified on `zorq-six` and the preview branch alias (L-012).
+**Current phase:** Phase 10 and final polish complete. Final handoff below.
 
 ## Phase 3 deployment evidence
 
@@ -286,11 +286,17 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
+**D-015 — 2026-11-06 — Final polish — Reference image 3 becomes the definitive UI direction.** The dark near-black canvas, lime accent, dot grid, metric cards, icon rail and dense table language replace the earlier light dashboard. Public pages reuse the same palette with dark content cards. The implementation follows Stageshow craft rules but does not copy the kit or reference assets. No route, permission, contract, database or API behaviour changes. Files: `apps/web/src/app/globals.css`, `apps/web/src/components/**`, `apps/web/src/app/**/page.tsx`, `docs/DESIGN_DECISIONS.md`.
+
+**D-016 — 2026-11-06 — Final polish — Partition availability is read from the database before the form renders, and client responses are parsed defensively.** The registration page calls a read-only `listReservedPartitions()` query and disables reserved partitions; `/api/assets` also exposes the same read-only list. Forms validate empty/null JSON bodies, transaction hashes and wallet signatures, and translate wallet rejection/empty-response failures into readable messages. No schema, contract or authorization rule changed. Files: `apps/web/src/server/domain/assets.ts`, `apps/web/src/app/api/assets/route.ts`, `apps/web/src/app/app/assets/new/page.tsx`, `apps/web/src/components/forms/new-asset-form.tsx`, `apps/web/src/components/forms/new-job-form.tsx`, `apps/web/src/lib/client-api.ts`, `apps/web/src/lib/wallet-client.ts`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
 
 Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — consequence — mitigation-if-any`
+
+**L-012 — 2026-11-06 — Final polish — The custom `zorq-preview` alias still serves the previous UI build.** Vercel CLI alias mutation endpoints remain challenge-blocked from this environment (`login_required` / security checkpoint), so the new UI cannot be force-promoted to the manually maintained custom alias. Consequence: the stable custom preview URL shows the older light UI, while the new UI is live and verified on the production alias `https://zorq-six.vercel.app` and the preview branch alias `https://zorq-git-preview-uhhh2.vercel.app`. Mitigation: provide a fresh `VERCEL_TOKEN` and run `vercel alias set` for the latest preview deployment, or point the custom domain at the preview branch in the Vercel dashboard. Files: `AI_HANDOFF.md`, `docs/evidence/preview-signin.txt`.
 
 **L-001 — 2026-11-05 — Phase 1 — Vercel edge security checkpoint blocks automated access from the build environment.** After the initial successful deployment, requests to `*.vercel.app` and `api.vercel.com` from this environment return HTTP 403 `Vercel Security Checkpoint` (`x-vercel-mitigated: challenge`), and the stored Vercel CLI session expired without being able to refresh. Consequence: automated deployed-preview E2E, deployment inspection and CLI environment updates cannot run here; git-push deployments still work. Mitigation: local production-build E2E plus operator browser verification, and re-authentication or a fresh `VERCEL_TOKEN` if the operator can supply one.
 
@@ -347,6 +353,38 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **Regression checks:** web unit 14/14 (3 files), auth integration passed, typecheck/lint/build passed, local Playwright 40/40, contract 11/11, FL 3/3. No origin check was bypassed and no business-rule assertion was weakened.
 
+## Final polish pass — bugs, reference UI, video re-render (6 November 2026)
+
+**Part 1 — frontend bug fixes**
+
+- Asset registration now reads reserved synthetic partitions from the database before the form renders and disables every in-use option with an “(In use)” label. The selected default is the first free partition; if none remain, submission is disabled. `/api/assets` also exposes the read-only `usedPartitions` list for other clients. The server-side uniqueness rule is unchanged.
+- Job, asset, license and revocation client flows now parse empty/null JSON bodies defensively, validate draft shapes and transaction hashes, and never read properties from a null response. Wallet rejection, insufficient testnet POT, empty signature and null-response failures produce readable messages instead of a JavaScript crash.
+- Sign-in now reloads the server-rendered app after a successful SIWE verification, so the page content and header share the same session state. The mock-extension Playwright test checks both `/api/auth/nonce` and `/api/auth/verify` return 200.
+
+**Part 2 — reference UI overhaul**
+
+- `reference3.webp` is now the primary visual source: near-black canvas, lime accent, dot grid, compact icon rail, top dashboard bar, large greeting, lime metric cards, dense tables and dark document cards.
+- All public and app routes were restyled, including loading, error, 404, forms, wallet, detail pages and mobile table layouts. Stageshow craft rules informed hierarchy, spacing, icon consistency and accent restraint; the kit and reference assets were not copied.
+- No route behaviour, permission rule, contract call, database schema or business authorization rule changed. The only API addition is the read-only partition list described above.
+
+**Part 3 — demo video**
+
+- `docs/demo/narration.md` now opens immediately with the data-privacy problem, contains no presenter name and spells no hex address, block height, transaction hash or long numeric ID. The same `en-US-BrianNeural` voice at `-4%` was retained.
+- `docs/demo/timeline.json` was retimed to a 2:02 target. The Playwright capture was re-run against the new UI on the preview branch alias, the end card was restyled to the dark/lime system, and `scripts/demo-video/render.sh` now sizes the evidence card to the remaining narration time.
+- Final video: `docs/demo/zorq-demo.mp4`, 122.5 seconds, 1280×720, H.264/AAC, under the 3:00 hard limit.
+
+**Verification**
+
+- `npm run typecheck`, `npm run lint`, `npm run build` — pass.
+- Web unit/scaffold — 19/19 Vitest + 4/4 scaffold.
+- Local Playwright — 40/40 desktop + mobile.
+- Auth integration — pass (nonce, signature, cookie flags, replay, invalid signature, wrong origin, logout, rate limit).
+- Contract — 11/11; FL service — 3/3.
+- Deployed sign-in and data-page smoke — pass on `https://zorq-six.vercel.app` and `https://zorq-git-preview-uhhh2.vercel.app`.
+- Evidence: `docs/evidence/signin-zorq-six.png`, `docs/evidence/signin-preview.png`, `docs/evidence/ui-overview.png`, `docs/evidence/ui-landing.png`.
+
+**Deployment note:** the custom `zorq-preview` alias remains on the previous build because Vercel alias mutation is challenge-blocked (L-012). The new UI is live on the production alias and the preview branch alias above.
+
 ## Phase 8/9/10 completion report
 
 ```text
@@ -359,8 +397,8 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 14 (D-001 … D-014)
-Total known limitations: 11 (L-001 … L-011)
+Total decisions logged: 16 (D-001 … D-016)
+Total known limitations: 12 (L-001 … L-012)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
 Deployment tx: 0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834
@@ -373,26 +411,26 @@ Final model hash: 0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef60
 Revocation evidence: token 3 revoked block 341655; denied at snapshot block 341656
 Round snapshots: 341642 (3 authorized), 341651 (3 authorized), 341656 (2 authorized, token 3 REVOKED)
 
-Stable preview: https://zorq-preview-uhhh2.vercel.app
-Preview deployment: https://zorq-fx6oe372j-uhhh2.vercel.app (commit 7772843; latest docs-only commit follows)
-Production URL: out of scope; Vercel project has a default production target only by convention
+New UI production alias: https://zorq-six.vercel.app
+New UI preview branch alias: https://zorq-git-preview-uhhh2.vercel.app
+Custom stable preview alias: https://zorq-preview-uhhh2.vercel.app (still previous build; L-012)
 FL service: https://zorq-fl-service.onrender.com
 Repository: https://github.com/onyebuchidaniel60/Zorq
-Demo video: docs/demo/zorq-demo.mp4 (2:11)
+Demo video: docs/demo/zorq-demo.mp4 (2:02)
 Evidence: docs/evidence/demo-run.json
 
 Verification steps:
-1. Open the stable preview; load /, /docs, /app and the run monitor.
+1. Open `https://zorq-six.vercel.app` or the preview branch alias; load /, /docs, /app and the run monitor.
 2. Run `npm run typecheck && npm run lint && npm run build && npm run test`.
 3. Run `npm --workspace @zorq/contracts test`.
 4. Run `cd apps/fl-service && uv run pytest -q`.
 5. Run `npx playwright test` (local 40/40) and `xvfb-run -a node tests/preview-data-smoke.mjs`.
 6. Inspect the contract on the explorer and read owner/supportsInterface; compare the deployment record in packages/contracts/deployments/portaldot-v3.json.
 7. Open the run monitor and verify round snapshots 341642/341651/341656 and token 3 REVOKED at round 3.
-8. Play docs/demo/zorq-demo.mp4; confirm duration 2:11 and the evidence end card.
+8. Play docs/demo/zorq-demo.mp4; confirm duration 2:02 and the dark evidence end card.
 9. Read AI_HANDOFF.md Decision Log and Known Limitations before submission.
 ```
 
 ## Exact next task
 
-Submission handoff. No further implementation is required for the frozen MVP; any post-deadline work should address L-010 (Google AI Studio voice) and the dependency advisories, then re-run the published verification steps.
+Submission handoff is complete except for L-012. Provide a fresh `VERCEL_TOKEN` or point the `zorq-preview` custom domain at the preview branch in the Vercel dashboard, then re-run the published sign-in and data-page checks. Remaining optional work: L-010 (Google AI Studio voice) and the dependency advisories.

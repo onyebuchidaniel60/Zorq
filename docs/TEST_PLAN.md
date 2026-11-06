@@ -116,7 +116,7 @@ Every checkpoint records commit SHA, exact commands, pass/fail output, E2E URL, 
 | Typecheck | `npm run typecheck` | Pass |
 | Lint | `npm run lint` | Pass |
 | Build | `npm run build` | Pass; auth routes dynamic |
-| Unit | `npm run test` | 14/14 Vitest + 4/4 scaffold |
+| Unit | `npm run test` | 19/19 Vitest + 4/4 scaffold |
 | Auth integration | `npm run test:auth` | Nonce, sr25519 signature, cookie flags, `/me`, replay, invalid signature, wrong origin, logout, rate limit |
 | Local E2E | `npx playwright test` | 40/40 desktop + mobile |
 | Deployed preview | `xvfb-run -a node tests/preview-smoke.mjs` | All 15 routes, real sign-in, cookie flags, replay rejection, logout, cleanup |
@@ -131,10 +131,26 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 |---|---|
 | Contract tests | 11/11 passing |
 | FL simulation tests | 3/3 passing |
-| Web unit/scaffold | 14/14 Vitest + 4/4 scaffold |
+| Web unit/scaffold | 19/19 Vitest + 4/4 scaffold |
 | Local Playwright | 40/40 desktop + mobile |
 | Preview smoke | All routes, sr25519 sign-in, cookie flags, replay rejection, logout |
 | Preview data UI | Deployer session; assets/jobs/licenses/job detail/run monitor; run page shows `REVOKED` and `completed` |
 | Three-round run | `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` completed 3/3 |
 | Revocation rule | Token 3 revoked block `341655`, denied at round-3 snapshot `341656`, rounds 1–2 included it |
 | Final model hash | `0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf` |
+
+
+## Final polish verification (6 November 2026)
+
+| Check | Result |
+|---|---|
+| Web unit/scaffold | 19/19 Vitest + 4/4 scaffold |
+| Auth integration | Pass |
+| Local Playwright | 40/40 desktop + mobile |
+| Contract | 11/11 |
+| FL service | 3/3 |
+| Deployed sign-in (`zorq-six`) | nonce 200, verify 200, signed-in UI |
+| Deployed sign-in (preview branch) | nonce 200, verify 200, signed-in UI |
+| Deployed data pages | Overview, assets, jobs, run monitor, revoked license, docs |
+| Partition UI | Reserved partitions 0–3 disabled, partition 4 selected |
+| Demo video | 122.5s, 1280×720, H.264/AAC, under 3:00 |
