@@ -180,7 +180,7 @@ The reference run used three active assets and three licenses. Rounds 1 and 2 ad
 See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). The current suite covers:
 
 - Solidity unit and integration tests (`11/11`)
-- FL simulation and contract-boundary tests (`3/3`)
+- FL simulation, external-data and contract-boundary tests (`7/7`)
 - SIWE authentication, replay rejection, origin checks and rate limits
 - Unit tests for domain formatting, SIWE construction, origin validation and safe client parsing
 - Playwright desktop + mobile route/state coverage (`40/40`)
