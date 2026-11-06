@@ -536,6 +536,42 @@ New Known Limitations this phase: none (L-012 and L-013 remain)
 Next single task: Operator manual testnet verification with a real wallet: attempt a 0-tPOT failure and confirm no ghost row, then complete a successful asset/job/license flow and watch pending become active.
 ```
 
+## Explorer/button/Quick Start completion report
+
+```text
+Assigned phase/task: Final UX polish — Portaldot explorer links, interactive button states and Quick Start onboarding
+Commit SHA: 334fba5 (code/docs); this report is committed immediately after
+Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
+Deployed commit/deployment ID: Vercel auto-deploy from 334fba5; dashboard deployment ID is not exposed by deployment headers from this environment (L-001).
+Changes visible:
+- Confirmed asset, job and license rows and detail pages show an external-link icon to the Portaldot scanner.
+- Primary submit buttons have hover, pressed, disabled and spinner/aria-busy states.
+- README and /docs open with a six-step Quick Start and a tPOT storage-deposit warning.
+Intentionally incomplete areas:
+- Live wallet-level testing (0 tPOT failure and a funded successful transaction) remains operator-owned (L-013).
+- The custom zorq-preview alias remains on the previous build (L-012); production and preview-branch aliases are current.
+Tests (exact commands + actual results):
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm test` — 31/31 Vitest, 4/4 scaffold.
+- `npm run build` — pass.
+- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npx playwright test` — 40/40 desktop + mobile.
+- Explorer route browser check — `https://scanner-testnet-v3.portaldot.dev/#/extrinsics/<deployment-tx>` rendered the extrinsic detail; `/tx/<hash>` fell back to the home shell.
+- Authenticated local render — deployer session rendered the jobs list with the explorer href.
+- `/docs` Quick Start — visually inspected at 1440px.
+Manual verification: Opened the scanner detail route, inspected the authenticated jobs list and /docs screenshot, and confirmed the generated href. No wallet transaction was sent.
+Known issues/blockers: L-012 and L-013; no code blocker.
+Security notes: Explorer links only contain public transaction hashes and public network configuration. No secret, key, cookie, database URL or service token was printed. External links use rel="noreferrer" and target="_blank".
+Design reference image status (supplied / missing / ambiguous): supplied and unchanged (`docs/design/reference/reference3.webp`); this pass follows the existing dark/lime system.
+Operator approval status (visuals: waived): waived.
+README/docs status: README Quick Start added at the top; /docs Quick Start card added; test plan and handoff updated.
+Documentation footer URL: /docs (reachable on both deployed aliases).
+GitHub URL or documented reason absent: https://github.com/onyebuchidaniel60/Zorq
+Decisions logged this phase: D-023
+New Known Limitations this phase: none (L-012 and L-013 remain)
+Next single task: Operator manual testnet verification with a real wallet.
+```
+
 ## Exact next task
 
 Operator manual testnet verification. The agent has completed the code and documentation changes; live wallet-level checks remain operator-owned.
