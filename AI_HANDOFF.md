@@ -282,6 +282,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-013 — 2026-11-05 — Phase 5 — Demo job uses three assets so revocation can be shown without stopping the run.** The operator requested two licenses, but a two-asset cohort would fail the next round after revoking one (minimum two authorized assets). A third synthetic asset/license lets round 2 include all three and round 3 continue with two after the revocation. This stays within the 2–5 cohort limit. Files: `apps/web/tests/integration/demo-*.ts`, `AI_HANDOFF.md`.
 
+**D-014 — 2026-11-06 — Post-Phase 10 hotfix — SIWE accepts only an exact set of trusted public origins, bound per challenge.** The failing browser was on `https://zorq-six.vercel.app`, a production alias, while `APP_ORIGIN` was `https://zorq-uhhh2.vercel.app`. Keeping a single canonical origin would break other official aliases; allowing arbitrary `Host` values would weaken the check. The server now accepts `APP_ORIGIN`, `NEXT_PUBLIC_APP_URL`, an optional comma-separated `ALLOWED_ORIGINS`, and the known Vercel production/preview aliases. It normalizes the browser `Origin` with `new URL(raw).origin`, never trusts `Host`/`x-forwarded-host`, and binds the SIWE domain/URI to the validated request origin stored with the nonce; verification compares against that stored origin. Preview remains exactly `https://zorq-preview-uhhh2.vercel.app`; production remains its own canonical `https://zorq-uhhh2.vercel.app` with `zorq-six` explicitly allowed. Files: `apps/web/src/server/env.ts`, `apps/web/src/server/http/request.ts`, `apps/web/src/server/auth/siwe.ts`, `apps/web/src/server/auth/service.ts`, `apps/web/src/app/api/auth/nonce/route.ts`, `apps/web/tests/unit/origin.test.ts`.
+
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
 ## Known Limitations
@@ -327,6 +329,24 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **Security:** no token, secret, seed or database URL was printed. The hotfix changes configuration, timeout/retry behaviour and the generic error copy only; no contract, schema, ownership or authorization semantics changed.
 
+## Post-Phase 10 hotfix 2 — ORIGIN_MISMATCH on the Vercel alias (6 November 2026)
+
+**Symptom:** after the nonce/database fix, clicking **Sign in** returned the red banner “The request origin is not allowed.”
+
+**Diagnosis:** Vercel runtime logs for `/api/auth/nonce` showed `ORIGIN_MISMATCH` on deployment `dpl_DtNzH8G3jUTP7JpFQLz2DvhRQSFd` at 01:33–01:34Z with `domain=zorq-six.vercel.app`. The browser was on `https://zorq-six.vercel.app`, an official production alias of the same Vercel project; the request `Origin` header was valid but `APP_ORIGIN` was `https://zorq-uhhh2.vercel.app`, so the single-origin allowlist rejected it before nonce creation. No `Host`/`x-forwarded-host` spoofing or non-standard SubWallet header was involved.
+
+**Fix:**
+1. Added `ALLOWED_ORIGINS` (optional comma-separated) plus an exact built-in set of the project’s Vercel production and preview aliases. No wildcard, suffix matching or request-host fallback is used.
+2. Normalized the browser `Origin` header with `new URL(raw).origin`, accepting only `http`/`https` origins and rejecting missing/malformed values.
+3. Bound each SIWE challenge to the validated request origin: the nonce stores its `domain` and `uri`, and `/api/auth/verify` validates the signed message against those stored values rather than a single global origin.
+4. Added the request origin to failed-auth structured logs for future diagnosis. No secret, token or database URL is logged.
+
+**Environment verification:** Preview `APP_ORIGIN` and `NEXT_PUBLIC_APP_URL` remain exactly `https://zorq-preview-uhhh2.vercel.app` (no trailing slash). Production remains its own canonical `https://zorq-uhhh2.vercel.app`; forcing the preview origin into production would mislabel the production deployment, so the failing production alias `https://zorq-six.vercel.app` is explicitly allowed instead.
+
+**Verification:** commit `cb5f94c`; Vercel deployment status success. A headful Playwright run with a mock Substrate extension against `https://zorq-six.vercel.app` observed `/api/auth/nonce` **200**, a SIWE message with `domain=zorq-six.vercel.app` and `URI: https://zorq-six.vercel.app`, and reached “Signed in”. The same check passed against `https://zorq-preview-uhhh2.vercel.app` with its own domain. Screenshots: `docs/evidence/signin-zorq-six.png`, `docs/evidence/signin-preview.png`; log: `docs/evidence/origin-hotfix.txt`; script: `apps/web/tests/preview-signin-hotfix.mjs`.
+
+**Regression checks:** web unit 14/14 (3 files), auth integration passed, typecheck/lint/build passed, local Playwright 40/40, contract 11/11, FL 3/3. No origin check was bypassed and no business-rule assertion was weakened.
+
 ## Phase 8/9/10 completion report
 
 ```text
@@ -339,7 +359,7 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 13 (D-001 … D-013)
+Total decisions logged: 14 (D-001 … D-014)
 Total known limitations: 11 (L-001 … L-011)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff

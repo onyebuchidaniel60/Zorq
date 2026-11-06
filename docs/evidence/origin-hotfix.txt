@@ -1,0 +1,25 @@
+Post-Phase 10 origin hotfix evidence
+Date: 2026-11-06T01:42Z
+Deployment: cb5f94c (Vercel production/preview status success)
+
+Root-cause log excerpt (before fix):
+2026-11-06T01:34:15.468Z domain=zorq-six.vercel.app path=/api/auth/nonce code=ORIGIN_MISMATCH message="The request origin is not allowed."
+
+The browser was on https://zorq-six.vercel.app, a documented production alias, while
+APP_ORIGIN was https://zorq-uhhh2.vercel.app. The Origin check rejected the alias before
+the nonce was created.
+
+After fix:
+COMMAND: PREVIEW_ORIGIN=https://zorq-six.vercel.app SIGNIN_SCREENSHOT=docs/evidence/signin-zorq-six.png xvfb-run -a node apps/web/tests/preview-signin-hotfix.mjs
+RESULT: nonce status 200
+RESULT: SIWE domain zorq-six.vercel.app; URI https://zorq-six.vercel.app
+RESULT: SIGN-IN UI PASSED 0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf
+
+COMMAND: PREVIEW_ORIGIN=https://zorq-preview-uhhh2.vercel.app SIGNIN_SCREENSHOT=docs/evidence/signin-preview.png xvfb-run -a node apps/web/tests/preview-signin-hotfix.mjs
+RESULT: nonce status 200
+RESULT: SIWE domain zorq-preview-uhhh2.vercel.app; URI https://zorq-preview-uhhh2.vercel.app
+RESULT: SIGN-IN UI PASSED 0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf
+
+Screenshots:
+docs/evidence/signin-zorq-six.png
+docs/evidence/signin-preview.png

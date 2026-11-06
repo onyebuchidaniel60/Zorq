@@ -9,6 +9,7 @@ await cryptoWaitReady();
 const pair = new Keyring({ type: "sr25519", ss58Format: 42 }).addFromSeed(Buffer.from(key.seed.slice(2), "hex"));
 const walletAddress = ss58ToH160(pair.address).toLowerCase();
 const origin = process.env.PREVIEW_ORIGIN ?? "https://zorq-preview-uhhh2.vercel.app";
+const screenshotPath = process.env.SIGNIN_SCREENSHOT ?? "/tmp/opencode/zorq-signin-success.png";
 
 const browser = await chromium.launch({ headless: false, args: ["--disable-blink-features=AutomationControlled"] });
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -58,7 +59,7 @@ try {
   console.log("nonce status", nonce.status(), "url", page.url()); console.log("nonce body", (await nonce.text()).slice(0,500));
   if (nonce.status() !== 200) throw new Error(`nonce returned ${nonce.status()}`);
   await page.getByText(/Signed in/i).first().waitFor({ state: "visible", timeout: 90_000 });
-  await page.screenshot({ path: "/tmp/opencode/zorq-signin-success.png" });
+  await page.screenshot({ path: screenshotPath });
   console.log("SIGN-IN UI PASSED", walletAddress);
 } finally {
   await browser.close();
