@@ -1,0 +1,7 @@
+Post-Phase 10 sign-in verification
+Date: 2026-11-06T01:24Z
+Origin: https://zorq-preview-uhhh2.vercel.app
+Command: PREVIEW_ORIGIN=https://zorq-preview-uhhh2.vercel.app xvfb-run -a node apps/web/tests/preview-signin-hotfix.mjs
+
+nonce status 200 url https://zorq-preview-uhhh2.vercel.app/app
+SIGN-IN UI PASSED 0xfb7e252fae2d9e5a849361c22d7e4f8be2bb32bf

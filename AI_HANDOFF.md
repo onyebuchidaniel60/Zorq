@@ -316,9 +316,16 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **Diagnosis:** Vercel runtime logs showed repeated `auth.nonce.failed` / `INTERNAL_ERROR` on the production deployment `dpl_4hz1dxMJktrJppn13d2vbD1qFj7q` (`zorq-hn5wh421l-uhhh2.vercel.app`). That deployment had only the Neon-injected database variables; `APP_ORIGIN`, `SESSION_SECRET`, `RATE_LIMIT_SECRET`, `ZORQ_CONTRACT_ADDRESS`, `FL_SERVICE_URL` and the public Portaldot variables existed only in Preview. `getServerEnv()` therefore threw before the nonce route could run, producing the generic 500 envelope. The stable Preview deployment already had correct values and returned nonce 200.
 
-**Fix:** added the missing config and secrets to the Vercel **Production** environment, then redeployed with `vercel deploy --prod`. Production `/api/ready` now reports database connected, chain verified and contract configured; `/api/auth/nonce` returns 200. Stable Preview `/api/auth/nonce` also returns 200. A headful Playwright run with a mock Substrate extension clicked Connect wallet → Sign in, observed the `/api/auth/nonce` response 200, and reached “Signed in”. Evidence screenshot: `docs/evidence/signin-success.png`.
+**Fix:**
+1. Verified Preview values are exactly `APP_ORIGIN=https://zorq-preview-uhhh2.vercel.app` and `NEXT_PUBLIC_APP_URL=https://zorq-preview-uhhh2.vercel.app` (no trailing slash), with `SESSION_SECRET`, `DATABASE_URL`, `ZORQ_CONTRACT_ADDRESS`, `FL_SERVICE_URL` and the public Portaldot variables present.
+2. Added the missing config and secrets to the Vercel **Production** environment and redeployed with `vercel deploy --prod`.
+3. Hardened the nonce path: `packages/db/src/client.ts` now uses a 30s connect timeout and 30s idle timeout; `/api/auth/nonce` and `/api/auth/verify` set `maxDuration = 30`; a transient Neon connect/timeout error triggers one retry. The generic user-facing message is now “temporarily unavailable”, without exposing internals.
 
-**Security:** no token, secret, seed or database URL was printed. The hotfix only added environment configuration; no application logic or schema changed. Existing tests remain green.
+**Verification:** Production `/api/ready` reports database connected, chain verified and contract configured; `/api/auth/nonce` returns 200. Stable Preview `/api/ready` is ready and `/api/auth/nonce` returns 200. A headful Playwright run with a mock Substrate extension clicked Connect wallet → Sign in, observed the `/api/auth/nonce` response 200, and reached “Signed in”. Evidence screenshot: `docs/evidence/signin-success.png`; test script: `apps/web/tests/preview-signin-hotfix.mjs`.
+
+**Regression checks:** auth integration passed (nonce, signature, cookie flags, replay rejection, invalid signature, wrong origin, logout, rate limit); contract tests 11/11; FL service tests 3/3; web unit 10/10; scaffold 4/4. No business-rule assertion was weakened.
+
+**Security:** no token, secret, seed or database URL was printed. The hotfix changes configuration, timeout/retry behaviour and the generic error copy only; no contract, schema, ownership or authorization semantics changed.
 
 ## Phase 8/9/10 completion report
 
