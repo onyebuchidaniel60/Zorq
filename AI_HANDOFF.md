@@ -310,6 +310,16 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-011 — 2026-11-06 — Phase 9 — Five production dependency advisories remain in the Polkadot address utility chain.** `npm audit --omit=dev` reports five high advisories through `@polkadot-apps/address → polkadot-api → deepmerge-ts/write-package`; the proposed fix is a major downgrade of the address utility. Zorq uses only `ss58ToH160` with validated string inputs, so the recursive-merge path is not exposed, but the advisories remain. Consequence: dependency audit is not clean; do not claim a zero-vulnerability release. Mitigation: replace the address utility with a small local SS58→H160 implementation or track an upstream fix before production use. Files: `package-lock.json`, `AI_HANDOFF.md`.
 
+## Post-Phase 10 hotfix — sign-in nonce failure (6 November 2026)
+
+**Symptom:** the operator saw “The sign-in challenge could not be created” after connecting a wallet on the deployed app.
+
+**Diagnosis:** Vercel runtime logs showed repeated `auth.nonce.failed` / `INTERNAL_ERROR` on the production deployment `dpl_4hz1dxMJktrJppn13d2vbD1qFj7q` (`zorq-hn5wh421l-uhhh2.vercel.app`). That deployment had only the Neon-injected database variables; `APP_ORIGIN`, `SESSION_SECRET`, `RATE_LIMIT_SECRET`, `ZORQ_CONTRACT_ADDRESS`, `FL_SERVICE_URL` and the public Portaldot variables existed only in Preview. `getServerEnv()` therefore threw before the nonce route could run, producing the generic 500 envelope. The stable Preview deployment already had correct values and returned nonce 200.
+
+**Fix:** added the missing config and secrets to the Vercel **Production** environment, then redeployed with `vercel deploy --prod`. Production `/api/ready` now reports database connected, chain verified and contract configured; `/api/auth/nonce` returns 200. Stable Preview `/api/auth/nonce` also returns 200. A headful Playwright run with a mock Substrate extension clicked Connect wallet → Sign in, observed the `/api/auth/nonce` response 200, and reached “Signed in”. Evidence screenshot: `docs/evidence/signin-success.png`.
+
+**Security:** no token, secret, seed or database URL was printed. The hotfix only added environment configuration; no application logic or schema changed. Existing tests remain green.
+
 ## Phase 8/9/10 completion report
 
 ```text
