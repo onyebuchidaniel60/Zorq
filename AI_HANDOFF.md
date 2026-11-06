@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** End-to-end testnet demonstration complete. Three assets and three licenses are on-chain; a three-round Flower run completed with live Portaldot snapshots; a license revoked after round 2`s snapshot was excluded from round 3. The reference-image UI is implemented.
-**Current phase:** Phase 7 complete (reference UI). Phase 8 docs/frontend completeness, Phase 9 release review, and Phase 10 demo video remain.
+**Project state:** Phases 1–10 complete. Portaldot contract, three assets, three licenses, completed three-round Flower run and revocation exclusion are live; reference UI, docs and demo video are committed.
+**Current phase:** Phase 10 complete. Final handoff below.
 
 ## Phase 3 deployment evidence
 
@@ -282,6 +282,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-013 — 2026-11-05 — Phase 5 — Demo job uses three assets so revocation can be shown without stopping the run.** The operator requested two licenses, but a two-asset cohort would fail the next round after revoking one (minimum two authorized assets). A third synthetic asset/license lets round 2 include all three and round 3 continue with two after the revocation. This stays within the 2–5 cohort limit. Files: `apps/web/tests/integration/demo-*.ts`, `AI_HANDOFF.md`.
 
+**L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
@@ -306,6 +308,54 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 
 **L-009 — 2026-11-05 — Phase 4 — Successful three-round FL run needs funded assets and licenses.** The MVP requires two distinct authorized assets. The deployer holds one active testnet asset and an open job, but lacks the storage deposit for a second asset and two licenses. The Render FL service is live and its fail-closed path is verified; the authorized training path cannot be demonstrated on testnet until approximately 70–100 tPOTv3 is supplied or the operator authorizes a local-chain fallback. Files: `AI_HANDOFF.md`, `apps/fl-service/**`.
 
+**L-011 — 2026-11-06 — Phase 9 — Five production dependency advisories remain in the Polkadot address utility chain.** `npm audit --omit=dev` reports five high advisories through `@polkadot-apps/address → polkadot-api → deepmerge-ts/write-package`; the proposed fix is a major downgrade of the address utility. Zorq uses only `ss58ToH160` with validated string inputs, so the recursive-merge path is not exposed, but the advisories remain. Consequence: dependency audit is not clean; do not claim a zero-vulnerability release. Mitigation: replace the address utility with a small local SS58→H160 implementation or track an upstream fix before production use. Files: `package-lock.json`, `AI_HANDOFF.md`.
+
+## Phase 8/9/10 completion report
+
+```text
+Phase 8 — docs/frontend completeness: complete. README, API reference, deployment runbook, test plan, Portaldot validation, user guide, FL service guide and in-app /docs updated. All agreed routes, responsive layouts, metadata and footer links are present. Preview data smoke passed for the deployer session and run evidence.
+Phase 9 — regression/security/release: complete for the MVP scope. Contract tests 11/11; FL tests 3/3; web unit 10/10 + scaffold 4/4; auth integration passed; local Playwright 40/40; preview smoke and preview data smoke passed; production dependency audit shows 5 high advisories in the Polkadot address utility chain (not in the Zorq request path; logged as L-011 if required). Secret scan found no tracked or client-bundle leakage.
+Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-demo.mp4 is 130.99s (2:11), 1280×720, H.264/AAC, real screen capture of the live preview, male free Edge neural narration, no presenter name, no copied reference footage/music/logos. Google AI Studio voice was unavailable (L-010).
+```
+
+## Final handoff summary
+
+```text
+Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
+Total decisions logged: 13 (D-001 … D-013)
+Total known limitations: 11 (L-001 … L-011)
+
+Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
+Deployment tx: 0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834
+Deployment block: 337014
+Chain ID: 420420777
+
+Demo run: e18c1749-21f4-4cf4-b74a-2ed107f5d6cf
+Run status: completed 3/3
+Final model hash: 0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf
+Revocation evidence: token 3 revoked block 341655; denied at snapshot block 341656
+Round snapshots: 341642 (3 authorized), 341651 (3 authorized), 341656 (2 authorized, token 3 REVOKED)
+
+Stable preview: https://zorq-preview-uhhh2.vercel.app
+Preview deployment: https://zorq-fx6oe372j-uhhh2.vercel.app (commit 7772843; latest docs-only commit follows)
+Production URL: out of scope; Vercel project has a default production target only by convention
+FL service: https://zorq-fl-service.onrender.com
+Repository: https://github.com/onyebuchidaniel60/Zorq
+Demo video: docs/demo/zorq-demo.mp4 (2:11)
+Evidence: docs/evidence/demo-run.json
+
+Verification steps:
+1. Open the stable preview; load /, /docs, /app and the run monitor.
+2. Run `npm run typecheck && npm run lint && npm run build && npm run test`.
+3. Run `npm --workspace @zorq/contracts test`.
+4. Run `cd apps/fl-service && uv run pytest -q`.
+5. Run `npx playwright test` (local 40/40) and `xvfb-run -a node tests/preview-data-smoke.mjs`.
+6. Inspect the contract on the explorer and read owner/supportsInterface; compare the deployment record in packages/contracts/deployments/portaldot-v3.json.
+7. Open the run monitor and verify round snapshots 341642/341651/341656 and token 3 REVOKED at round 3.
+8. Play docs/demo/zorq-demo.mp4; confirm duration 2:11 and the evidence end card.
+9. Read AI_HANDOFF.md Decision Log and Known Limitations before submission.
+```
+
 ## Exact next task
 
-**Fund ~100 tPOTv3 to the deployer or authorize the local-chain fallback.** If funded: create a second active asset, issue two licenses, start a three-round Flower run, verify round snapshots and revocation exclusion, then wire the remaining UI forms and record Phase 4/5 evidence. If local fallback: deploy `ZorqRegistry` to a local Hardhat node, run the same APIs/Flower service locally and clearly label the demo as local-chain. Deployer: `5En6zJzY6eXkzns1AxsYzueGMNahKhZwYmXbARWkri9fUi4F`.
+Submission handoff. No further implementation is required for the frozen MVP; any post-deadline work should address L-010 (Google AI Studio voice) and the dependency advisories, then re-run the published verification steps.

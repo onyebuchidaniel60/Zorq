@@ -45,11 +45,15 @@ test("root metadata keeps preview deployments out of search indexes", () => {
   assert.match(layout, /follow:\s*false/);
 });
 
-test("unfinished forms are disabled rather than inert", () => {
-  for (const file of ["src/app/app/assets/new/page.tsx", "src/app/app/jobs/new/page.tsx"]) {
+test("asset and job forms are real client forms", () => {
+  for (const file of [
+    "src/components/forms/new-asset-form.tsx",
+    "src/components/forms/new-job-form.tsx",
+  ]) {
     const content = readFileSync(path.join(root, file), "utf8");
-    assert.match(content, /<fieldset disabled/);
-    assert.match(content, /Phase 3/);
+    assert.match(content, /use client/);
+    assert.match(content, /<form onSubmit/);
+    assert.match(content, /walletClient\.writeContract/);
   }
 });
 

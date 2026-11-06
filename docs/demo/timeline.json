@@ -1,0 +1,66 @@
+{
+  "video": {
+    "targetDurationSeconds": 131,
+    "hardLimitSeconds": 180,
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "actualDurationSeconds": 131
+  },
+  "segments": [
+    {
+      "start": 0,
+      "end": 15,
+      "visual": "Landing page",
+      "narration": "Problem and product one-liner"
+    },
+    {
+      "start": 15,
+      "end": 30,
+      "visual": "Landing license binding card",
+      "narration": "What a DataLicense binds"
+    },
+    {
+      "start": 30,
+      "end": 45,
+      "visual": "App overview",
+      "narration": "Execution-scoped workspace"
+    },
+    {
+      "start": 45,
+      "end": 58,
+      "visual": "Asset list",
+      "narration": "Synthetic assets and commitments"
+    },
+    {
+      "start": 58,
+      "end": 72,
+      "visual": "Job detail",
+      "narration": "Job, participants and creator controls"
+    },
+    {
+      "start": 72,
+      "end": 92,
+      "visual": "Run monitor",
+      "narration": "Three rounds and snapshot evidence"
+    },
+    {
+      "start": 92,
+      "end": 102,
+      "visual": "Revoked license detail",
+      "narration": "Terminal revocation"
+    },
+    {
+      "start": 102,
+      "end": 112,
+      "visual": "Docs",
+      "narration": "Limits and documentation"
+    },
+    {
+      "start": 112,
+      "end": 120,
+      "visual": "Evidence end card",
+      "narration": "Contract, chain ID and repository"
+    }
+  ]
+}

@@ -80,6 +80,10 @@ Exact compatible dependency versions are pinned in `package-lock.json`. Do not s
 
 See [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md) and `ARCHITECTURE.md` section 11. Copy `.env.example` to the relevant local env file and fill secrets outside version control. Never commit secrets or put server-only variables in `NEXT_PUBLIC_*` variables. Preview and production must use separate databases and credentials.
 
+## Demo video
+
+[`docs/demo/zorq-demo.mp4`](./docs/demo/zorq-demo.mp4) — 2:11 screen-recorded testnet walkthrough. Narration and timeline are in `docs/demo/`; capture scripts are in `scripts/demo-video/`.
+
 ## Testing
 
 See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). Every phase follows:

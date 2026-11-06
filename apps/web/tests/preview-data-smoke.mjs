@@ -46,8 +46,11 @@ try {
     await page.goto(`${origin}${path}`,{waitUntil:"domcontentloaded",timeout:30000});
     await solveChallenge();
     await page.locator("h1").first().waitFor({state:"visible",timeout:20000});
-    const text=await page.locator("body").innerText();
-    if(needle && !text.includes(needle)) fail(`${path} missing ${needle}`); else pass(`${path}`);
+    if (needle) {
+      try { await page.getByText(needle, { exact: false }).first().waitFor({ state: "visible", timeout: 12000 }); }
+      catch { fail(`${path} missing ${needle}`); return; }
+    }
+    pass(`${path}`);
   }
   await open("/app","Authorization workspace");
   await open("/app/assets","Data assets");
