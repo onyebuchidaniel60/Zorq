@@ -1,15 +1,28 @@
 import { ApiError } from "./api";
 import { allowedBrowserOrigins } from "../env";
 
-export function assertSameOrigin(request: Request): void {
-  const origin = request.headers.get("origin");
-  if (!origin) {
+export function assertSameOrigin(request: Request): string {
+  const rawOrigin = request.headers.get("origin");
+  if (!rawOrigin) {
     throw new ApiError(403, "ORIGIN_MISMATCH", "The request origin could not be verified.");
+  }
+
+  let origin: string;
+  try {
+    const url = new URL(rawOrigin);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("unsupported origin scheme");
+    }
+    origin = url.origin;
+  } catch {
+    throw new ApiError(403, "ORIGIN_MISMATCH", "The request origin is not allowed.");
   }
 
   if (!allowedBrowserOrigins().has(origin)) {
     throw new ApiError(403, "ORIGIN_MISMATCH", "The request origin is not allowed.");
   }
+
+  return origin;
 }
 
 export function clientIp(request: Request): string {

@@ -6,7 +6,6 @@ import { appendAuditEvent } from "../audit";
 import {
   buildSiweMessage,
   createNonceValue,
-  expectedDomain,
   expectedUri,
   NONCE_TTL_SECONDS,
   normaliseWalletAddress,
@@ -25,6 +24,7 @@ export async function createAuthNonce(input: {
   walletAddress: string;
   ss58Address: string;
   requestId: string;
+  origin?: string;
 }): Promise<CreatedNonce> {
   const walletAddress = normaliseWalletAddress(input.walletAddress);
   const mapped = ss58ToWalletAddress(input.ss58Address);
@@ -41,7 +41,8 @@ export async function createAuthNonce(input: {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + NONCE_TTL_SECONDS * 1000);
   const nonce = createNonceValue();
-  const message = buildSiweMessage({ walletAddress, nonce, issuedAt: now, expiresAt });
+  const origin = input.origin ? new URL(input.origin).origin : expectedUri();
+  const message = buildSiweMessage({ walletAddress, nonce, issuedAt: now, expiresAt, origin });
 
   await db.transaction(async (tx) => {
     await tx
@@ -52,8 +53,8 @@ export async function createAuthNonce(input: {
       nonce,
       walletAddress,
       ss58Address: input.ss58Address,
-      domain: expectedDomain(),
-      uri: expectedUri(),
+      domain: new URL(origin).host,
+      uri: origin,
       chainId: Number(process.env.PORTALDOT_CHAIN_ID ?? 420420777),
       createdAt: now,
       expiresAt,
@@ -108,7 +109,11 @@ export async function verifyAndConsumeNonce(input: {
     throw new ApiError(401, "NONCE_EXPIRED", "This sign-in challenge has expired.");
   }
 
-  const validated = parseAndValidateSiweMessage(input.message, record.walletAddress);
+  const validated = parseAndValidateSiweMessage(input.message, record.walletAddress, {
+    domain: record.domain,
+    uri: record.uri,
+    chainId: record.chainId,
+  });
 
   if (
     validated.nonce !== record.nonce ||

@@ -44,12 +44,14 @@ export function buildSiweMessage(options: {
   nonce: string;
   issuedAt: Date;
   expiresAt: Date;
+  origin?: string;
 }): string {
+  const uri = options.origin ? new URL(options.origin).origin : expectedUri();
   const message = new SiweMessage({
-    domain: expectedDomain(),
+    domain: new URL(uri).host,
     address: getAddress(options.walletAddress),
     statement: "Sign in to Zorq to manage job-specific DataLicenses.",
-    uri: expectedUri(),
+    uri,
     version: "1",
     chainId: getServerEnv().PORTALDOT_CHAIN_ID,
     nonce: options.nonce,
@@ -63,6 +65,7 @@ export function buildSiweMessage(options: {
 export function parseAndValidateSiweMessage(
   rawMessage: string,
   expectedWallet: string,
+  expected?: { domain: string; uri: string; chainId?: number },
 ): SiweMessage {
   let message: SiweMessage;
   try {
@@ -76,13 +79,17 @@ export function parseAndValidateSiweMessage(
   const expiresAt = message.expirationTime ? Date.parse(message.expirationTime) : NaN;
   const notBefore = message.notBefore ? Date.parse(message.notBefore) : null;
 
-  if (message.domain !== expectedDomain()) {
+  const expectedDomainValue = expected?.domain ?? expectedDomain();
+  const expectedUriValue = expected?.uri ?? expectedUri();
+  const expectedChainId = expected?.chainId ?? getServerEnv().PORTALDOT_CHAIN_ID;
+
+  if (message.domain !== expectedDomainValue) {
     throw new ApiError(401, "ORIGIN_MISMATCH", "The SIWE domain does not match this application.");
   }
-  if (message.uri !== expectedUri()) {
+  if (message.uri !== expectedUriValue) {
     throw new ApiError(401, "ORIGIN_MISMATCH", "The SIWE URI does not match this application.");
   }
-  if (message.chainId !== getServerEnv().PORTALDOT_CHAIN_ID) {
+  if (message.chainId !== expectedChainId) {
     throw new ApiError(400, "WRONG_CHAIN", "The SIWE message was signed for the wrong chain.");
   }
   if (message.version !== "1") {

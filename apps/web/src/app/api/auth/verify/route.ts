@@ -77,6 +77,7 @@ export async function POST(request: Request) {
     logEvent("warn", "auth.verify.failed", {
       requestId,
       code: error instanceof ApiError ? error.code : "INTERNAL_ERROR",
+      origin: request.headers.get("origin") ?? null,
     });
     return jsonError(error, requestId, "Sign-in could not be completed.");
   }

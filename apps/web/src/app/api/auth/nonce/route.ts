@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const requestId = requestIdFor(request);
 
   try {
-    assertSameOrigin(request);
+    const origin = assertSameOrigin(request);
 
     const limit = await consumeRateLimit({
       scope: "auth-nonce-ip",
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
         walletAddress: parsed.data.address,
         ss58Address: parsed.data.ss58Address,
         requestId,
+        origin,
       });
 
     let created;
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       requestId,
       code: error instanceof ApiError ? error.code : "INTERNAL_ERROR",
       message: error instanceof Error ? error.message.slice(0, 200) : "unknown",
+      origin: request.headers.get("origin") ?? null,
     });
     return jsonError(error, requestId, "The sign-in service is temporarily unavailable. Retry in a moment.");
   }

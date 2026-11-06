@@ -31,6 +31,28 @@ describe("SIWE message construction", () => {
     expect(message).toContain("Expiration Time: 2026-11-05T10:05:00.000Z");
   });
 
+  it("binds a trusted alternate origin and validates against the stored nonce origin", () => {
+    const origin = "https://zorq-six.vercel.app";
+    const nonce = createNonceValue();
+    const message = buildSiweMessage({
+      walletAddress,
+      nonce,
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 300_000),
+      origin,
+    });
+
+    expect(message).toContain("URI: https://zorq-six.vercel.app");
+
+    const parsed = parseAndValidateSiweMessage(message, walletAddress, {
+      domain: "zorq-six.vercel.app",
+      uri: origin,
+      chainId: 420420777,
+    });
+    expect(parsed.domain).toBe("zorq-six.vercel.app");
+    expect(parsed.uri).toBe(origin);
+  });
+
   it("rejects a message with the wrong domain", () => {
     const nonce = createNonceValue();
     const message = buildSiweMessage({
