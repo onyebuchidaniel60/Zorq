@@ -59,7 +59,7 @@ Zorq keeps transaction feedback optimistic without hiding the source of truth:
 1. The server creates a short-lived **draft** only to generate the opaque on-chain identifier, commitment and contract arguments. Drafts are excluded from every asset, job and license list.
 2. The wallet signs the contract call. If the wallet rejects it, the chain reports insufficient tPOT/storage deposit, or the call fails with a dispatch error, the client calls the draft-deletion endpoint immediately. The failed item never appears in a list.
 3. After the transaction is included in a block, the client records its hash and block hash through `/pending` and redirects to the relevant list. The item renders with a **pending** badge.
-4. The list polls `/confirm` every four seconds. The backend verifies the receipt/event and updates `pending_chain` to `active` (or `open` for a job). The page refreshes without blocking navigation.
+4. The list polls `/confirm` every four seconds. The backend verifies the receipt/event and updates `pending_chain` to `active` (or `open` for a job). The page refreshes without blocking navigation. Pending jobs are visible only to their creator until the job is published.
 5. Unsubmitted drafts older than 30 minutes and pending rows without a transaction hash are removed by the list/draft cleanup routine. Ambiguous timeouts keep the hidden draft rather than deleting a transaction that may still settle.
 
 The EVM contract remains authoritative. PostgreSQL holds metadata, the confirmation mirror and the audit trail; it cannot grant a right the chain denies. Detail and creation pages include a back link to their parent list.

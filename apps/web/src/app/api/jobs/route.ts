@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const requestId = requestIdFor(request);
   try {
-    await requireSession(request);
-    const jobs = await listJobs();
+    const session = await requireSession(request);
+    const jobs = await listJobs(session.walletAddress);
     return NextResponse.json({ jobs }, { headers: { "Cache-Control": "no-store", "x-request-id": requestId } });
   } catch (error) {
     return jsonError(error, requestId, "Jobs could not be loaded.");

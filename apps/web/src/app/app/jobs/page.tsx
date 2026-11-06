@@ -19,7 +19,7 @@ function tone(status: string) {
 
 export default async function JobsPage() {
   const session = await getSessionFromCookies();
-  const jobs = session ? await listJobs() : [];
+  const jobs = session ? await listJobs(session.walletAddress) : [];
   const pending = jobs
     .filter(
       (job) =>

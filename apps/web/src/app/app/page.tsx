@@ -50,7 +50,7 @@ export default async function AppOverviewPage() {
 
   const [assets, jobs, licenses] = await Promise.all([
     listAssets(session.walletAddress),
-    listJobs(),
+    listJobs(session.walletAddress),
     listLicenses(session.walletAddress),
   ]);
   const db = getDb();

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, ne, or } from "drizzle-orm";
 import { flJobs, getDb, jobParticipants } from "@zorq/db";
 import { ApiError } from "../http/api";
 import { appendAuditEvent } from "../audit";
@@ -267,13 +267,21 @@ export async function confirmJob(input: {
   return { jobId: job.id, status: "open", txHash: verified.txHash };
 }
 
-export async function listJobs() {
+export async function listJobs(viewerWallet?: string) {
   await cleanupStaleJobDrafts();
   const db = getDb();
+  const visibility = viewerWallet
+    ? or(ne(flJobs.status, "pending_chain"), eq(flJobs.creatorWallet, viewerWallet))
+    : ne(flJobs.status, "pending_chain");
   const jobs = await db
     .select()
     .from(flJobs)
-    .where(inArray(flJobs.status, ["pending_chain", "open", "paused", "closed"]));
+    .where(
+      and(
+        inArray(flJobs.status, ["pending_chain", "open", "paused", "closed"]),
+        visibility,
+      ),
+    );
   return jobs;
 }
 
