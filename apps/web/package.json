@@ -13,7 +13,8 @@
     "test:scaffold": "node --test tests/scaffold/*.test.mjs",
     "test:auth": "tsx tests/integration/auth-flow.ts",
     "test:preview": "node tests/preview-smoke.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:auth-state": "node tests/auth-state-smoke.mjs"
   },
   "dependencies": {
     "@polkadot-apps/address": "0.4.0",

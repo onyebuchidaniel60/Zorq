@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Zorq — DataLicenses for federated learning",
     description:
-      "Job-specific, time-bounded, non-transferable DataLicenses checked at every training-round boundary. Synthetic-data testnet prototype.",
+      "Job-specific, time-bounded, non-transferable DataLicenses checked at every training-round boundary. Enterprise authorization infrastructure on the Portaldot V3 testnet.",
     type: "website",
     url: appUrl,
     siteName: "Zorq",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Zorq — DataLicenses for federated learning",
     description:
-      "Execution-scoped authorization for federated learning, demonstrated on the Portaldot V3 EVM testnet.",
+      "Execution-scoped authorization for federated learning on the Portaldot V3 EVM testnet.",
   },
 };
 

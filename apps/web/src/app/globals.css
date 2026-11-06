@@ -147,19 +147,6 @@ a {
   gap: 1.5rem;
 }
 
-.brand-mark {
-  display: inline-grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border-radius: 0.7rem;
-  background: var(--ink);
-  color: var(--lime);
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-}
-
 .brand-word {
   font-size: 1.1rem;
   font-weight: 700;

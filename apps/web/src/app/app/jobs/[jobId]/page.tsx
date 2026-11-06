@@ -55,7 +55,7 @@ export default async function JobDetailPage({
                 <p className="z-eyebrow">Public purpose</p>
                 <h2 className="z-title-md">What this job trains</h2>
               </div>
-              <span className="z-chip z-chip-muted">{job.modelKey}</span>
+              <span className="z-chip z-chip-muted">Binary classifier v1</span>
             </div>
             <p className="z-copy">{job.purposeText}</p>
             <dl className="z-kv mt-5 grid gap-4 sm:grid-cols-2">

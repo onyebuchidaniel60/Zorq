@@ -36,8 +36,8 @@ export default function HomePage() {
         <div className="landing-hero-top">
           <div className="landing-kicker">
             <StatusBadge tone="success">Portaldot testnet</StatusBadge>
-            <StatusBadge tone="neutral">Synthetic data only</StatusBadge>
-            <StatusBadge tone="warning">Experimental prototype</StatusBadge>
+            <StatusBadge tone="neutral">Evaluation environment</StatusBadge>
+            <StatusBadge tone="warning">Testnet deployment</StatusBadge>
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#727969]">
             Chain 420420777
@@ -70,7 +70,7 @@ export default function HomePage() {
           </div>
           <div className="landing-stat">
             <p>3 rounds</p>
-            <p>Fixed FedAvg demonstration</p>
+            <p>Fixed FedAvg training</p>
           </div>
           <div className="landing-stat landing-stat-lime">
             <p>1 snapshot</p>
@@ -116,7 +116,7 @@ export default function HomePage() {
           </section>
           <section className="landing-card">
             <p className="z-eyebrow">Boundary conditions</p>
-            <h2 className="z-title-md mt-2">What this prototype does not claim</h2>
+            <h2 className="z-title-md mt-2">What this deployment does not claim</h2>
             <p className="z-copy mt-2">
               No real patient, banking or customer data. No native Portaldot FL,
               ZKP, HE, differential-privacy or secure-aggregation integration.

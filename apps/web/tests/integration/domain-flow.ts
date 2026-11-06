@@ -215,7 +215,7 @@ try {
     method: "POST",
     body: JSON.stringify({
       title: `Phase 3 integration job ${Date.now()}`,
-      description: "Synthetic integration test job.",
+      description: "Federated integration test job.",
       purposeText: "Verify job-scoped DataLicense authorization for a synthetic federated-learning demonstration.",
       startsAt: new Date(Number(now - 300n) * 1000).toISOString(),
       endsAt: new Date(Number(now + 172800n) * 1000).toISOString(),

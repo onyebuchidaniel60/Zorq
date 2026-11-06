@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui-icon";
+import { ZorqMark } from "@/components/zorq-logo";
 
 const githubUrl = "https://github.com/onyebuchidaniel60/Zorq";
 
@@ -9,14 +10,11 @@ export function SiteFooter() {
       <div className="site-footer-inner">
         <div>
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="brand-mark">
-              Z
-            </span>
+            <ZorqMark className="size-9 shrink-0" />
             <p className="text-sm font-semibold tracking-[-0.03em] text-white">Zorq</p>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#c9cec0]">
-            Programmable authorization for federated machine learning. A testnet
-            prototype using synthetic data only.
+            Authorization infrastructure for federated machine learning on Portaldot.
           </p>
           <p className="mt-3 text-xs leading-5 text-[#727969]">
             Not for real personal, medical, financial or customer data.
@@ -46,8 +44,8 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="mt-3 flex flex-col gap-2 px-2 text-[11px] text-[#5f6755] sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 Zorq. Testnet demonstration.</p>
-        <p>Chain ID 420420777 · Synthetic data only · No native FL/ZKP claim</p>
+        <p>© 2026 Zorq. Protocol Infrastructure.</p>
+        <p>Chain ID 420420777 · Portaldot V3 · No native FL/ZKP claim</p>
       </div>
     </footer>
   );

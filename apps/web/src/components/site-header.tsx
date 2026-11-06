@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui-icon";
+import { ZorqMark } from "@/components/zorq-logo";
 
 const publicLinks = [
   { href: "/docs", label: "Documentation" },
@@ -13,9 +14,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="flex items-center gap-3" aria-label="Zorq home">
-          <span aria-hidden="true" className="brand-mark">
-            Z
-          </span>
+          <ZorqMark className="size-9 shrink-0" />
           <span className="brand-word">Zorq</span>
           <span className="ml-1 hidden items-center gap-1.5 rounded-full bg-[#0a0b09] px-2.5 py-1 text-[10px] font-semibold text-[#d9ff63] sm:inline-flex">
             <span className="size-1 rounded-full bg-[#d9ff63]" aria-hidden="true" />

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { contractAddress, getContractClients } from "@/lib/wallet-client";
 import {
+  fetchWithAuth,
   readApiError,
   readJsonObject,
   transactionHash,
@@ -47,7 +48,7 @@ function toLocal(date: Date) {
 
 export function JobActions({ job }: { job: Job }) {
   const router = useRouter();
-  const { wallet, user } = useWallet();
+  const { wallet, user, ensureWallet, signIn } = useWallet();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetId, setAssetId] = useState("");
   const [validFrom, setValidFrom] = useState(() =>
@@ -67,7 +68,7 @@ export function JobActions({ job }: { job: Job }) {
     }
     let cancelled = false;
 
-    fetch("/api/assets", { cache: "no-store" })
+    fetchWithAuth("/api/assets", { cache: "no-store" }, signIn)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(await readApiError(response, "Your assets could not be loaded."));
@@ -95,20 +96,27 @@ export function JobActions({ job }: { job: Job }) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, signIn]);
 
   async function withWallet(
     action: (
       clients: Awaited<ReturnType<typeof getContractClients>>,
+      activeWallet: NonNullable<typeof wallet>,
     ) => Promise<void>,
   ) {
-    if (!wallet) {
-      setError("Connect your wallet first.");
-      return;
-    }
     setError(null);
     try {
-      await action(await getContractClients(wallet));
+      let activeWallet = wallet;
+      if (!user) {
+        activeWallet = await ensureWallet();
+        const signedIn = await signIn({ reload: false, wallet: activeWallet });
+        if (!signedIn) {
+          throw new Error("Sign-in was not completed. Approve the wallet prompt and retry.");
+        }
+      } else if (!activeWallet) {
+        activeWallet = await ensureWallet();
+      }
+      await action(await getContractClients(activeWallet), activeWallet);
       router.refresh();
     } catch (cause) {
       setError(userFacingError(cause, "The action could not be completed."));
@@ -118,19 +126,24 @@ export function JobActions({ job }: { job: Job }) {
 
   async function issueLicense(event: React.FormEvent) {
     event.preventDefault();
-    await withWallet(async ({ walletClient, publicClient }) => {
+    await withWallet(async ({ walletClient, publicClient }, activeWallet) => {
       setStatus("Preparing the license draft…");
-      const response = await fetch("/api/licenses/drafts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assetId,
-          jobId: job.id,
-          validFrom: new Date(validFrom).toISOString(),
-          validUntil: new Date(validUntil).toISOString(),
-          idempotencyKey: crypto.randomUUID(),
-        }),
-      });
+      const response = await fetchWithAuth(
+        "/api/licenses/drafts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assetId,
+            jobId: job.id,
+            validFrom: new Date(validFrom).toISOString(),
+            validUntil: new Date(validUntil).toISOString(),
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!response.ok) {
         throw new Error(await readApiError(response, "The license draft could not be created."));
       }
@@ -159,7 +172,7 @@ export function JobActions({ job }: { job: Job }) {
             BigInt(Math.trunc(Number(draft.args[2]))),
             BigInt(Math.trunc(Number(draft.args[3]))),
           ],
-          account: wallet!.walletAddress as `0x${string}`,
+          account: activeWallet.walletAddress as `0x${string}`,
           chain: null,
         }),
       );
@@ -169,11 +182,16 @@ export function JobActions({ job }: { job: Job }) {
         hash,
         timeout: 120_000,
       });
-      const confirm = await fetch(`/api/licenses/${draft.licenseId}/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
-      });
+      const confirm = await fetchWithAuth(
+        `/api/licenses/${draft.licenseId}/confirm`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!confirm.ok) {
         throw new Error(await readApiError(confirm, "The license confirmation failed."));
       }
@@ -184,10 +202,14 @@ export function JobActions({ job }: { job: Job }) {
   async function startRun() {
     await withWallet(async () => {
       setStatus("Starting the run…");
-      const response = await fetch(`/api/jobs/${job.id}/runs`, {
-        method: "POST",
-        headers: { "Idempotency-Key": crypto.randomUUID() },
-      });
+      const response = await fetchWithAuth(
+        `/api/jobs/${job.id}/runs`,
+        {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+        },
+        signIn,
+      );
       if (!response.ok) {
         throw new Error(await readApiError(response, "The run could not be started."));
       }
@@ -203,7 +225,7 @@ export function JobActions({ job }: { job: Job }) {
   }
 
   async function setState(next: "paused" | "closed" | "open") {
-    await withWallet(async ({ walletClient, publicClient }) => {
+    await withWallet(async ({ walletClient, publicClient }, activeWallet) => {
       setStatus(`Updating job state to ${next}…`);
       const enumValue = next === "open" ? 0 : next === "paused" ? 1 : 2;
       const hash = transactionHash(
@@ -212,7 +234,7 @@ export function JobActions({ job }: { job: Job }) {
           abi: ZORQ_REGISTRY_ABI,
           functionName: "setJobState",
           args: [job.chainJobId as `0x${string}`, enumValue],
-          account: wallet!.walletAddress as `0x${string}`,
+          account: activeWallet.walletAddress as `0x${string}`,
           chain: null,
         }),
       );
@@ -220,11 +242,16 @@ export function JobActions({ job }: { job: Job }) {
         hash,
         timeout: 120_000,
       });
-      const confirm = await fetch(`/api/jobs/${job.id}/state/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expectedState: next, txHash: hash, blockHash: receipt.blockHash }),
-      });
+      const confirm = await fetchWithAuth(
+        `/api/jobs/${job.id}/state/confirm`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expectedState: next, txHash: hash, blockHash: receipt.blockHash }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!confirm.ok) {
         throw new Error(await readApiError(confirm, "The job state confirmation failed."));
       }

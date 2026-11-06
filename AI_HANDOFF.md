@@ -3,7 +3,7 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus a final-polish pass: partition and null-response bugs fixed, the definitive dark/lime reference UI implemented across all routes, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build; the new UI is verified on `zorq-six` and the preview branch alias (L-012).
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy and new Zorq mark applied, README/in-app docs expanded, repository artifacts cleaned, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build; the new UI is verified on `zorq-six` and the preview branch alias (L-012).
 **Current phase:** Phase 10 and final polish complete. Final handoff below.
 
 ## Phase 3 deployment evidence
@@ -290,6 +290,10 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-016 — 2026-11-06 — Final polish — Partition availability is read from the database before the form renders, and client responses are parsed defensively.** The registration page calls a read-only `listReservedPartitions()` query and disables reserved partitions; `/api/assets` also exposes the same read-only list. Forms validate empty/null JSON bodies, transaction hashes and wallet signatures, and translate wallet rejection/empty-response failures into readable messages. No schema, contract or authorization rule changed. Files: `apps/web/src/server/domain/assets.ts`, `apps/web/src/app/api/assets/route.ts`, `apps/web/src/app/app/assets/new/page.tsx`, `apps/web/src/components/forms/new-asset-form.tsx`, `apps/web/src/components/forms/new-job-form.tsx`, `apps/web/src/lib/client-api.ts`, `apps/web/src/lib/wallet-client.ts`.
 
+**D-017 — 2026-11-06 — Final polish — Authentication and wallet connection are separate states, and 401s re-authenticate once.** The server layout hydrates the SIWE session as `user`; the wallet extension may still be disconnected on a fresh page load. Forms now distinguish `isAuthenticated` from `isConnected`, resolve the wallet on demand with `ensureWallet()`, and retry a request once after an automatic SIWE prompt on 401. A valid session no longer produces the stale “Connect and sign in with your wallet first” error. Files: `apps/web/src/components/wallet/wallet-context.tsx`, `apps/web/src/lib/client-api.ts`, `apps/web/src/components/forms/**`, `apps/web/tests/auth-state-smoke.mjs`.
+
+**D-018 — 2026-11-06 — Final polish — Enterprise copy, new Zorq mark, expanded documentation and repository cleanup.** Replaced visible “synthetic/demo/prototype” language in React UI with enterprise wording while keeping honest evaluation-data and testnet disclaimers in README/docs. Added a custom geometric Zorq SVG mark for header, footer, rail and favicon; expanded README with Mermaid architecture, setup, env vars and Portaldot deployment details; expanded `/docs`; removed build logs/caches and temporary artifacts; tightened `.gitignore`. No business logic, contract or schema changes. Files: `README.md`, `apps/web/src/components/zorq-logo.tsx`, `apps/web/src/app/icon.svg`, `apps/web/src/**`, `docs/**`, `.gitignore`.
+
 ## Known Limitations
 
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
@@ -376,7 +380,7 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 **Verification**
 
 - `npm run typecheck`, `npm run lint`, `npm run build` — pass.
-- Web unit/scaffold — 19/19 Vitest + 4/4 scaffold.
+- Web unit/scaffold — 21/21 Vitest + 4/4 scaffold.
 - Local Playwright — 40/40 desktop + mobile.
 - Auth integration — pass (nonce, signature, cookie flags, replay, invalid signature, wrong origin, logout, rate limit).
 - Contract — 11/11; FL service — 3/3.
@@ -384,6 +388,15 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 - Evidence: `docs/evidence/signin-zorq-six.png`, `docs/evidence/signin-preview.png`, `docs/evidence/ui-overview.png`, `docs/evidence/ui-landing.png`.
 
 **Deployment note:** the custom `zorq-preview` alias remains on the previous build because Vercel alias mutation is challenge-blocked (L-012). The new UI is live on the production alias and the preview branch alias above.
+
+## Auth-state, enterprise copy and logo pass (6 November 2026)
+
+- **Auth state:** `/app/assets/new` no longer treats a valid SIWE session as unauthenticated when the wallet extension is disconnected. The form resolves the wallet on demand, and any 401 response triggers one SIWE prompt and a retry. The exact regression is covered by `apps/web/tests/auth-state-smoke.mjs`.
+- **Copy:** “Synthetic demo partition” is now “Data Partition”; the commitment copy is “A salted commitment is integrity evidence. Raw data partitions never leave the provider's runtime.”; the app footer reads “© 2026 Zorq · Protocol Infrastructure.” Visible synthetic/demo/prototype language was replaced with enterprise wording across React UI. README/docs retain the honest evaluation-data and testnet limitations.
+- **Logo:** a new geometric Zorq SVG mark is used in the header, footer, app rail and favicon.
+- **Documentation:** `README.md` now includes a project overview, Mermaid architecture diagram, repository layout, local setup, environment variable table, Portaldot deployment evidence and testing/security guidance. `/docs` now covers architecture, lifecycle, snapshots, auth, APIs, local development, deployment and testing.
+- **Declutter:** removed `.next`, Playwright reports, test results, TypeScript build info, demo raw captures and log artifacts from the working tree; tightened `.gitignore`; no temporary debugging scripts remain under `scripts/`.
+- **Verification:** web unit/scaffold 21/21 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 3/3; typecheck/lint/build pass.
 
 ## Phase 8/9/10 completion report
 
@@ -397,7 +410,7 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 16 (D-001 … D-016)
+Total decisions logged: 18 (D-001 … D-018)
 Total known limitations: 12 (L-001 … L-012)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff

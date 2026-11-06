@@ -1,10 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  fetchWithAuth,
   readApiError,
   readJsonObject,
   transactionHash,
   userFacingError,
 } from "@/lib/client-api";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("client API error handling", () => {
   it("rejects an empty JSON response instead of reading properties from null", async () => {
@@ -39,5 +44,33 @@ describe("client API error handling", () => {
     expect(userFacingError(new Error("User rejected the request"), "The action failed.")).toBe(
       "The wallet request was rejected. Nothing was submitted.",
     );
+  });
+});
+
+describe("authenticated fetch", () => {
+  it("re-prompts sign-in and retries once on 401", async () => {
+    const responses = [
+      new Response("", { status: 401 }),
+      new Response("{}", { status: 200 }),
+    ];
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => responses[calls++] ?? responses[1]));
+    const signIn = vi.fn(async () => true);
+
+    const response = await fetchWithAuth("/api/test", { method: "POST" }, signIn);
+
+    expect(signIn).toHaveBeenCalledWith({ reload: false, wallet: undefined });
+    expect(calls).toBe(2);
+    expect(response.status).toBe(200);
+  });
+
+  it("does not prompt when the session is already valid", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 200 })));
+    const signIn = vi.fn(async () => true);
+
+    const response = await fetchWithAuth("/api/test", { method: "POST" }, signIn);
+
+    expect(signIn).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
   });
 });

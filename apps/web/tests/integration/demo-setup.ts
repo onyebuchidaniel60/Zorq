@@ -91,8 +91,8 @@ try {
   const jobDraft = await json<{ jobId: string; chainJobId: `0x${string}`; purposeHash: `0x${string}`; modelConfigHash: `0x${string}` }>("/api/jobs/drafts", {
     method: "POST",
     body: JSON.stringify({
-      title: `Zorq demo run ${Date.now()}`,
-      description: "Three-participant synthetic FL demo with one revocation between rounds.",
+      title: `Portaldot Federated Run ${Date.now()}`,
+      description: "Three-participant federated training run with one revocation boundary.",
       purposeText: "Demonstrate job-scoped DataLicense authorization and revocation at a federated-learning round boundary.",
       startsAt: new Date(Number(now - 300n) * 1000).toISOString(),
       endsAt: new Date(Number(now + 172800n) * 1000).toISOString(),
@@ -111,7 +111,7 @@ try {
   for (const partition of [1, 2]) {
     const draft = await json<{ assetId: string; chainAssetId: `0x${string}`; metadataCommitment: `0x${string}` }>("/api/assets/drafts", {
       method: "POST",
-      body: JSON.stringify({ displayName: `Synthetic demo asset ${partition}`, description: "Synthetic Phase 5 demo partition.", demoPartitionId: partition, idempotencyKey: `demo-asset-${partition}-${Date.now()}` }),
+      body: JSON.stringify({ displayName: `Provider Dataset ${partition}`, description: "Evaluation data partition for federated training.", demoPartitionId: partition, idempotencyKey: `demo-asset-${partition}-${Date.now()}` }),
     });
     const tx = await submit("registerAsset", [draft.chainAssetId, draft.metadataCommitment], 25);
     await delay(7000);

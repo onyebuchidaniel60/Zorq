@@ -43,7 +43,7 @@ export async function createAssetDraft(input: {
     .limit(1);
 
   if (partition.length > 0) {
-    throw new ApiError(409, "INVALID_INPUT", "That synthetic partition is already in use.");
+    throw new ApiError(409, "INVALID_INPUT", "That data partition is already in use.");
   }
 
   const id = randomUUID();

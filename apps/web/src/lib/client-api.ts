@@ -1,5 +1,29 @@
+import type { ConnectedWallet } from "@/lib/wallet-client";
+
+type SignIn = (options?: {
+  reload?: boolean;
+  wallet?: ConnectedWallet;
+}) => Promise<boolean>;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export async function fetchWithAuth(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  signIn: SignIn,
+  wallet?: ConnectedWallet,
+): Promise<Response> {
+  const response = await fetch(input, init);
+  if (response.status !== 401) {
+    return response;
+  }
+  const signedIn = await signIn({ reload: false, wallet });
+  if (!signedIn) {
+    return response;
+  }
+  return fetch(input, init);
 }
 
 async function readBody(response: Response): Promise<unknown> {

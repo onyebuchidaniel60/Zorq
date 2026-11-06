@@ -21,14 +21,22 @@ export type SessionUser = {
   displayName: string | null;
 };
 
+export type SignInOptions = {
+  reload?: boolean;
+  wallet?: ConnectedWallet;
+};
+
 type WalletContextValue = {
   wallet: ConnectedWallet | null;
   user: SessionUser | null;
   sessionReady: boolean;
+  isConnected: boolean;
+  isAuthenticated: boolean;
   busy: boolean;
   error: string | null;
   connect: () => Promise<void>;
-  signIn: () => Promise<void>;
+  ensureWallet: () => Promise<ConnectedWallet>;
+  signIn: (options?: SignInOptions) => Promise<boolean>;
   logout: () => Promise<void>;
   clearError: () => void;
 };
@@ -114,27 +122,37 @@ export function WalletProvider({
     }
   }, []);
 
-  const signIn = useCallback(async () => {
-    if (!wallet) {
-      setError("Connect a wallet before signing in.");
-      return;
+  const ensureWallet = useCallback(async () => {
+    if (wallet) {
+      return wallet;
     }
+    const connected = await connectSubstrateWallet();
+    setWallet(connected);
+    return connected;
+  }, [wallet]);
 
+  const signIn = useCallback(async (options: SignInOptions = {}): Promise<boolean> => {
     setBusy(true);
     setError(null);
     try {
+      const activeWallet =
+        options.wallet ?? wallet ?? (await connectSubstrateWallet());
+      if (!wallet) {
+        setWallet(activeWallet);
+      }
+
       const nonceResponse = await fetch("/api/auth/nonce", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: wallet.walletAddress,
-          ss58Address: wallet.ss58Address,
+          address: activeWallet.walletAddress,
+          ss58Address: activeWallet.ss58Address,
         }),
       });
 
       if (!nonceResponse.ok) {
         setError(await readError(nonceResponse));
-        return;
+        return false;
       }
 
       const challenge = (await nonceResponse.json()) as {
@@ -142,10 +160,10 @@ export function WalletProvider({
       };
       if (typeof challenge?.message !== "string" || !challenge.message.trim()) {
         setError("The sign-in challenge was empty. Retry once.");
-        return;
+        return false;
       }
 
-      const signed = await signSiweMessage(wallet, challenge.message);
+      const signed = await signSiweMessage(activeWallet, challenge.message);
 
       const verifyResponse = await fetch("/api/auth/verify", {
         method: "POST",
@@ -159,22 +177,26 @@ export function WalletProvider({
 
       if (!verifyResponse.ok) {
         setError(await readError(verifyResponse));
-        return;
+        return false;
       }
 
       const verified = (await verifyResponse.json()) as { user?: SessionUser };
       if (!verified?.user?.walletAddress) {
         setError("The sign-in response was incomplete. Request a new challenge.");
-        return;
+        return false;
       }
       setUser(verified.user);
-      window.location.reload();
+      if (options.reload !== false) {
+        window.location.reload();
+      }
+      return true;
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
           : "Sign-in could not be completed.",
       );
+      return false;
     } finally {
       setBusy(false);
     }
@@ -199,14 +221,17 @@ export function WalletProvider({
       wallet,
       user,
       sessionReady,
+      isConnected: Boolean(wallet),
+      isAuthenticated: Boolean(user),
       busy,
       error,
       connect,
+      ensureWallet,
       signIn,
       logout,
       clearError: () => setError(null),
     }),
-    [wallet, user, sessionReady, busy, error, connect, signIn, logout],
+    [wallet, user, sessionReady, busy, error, connect, ensureWallet, signIn, logout],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

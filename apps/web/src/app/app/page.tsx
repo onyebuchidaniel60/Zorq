@@ -204,7 +204,7 @@ export default async function AppOverviewPage() {
                 <p className="z-title-md">No run evidence yet</p>
                 <p className="z-copy">
                   Open a job with at least two active licenses to start the
-                  three-round demonstration.
+                  three-round training run.
                 </p>
                 <Link href="/app/jobs" className="z-button mt-2">
                   Browse jobs
@@ -290,7 +290,7 @@ export default async function AppOverviewPage() {
               </div>
               <div className="z-side-row">
                 <span className="z-muted">Coordinator</span>
-                <span className="z-side-value">Flower demo</span>
+                <span className="z-side-value">Flower adapter</span>
               </div>
               <div className="z-side-row">
                 <span className="z-muted">Snapshot</span>
@@ -330,7 +330,7 @@ export default async function AppOverviewPage() {
             <div className="z-card-header z-card-header-tight">
               <div>
                 <p className="z-eyebrow">Data boundary</p>
-                <h2 className="z-title-md">Synthetic only</h2>
+                <h2 className="z-title-md">Provider controlled</h2>
               </div>
               <Icon name="shield" className="size-4 text-[#d9ff63]" />
             </div>

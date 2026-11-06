@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/page-header";
 
 export const metadata: Metadata = {
   title: "Support",
-  description: "Troubleshooting and issue reporting for the Zorq testnet prototype.",
+  description: "Troubleshooting and issue reporting for the Zorq testnet deployment.",
 };
 
 const issues = [
@@ -17,7 +17,7 @@ const issues = [
   },
   {
     title: "A partition is already in use",
-    body: "Only one asset can reserve each synthetic partition (0–4). The registration form reads reserved partitions from the database and disables them. The server still rejects a conflicting submission safely if another wallet takes it first.",
+    body: "Only one asset can reserve each data partition (0–4). The registration form reads reserved partitions from the database and disables them. The server still rejects a conflicting submission safely if another wallet takes it first.",
   },
   {
     title: "Wrong network or origin",
@@ -35,7 +35,7 @@ export default function SupportPage() {
       <PageHeader
         eyebrow="Support"
         title="Help and issue reporting"
-        description="Known prototype limitations and the verified place to report a problem."
+        description="Known deployment limitations and the verified place to report a problem."
         variant="public"
         />
       <div className="legal-layout">

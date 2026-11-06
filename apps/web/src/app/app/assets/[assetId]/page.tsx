@@ -42,7 +42,7 @@ export default async function AssetDetailPage({
       <PageHeader
         eyebrow="Data asset"
         title={asset!.displayName}
-        description={asset!.description ?? "Owner-only synthetic asset metadata."}
+        description={asset!.description ?? "Owner-only asset metadata."}
         actions={
           <StatusBadge tone={asset!.status === "active" ? "success" : "neutral"}>
             {asset!.status}
@@ -60,7 +60,7 @@ export default async function AssetDetailPage({
           </div>
           <dl className="z-kv">
             <div>
-              <dt>Synthetic partition</dt>
+              <dt>Data partition</dt>
               <dd>Partition {asset!.demoPartitionId}</dd>
             </div>
             <div>
@@ -100,7 +100,7 @@ export default async function AssetDetailPage({
             </div>
             <h2 className="z-title-md z-text-dark">Commitment, not encryption</h2>
             <p className="z-copy z-text-dark-soft">
-              A commitment is integrity evidence. The raw synthetic partition never
+              A commitment is integrity evidence. Raw data partitions never
               leaves the worker runtime and is never stored by Zorq.
             </p>
           </section>

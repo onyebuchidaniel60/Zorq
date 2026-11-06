@@ -38,7 +38,7 @@ export default async function JobsPage() {
           <div className="z-empty">
             <h2 className="z-title-md">No published jobs</h2>
             <p className="z-copy max-w-xl">
-              Publish a three-round synthetic binary-classification job with a fixed
+              Publish a three-round binary-classification job with a fixed
               model preset and a bounded training window.
             </p>
             <Link href="/app/jobs/new" className="z-button mt-2">

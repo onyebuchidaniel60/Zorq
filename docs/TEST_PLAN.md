@@ -116,7 +116,7 @@ Every checkpoint records commit SHA, exact commands, pass/fail output, E2E URL, 
 | Typecheck | `npm run typecheck` | Pass |
 | Lint | `npm run lint` | Pass |
 | Build | `npm run build` | Pass; auth routes dynamic |
-| Unit | `npm run test` | 19/19 Vitest + 4/4 scaffold |
+| Unit | `npm run test` | 21/21 Vitest + 4/4 scaffold |
 | Auth integration | `npm run test:auth` | Nonce, sr25519 signature, cookie flags, `/me`, replay, invalid signature, wrong origin, logout, rate limit |
 | Local E2E | `npx playwright test` | 40/40 desktop + mobile |
 | Deployed preview | `xvfb-run -a node tests/preview-smoke.mjs` | All 15 routes, real sign-in, cookie flags, replay rejection, logout, cleanup |
@@ -131,7 +131,7 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 |---|---|
 | Contract tests | 11/11 passing |
 | FL simulation tests | 3/3 passing |
-| Web unit/scaffold | 19/19 Vitest + 4/4 scaffold |
+| Web unit/scaffold | 21/21 Vitest + 4/4 scaffold |
 | Local Playwright | 40/40 desktop + mobile |
 | Preview smoke | All routes, sr25519 sign-in, cookie flags, replay rejection, logout |
 | Preview data UI | Deployer session; assets/jobs/licenses/job detail/run monitor; run page shows `REVOKED` and `completed` |
@@ -144,7 +144,7 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 
 | Check | Result |
 |---|---|
-| Web unit/scaffold | 19/19 Vitest + 4/4 scaffold |
+| Web unit/scaffold | 21/21 Vitest + 4/4 scaffold |
 | Auth integration | Pass |
 | Local Playwright | 40/40 desktop + mobile |
 | Contract | 11/11 |
@@ -152,5 +152,16 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 | Deployed sign-in (`zorq-six`) | nonce 200, verify 200, signed-in UI |
 | Deployed sign-in (preview branch) | nonce 200, verify 200, signed-in UI |
 | Deployed data pages | Overview, assets, jobs, run monitor, revoked license, docs |
+| Auth-state hydration | Session present, wallet disconnected, 401 auto re-auth, retry |
 | Partition UI | Reserved partitions 0–3 disabled, partition 4 selected |
 | Demo video | 122.5s, 1280×720, H.264/AAC, under 3:00 |
+
+
+## Auth-state regression (6 November 2026)
+
+`apps/web/tests/auth-state-smoke.mjs` verifies the exact hydration case: a valid SIWE session exists but the wallet extension is not yet connected. It confirms that the form resolves the wallet on demand, that a 401 triggers an automatic SIWE prompt and one retry, and that the stale “Connect and sign in with your wallet first” error is not rendered.
+
+```bash
+cd apps/web
+PREVIEW_ORIGIN=http://127.0.0.1:3100 npm run test:auth-state
+```

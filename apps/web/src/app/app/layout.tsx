@@ -4,6 +4,7 @@ import { PrototypeNotice } from "@/components/prototype-notice";
 import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { WalletProvider } from "@/components/wallet/wallet-context";
 import { Icon } from "@/components/ui-icon";
+import { ZorqMark } from "@/components/zorq-logo";
 import { getSessionFromCookies } from "@/server/auth/session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,12 +27,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="app-stage">
         <div className="app-frame">
           <aside className="app-rail">
-            <Link
-              href="/"
-              aria-label="Zorq home"
-              className="grid size-9 place-items-center rounded-[10px] bg-[#d9ff63] text-[13px] font-extrabold tracking-[-0.05em] text-[#11140a]"
-            >
-              Z
+            <Link href="/" aria-label="Zorq home" className="shrink-0">
+              <ZorqMark className="size-9" />
             </Link>
 
             <AppNav />
@@ -55,8 +52,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="app-main">
             <header className="app-topbar">
               <div className="app-topbar-title">
-                <span className="hidden size-8 place-items-center rounded-[9px] bg-[#d9ff63] text-[11px] font-extrabold text-[#11140a] sm:grid lg:hidden">
-                  Z
+                <span className="hidden sm:grid lg:hidden">
+                  <ZorqMark className="size-8" />
                 </span>
                 <div>
                   <h2>Dashboard</h2>
@@ -80,7 +77,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <PrototypeNotice />
               {children}
               <footer className="app-footer">
-                <span>© 2026 Zorq · synthetic data only</span>
+                <span>© 2026 Zorq · Protocol Infrastructure</span>
                 <nav aria-label="App footer links">
                   <Link href="/docs">Documentation</Link>
                   <Link href="/privacy">Privacy</Link>

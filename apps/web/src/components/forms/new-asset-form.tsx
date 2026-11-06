@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { contractAddress, getContractClients } from "@/lib/wallet-client";
 import {
+  fetchWithAuth,
   readApiError,
   readJsonObject,
   transactionHash,
@@ -26,7 +27,7 @@ export function NewAssetForm({
   initialUsedPartitions: number[];
 }) {
   const router = useRouter();
-  const { wallet, user, connect } = useWallet();
+  const { wallet, user, ensureWallet, signIn } = useWallet();
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [usedPartitions] = useState<number[]>(
@@ -40,28 +41,40 @@ export function NewAssetForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!user || !wallet) {
-      setError("Connect and sign in with your wallet first.");
-      return;
-    }
     if (partition === null) {
-      setError("No synthetic partition is available. Deactivate an unused asset before registering another.");
+      setError("No data partition is available. Deactivate an unused asset before registering another.");
       return;
     }
     setError(null);
 
     try {
+      let activeWallet = wallet;
+      if (!user) {
+        activeWallet = await ensureWallet();
+        const signedIn = await signIn({ reload: false, wallet: activeWallet });
+        if (!signedIn) {
+          throw new Error("Sign-in was not completed. Approve the wallet prompt and retry.");
+        }
+      } else if (!activeWallet) {
+        activeWallet = await ensureWallet();
+      }
+
       setStatus("Preparing the asset draft…");
-      const draftResponse = await fetch("/api/assets/drafts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName,
-          description,
-          demoPartitionId: partition,
-          idempotencyKey: crypto.randomUUID(),
-        }),
-      });
+      const draftResponse = await fetchWithAuth(
+        "/api/assets/drafts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            displayName,
+            description,
+            demoPartitionId: partition,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!draftResponse.ok) {
         throw new Error(await readApiError(draftResponse, "The asset draft could not be created."));
       }
@@ -78,14 +91,14 @@ export function NewAssetForm({
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const { walletClient, publicClient } = await getContractClients(wallet);
+      const { walletClient, publicClient } = await getContractClients(activeWallet);
       const hash = transactionHash(
         await walletClient.writeContract({
           address: contractAddress(),
           abi: ZORQ_REGISTRY_ABI,
           functionName: "registerAsset",
           args: [draft.chainAssetId, draft.metadataCommitment],
-          account: wallet.walletAddress as `0x${string}`,
+          account: activeWallet.walletAddress as `0x${string}`,
           chain: null,
         }),
       );
@@ -95,11 +108,16 @@ export function NewAssetForm({
         hash,
         timeout: 120_000,
       });
-      const confirmResponse = await fetch(`/api/assets/${draft.assetId}/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
-      });
+      const confirmResponse = await fetchWithAuth(
+        `/api/assets/${draft.assetId}/confirm`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!confirmResponse.ok) {
         throw new Error(await readApiError(confirmResponse, "The asset confirmation failed."));
       }
@@ -142,7 +160,7 @@ export function NewAssetForm({
               required
               minLength={3}
               maxLength={80}
-              placeholder="Synthetic cohort A"
+              placeholder="Data cohort A"
               className="z-input"
             />
             <p className="z-help">3–80 characters. Owner-only metadata.</p>
@@ -158,7 +176,7 @@ export function NewAssetForm({
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
               maxLength={500}
-              placeholder="What makes this synthetic partition distinct?"
+              placeholder="What makes this data partition distinct?"
               className="z-textarea"
             />
           </div>
@@ -166,7 +184,7 @@ export function NewAssetForm({
           <div className="z-field">
             <div className="z-label-row">
               <label htmlFor="asset-partition" className="z-label">
-                Synthetic demo partition
+                Data Partition
               </label>
               <span className="z-help z-help-inline">
                 {freeCount} of {PARTITIONS.length} free
@@ -199,19 +217,13 @@ export function NewAssetForm({
           </div>
 
           <div className="z-form-actions">
-            {!user ? (
-              <button type="button" onClick={() => void connect()} className="z-button">
-                Connect wallet
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={Boolean(status && status !== "Asset registered") || freeCount === 0}
-                className="z-button"
-              >
-                {status ?? "Register asset"}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={Boolean(status && status !== "Asset registered") || freeCount === 0}
+              className="z-button"
+            >
+              {status ?? (user ? "Register asset" : "Sign in and register")}
+            </button>
             <p className="z-help">
               The wallet signs one on-chain registration. No dataset leaves the
               provider environment.
@@ -245,8 +257,8 @@ export function NewAssetForm({
           <p className="z-eyebrow z-eyebrow-dark">Data boundary</p>
           <h2 className="z-title-md z-text-dark">Commitment, not custody</h2>
           <p className="z-copy z-text-dark-soft">
-            A salted commitment is integrity evidence. It is not encryption, and
-            the raw synthetic partition never leaves the worker runtime.
+            A salted commitment is integrity evidence. Raw data partitions never
+            leave the provider&apos;s runtime.
           </p>
         </section>
 

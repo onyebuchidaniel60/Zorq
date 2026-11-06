@@ -34,7 +34,7 @@ export default async function LicensesPage() {
           <div className="z-empty">
             <h2 className="z-title-md">No licenses yet</h2>
             <p className="z-copy max-w-xl">
-              Open a job and issue a license for one of your active synthetic assets.
+              Open a job and issue a license for one of your active data assets.
               Revocation is terminal for that token.
             </p>
             <Link href="/app/jobs" className="z-button mt-2">

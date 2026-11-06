@@ -39,7 +39,7 @@ export default async function AssetsPage() {
           <div className="z-empty">
             <h2 className="z-title-md">No assets yet</h2>
             <p className="z-copy max-w-xl">
-              Register a synthetic demo partition to create an on-chain asset
+              Register a data partition to create an on-chain asset
               commitment. Each partition can be used by one active asset.
             </p>
             <Link href="/app/assets/new" className="z-button mt-2">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { contractAddress, getContractClients } from "@/lib/wallet-client";
 import {
+  fetchWithAuth,
   readApiError,
   readJsonObject,
   transactionHash,
@@ -41,7 +42,7 @@ function isDraft(value: Draft): boolean {
 
 export function NewJobForm() {
   const router = useRouter();
-  const { wallet, user, connect } = useWallet();
+  const { wallet, user, ensureWallet, signIn } = useWallet();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [purposeText, setPurposeText] = useState("");
@@ -55,27 +56,39 @@ export function NewJobForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!user || !wallet) {
-      setError("Connect and sign in with your wallet first.");
-      return;
-    }
     setError(null);
 
     try {
+      let activeWallet = wallet;
+      if (!user) {
+        activeWallet = await ensureWallet();
+        const signedIn = await signIn({ reload: false, wallet: activeWallet });
+        if (!signedIn) {
+          throw new Error("Sign-in was not completed. Approve the wallet prompt and retry.");
+        }
+      } else if (!activeWallet) {
+        activeWallet = await ensureWallet();
+      }
+
       setStatus("Preparing the job draft…");
-      const response = await fetch("/api/jobs/drafts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          purposeText,
-          startsAt: new Date(startsAt).toISOString(),
-          endsAt: new Date(endsAt).toISOString(),
-          maxParticipants,
-          idempotencyKey: crypto.randomUUID(),
-        }),
-      });
+      const response = await fetchWithAuth(
+        "/api/jobs/drafts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            purposeText,
+            startsAt: new Date(startsAt).toISOString(),
+            endsAt: new Date(endsAt).toISOString(),
+            maxParticipants,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!response.ok) {
         throw new Error(await readApiError(response, "The job draft could not be created."));
       }
@@ -88,7 +101,7 @@ export function NewJobForm() {
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const { walletClient, publicClient } = await getContractClients(wallet);
+      const { walletClient, publicClient } = await getContractClients(activeWallet);
       const hash = transactionHash(
         await walletClient.writeContract({
           address: contractAddress(),
@@ -102,7 +115,7 @@ export function NewJobForm() {
             BigInt(Math.trunc(Number(draft.args[4]))),
             Number(draft.args[5]),
           ],
-          account: wallet.walletAddress as `0x${string}`,
+          account: activeWallet.walletAddress as `0x${string}`,
           chain: null,
         }),
       );
@@ -112,11 +125,16 @@ export function NewJobForm() {
         hash,
         timeout: 120_000,
       });
-      const confirm = await fetch(`/api/jobs/${draft.jobId}/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
-      });
+      const confirm = await fetchWithAuth(
+        `/api/jobs/${draft.jobId}/confirm`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+        },
+        signIn,
+        activeWallet,
+      );
       if (!confirm.ok) {
         throw new Error(await readApiError(confirm, "The job confirmation failed."));
       }
@@ -155,7 +173,7 @@ export function NewJobForm() {
               required
               minLength={3}
               maxLength={100}
-              placeholder="Synthetic binary classification"
+              placeholder="Binary classification"
               className="z-input"
             />
           </div>
@@ -246,19 +264,13 @@ export function NewJobForm() {
           </div>
 
           <div className="z-form-actions">
-            {!user ? (
-              <button type="button" onClick={() => void connect()} className="z-button">
-                Connect wallet
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={Boolean(status && status !== "Published")}
-                className="z-button"
-              >
-                {status ?? "Publish job"}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={Boolean(status && status !== "Published")}
+              className="z-button"
+            >
+              {status ?? (user ? "Publish job" : "Sign in and publish")}
+            </button>
             <p className="z-help">
               Publishing signs one transaction. The purpose, configuration and
               cohort cap cannot be changed later.
@@ -277,7 +289,7 @@ export function NewJobForm() {
       <aside className="z-aside-stack">
         <section className="z-card z-card-lime z-side-card">
           <p className="z-eyebrow z-eyebrow-dark">Fixed configuration</p>
-          <h2 className="z-title-md z-text-dark">synthetic-binary-classifier-v1</h2>
+          <h2 className="z-title-md z-text-dark">Binary classifier v1</h2>
           <dl className="z-config-list">
             {[
               ["Architecture", "Linear(8, 1)"],

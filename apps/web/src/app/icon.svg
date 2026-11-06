@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Zorq">
-  <rect width="64" height="64" rx="14" fill="#0f766e"/>
-  <path d="M18 18h28v8L30 46h16v7H18v-8l16-20H18z" fill="#ffffff"/>
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="#0A0B09" stroke="#D9FF63" stroke-opacity=".28"/>
+  <path d="M32 8 53 19.5v25L32 56 11 44.5v-25L32 8Z" fill="none" stroke="#D9FF63" stroke-opacity=".24" stroke-width="1.5"/>
+  <path d="M20 22h24L29 42h15" fill="none" stroke="#D9FF63" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="44" cy="22" r="2.8" fill="#F3F5ED"/>
 </svg>

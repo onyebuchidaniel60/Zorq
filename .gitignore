@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+.env*
+!.env.example
 .secrets/
 *.pem
 *.key
@@ -38,16 +40,7 @@ Thumbs.db
 # Local artifacts
 *.tmp
 tmp/
-
-# Environment files (the template is committed)
-.env
-.env.local
-.env.*.local
-!.env.example
-
-# TypeScript incremental build info
 *.tsbuildinfo
-.env*
 
 # Hardhat build output
 packages/contracts/artifacts/
