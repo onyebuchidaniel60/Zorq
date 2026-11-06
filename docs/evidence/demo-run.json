@@ -1,0 +1,110 @@
+{
+  "runId": "e18c1749-21f4-4cf4-b74a-2ed107f5d6cf",
+  "status": "completed",
+  "failureCode": null,
+  "finalModelHash": "0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf",
+  "rounds": [
+    {
+      "round": 1,
+      "status": "completed",
+      "block": 341642,
+      "hash": "0xe98f233288e6602bc932fbdaae078d4afad15e1d15143737c96b48eb10e8f9d4",
+      "authorized": 3,
+      "aggregated": 3,
+      "metrics": {
+        "loss": 0.587897,
+        "accuracy": 0.71875
+      }
+    },
+    {
+      "round": 2,
+      "status": "completed",
+      "block": 341651,
+      "hash": "0x91f54cbbf7e1056ca008de16a2406ea9729e66b9969d728ff6a6c4c6e0ac332f",
+      "authorized": 3,
+      "aggregated": 3,
+      "metrics": {
+        "loss": 0.515531,
+        "accuracy": 0.810547
+      }
+    },
+    {
+      "round": 3,
+      "status": "completed",
+      "block": 341656,
+      "hash": "0x176a38c047bba2c79f48e4abb2eec258ad8e282fa07a843c6ba7b99dfdf1b7a9",
+      "authorized": 2,
+      "aggregated": 2,
+      "metrics": {
+        "loss": 0.462994,
+        "accuracy": 0.857422
+      }
+    }
+  ],
+  "checks": [
+    {
+      "roundId": "9fd6069b-6f2f-4a28-921e-67ea26e4ed82",
+      "licenseId": "88a3af2f-58ba-4092-b900-3ffa0b0294ed",
+      "allowed": false,
+      "reason": "REVOKED",
+      "block": 341656
+    },
+    {
+      "roundId": "7af344b9-bf2f-45d8-99c1-90986f618f12",
+      "licenseId": "5d71557b-c291-49b5-bb55-479f312b757e",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341642
+    },
+    {
+      "roundId": "7af344b9-bf2f-45d8-99c1-90986f618f12",
+      "licenseId": "992d1d43-826b-487e-bfa3-51cad2d88669",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341642
+    },
+    {
+      "roundId": "7af344b9-bf2f-45d8-99c1-90986f618f12",
+      "licenseId": "88a3af2f-58ba-4092-b900-3ffa0b0294ed",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341642
+    },
+    {
+      "roundId": "969b4673-8dc8-4b2f-b159-10d324c39f31",
+      "licenseId": "5d71557b-c291-49b5-bb55-479f312b757e",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341651
+    },
+    {
+      "roundId": "969b4673-8dc8-4b2f-b159-10d324c39f31",
+      "licenseId": "992d1d43-826b-487e-bfa3-51cad2d88669",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341651
+    },
+    {
+      "roundId": "969b4673-8dc8-4b2f-b159-10d324c39f31",
+      "licenseId": "88a3af2f-58ba-4092-b900-3ffa0b0294ed",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341651
+    },
+    {
+      "roundId": "9fd6069b-6f2f-4a28-921e-67ea26e4ed82",
+      "licenseId": "5d71557b-c291-49b5-bb55-479f312b757e",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341656
+    },
+    {
+      "roundId": "9fd6069b-6f2f-4a28-921e-67ea26e4ed82",
+      "licenseId": "992d1d43-826b-487e-bfa3-51cad2d88669",
+      "allowed": true,
+      "reason": "AUTHORIZED",
+      "block": 341656
+    }
+  ],
+  "revokedTokenId": "3"
+}

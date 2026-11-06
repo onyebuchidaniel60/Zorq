@@ -1,31 +1,43 @@
 # Zorq Visual Design Decision Record
 
-**Status:** Awaiting operator reference image.  
-**Design source:** `docs/design/reference/` (operator-supplied; do not fetch, generate or substitute).  
+**Status:** Implemented from operator-supplied references.
+**Design source:** `docs/design/reference/reference1.webp` and `reference2.webp`.
 **Approval loop:** Waived. See `docs/DESIGN_APPROVAL.md`.
 
-## Reference
+## Reference inventory
 
 | Item | Value |
 |---|---|
-| Reference image path | `docs/design/reference/` — currently missing; operator supply required before Phase 7 |
-| Reference author/source | Operator-supplied |
-| Date received | Not yet received |
-| Screens/states covered | To be recorded at Phase 6 handoff |
-| Screens/states not covered | To be recorded at Phase 6 handoff; propose an extension here and proceed |
+| Reference image 1 | `docs/design/reference/reference1.webp` — full desktop dashboard, 16:9 |
+| Reference image 2 | `docs/design/reference/reference2.webp` — close-up of the right-hand card stack |
+| Relationship | Image 1 sets composition and hierarchy; image 2 defines surface, spacing, type scale and control treatment at detail level |
+| Precedence if they conflict | Image 2 wins for component-level treatment (radii, spacing, type weight, pill/button shapes); image 1 wins for page composition and navigation |
+| Date received | Supplied before Phase 1; applied in Phase 7 |
 
-## What was adopted verbatim
+## What was adopted
 
-To be recorded in Phase 6/7 after the reference is supplied. Record only visual attributes: composition, navigation hierarchy, spacing rhythm, typography feel, colour treatment, density, surface treatment, motion and status presentation.
+- Light warm-grey page background with large white surfaces and generous `28px`-class corner radii.
+- Thin, icon-only left navigation rail; small black circular brand mark; content starts in a wide card column.
+- Black primary pill action; pale grey secondary pills; mint-tinted status chips for healthy/positive states.
+- Quiet typography: near-black headings with tight tracking, small muted labels with wide tracking, restrained body copy.
+- Dashboard composition: a wide primary card, a stack of narrower cards on the right, large numeric values, subtle divider lines and a vertical rhythm built from 20–24px gaps.
+- Card-internal rows with a label, muted metadata, and a right-aligned value or action.
+- Rounded profile/session surface in the header area; compact icon controls.
 
 ## What was adapted
 
-To be recorded in Phase 6/7. For each adaptation, state the reference attribute, the product constraint that required adaptation, and the resulting Zorq-specific treatment. Do not copy protected logos, proprietary artwork, presenter likeness or exact branded compositions.
+- The reference is a fitness/profile dashboard. Zorq maps its composition to authorization: assets, jobs, licenses and run snapshots replace health metrics and goals.
+- Health toggles and target rows become license/state actions and round-status rows.
+- The reference's photographic profile is replaced with a wallet identity chip and connection state; no personal likeness is copied.
+- The black brand mark is Zorq's own "Z" mark, not the reference logo.
+- Tables collapse to stacked cards on mobile; the reference only shows desktop.
+- Added explicit testnet/synthetic-data disclosure, which the reference does not contain.
+- Motion is limited to short hover translation and colour transitions; reduced-motion is respected.
 
 ## What remained product-specific
 
-- Zorq's route structure, role model, license lifecycle, authorization snapshots and all interaction behaviour stay exactly as specified in `PROJECT_SPEC.md`.
-- Data-visibility rules, permission boundaries, API schemas, contract interactions and state transitions are not changed by visual work.
+- Route structure, role model, license lifecycle, authorization snapshots, permissions and all interaction behaviour remain exactly as specified in `PROJECT_SPEC.md`.
+- No reference feature was invented as a product capability. The UI only exposes implemented APIs; incomplete actions remain labelled.
 - Synthetic-demo and testnet-only disclosures remain visible.
 - Accessibility, keyboard operation, focus visibility, reduced-motion support and responsive behaviour remain mandatory.
 
@@ -33,25 +45,19 @@ To be recorded in Phase 6/7. For each adaptation, state the reference attribute,
 
 | Screen/state class | Covered by reference? | Notes/extension |
 |---|---|---|
-| Landing page | To be recorded | — |
-| App overview/dashboard | To be recorded | — |
-| Asset list, registration and detail | To be recorded | — |
-| Job list, creation and detail | To be recorded | — |
-| License list and detail/revocation confirmation | To be recorded | — |
-| Run dashboard, rounds and authorization evidence | To be recorded | — |
-| Wallet connect, wrong chain, transaction pending/failed/success | To be recorded | — |
-| Loading, empty, validation, error, permission-denied and not-found | To be recorded | — |
-| Desktop, tablet and mobile layouts | To be recorded | — |
-
-If the reference does not cover a primary screen or state, the agent proposes an extension in this table that stays within the frozen product behaviour and proceeds. No mockup or approval round is required.
+| Landing page | Composition only | Extended with Zorq proposition, testnet disclosure and three summary stats |
+| App overview/dashboard | Yes — primary reference screen | Mapped to asset/job/license/run summary cards and recent runs |
+| Asset list, registration and detail | Partial — list/detail card language | Extended with owner-only metadata and on-chain evidence |
+| Job list, creation and detail | Partial | Extended with purpose/model commitments and creator controls |
+| License list and detail/revocation | Partial | Extended with validity windows, soulbound notice and terminal revocation |
+| Run dashboard, rounds and authorization evidence | Not covered | Extended with a round timeline, snapshot block evidence and allow/deny chips |
+| Wallet connect, wrong chain, transaction pending/failed/success | Not covered | Extended with a compact session surface and explicit pending/error copy |
+| Loading, empty, validation, error, permission-denied and not-found | Not covered | Extended with white card states consistent with the reference |
+| Desktop, tablet and mobile layouts | Desktop only | Tablet/mobile use stacked cards, a horizontal nav and full-width controls |
 
 ## Visual implementation notes
 
-- Phase 7 installs Stageshow only for composition, motion, density and faux-product-UI polish consistent with the reference: `npx skills add benjitaylor/skills --skill stageshow`.
-- Stageshow must not override the reference direction or introduce behaviour changes.
-- If the reference implies a feature the product does not have, record the gap here and implement the closest behaviour-consistent equivalent.
-- If no behaviour-consistent equivalent exists, stop and report the specific blocker under `AGENTS.md` §1.1 and §8.
-
-## Approval record
-
-Not applicable. The mockup and approval loop is covered by the operator waiver. This document is a reference-and-adaptation record, not an approval artifact.
+- Phase 7 installed and used the Stageshow skill for composition and faux-product-UI polish only.
+- Reference imagery was not copied; no footage, logos, likeness or verbatim text is reused.
+- The implementation uses system fonts, CSS gradients and simple SVG icons; it introduces no remote asset or tracking dependency.
+- If the reference implied a feature the product does not have, the closest behaviour-consistent equivalent was implemented and recorded above.

@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 5 November 2026
-**Project state:** Phase 3 contract/ APIs and Phase 4 FL service are deployed. Testnet asset and job are confirmed; the Render FL service is live and fail-closed integration is verified. A successful three-round run needs two distinct on-chain licenses, which are blocked by the per-call storage deposit.
-**Current phase:** Phase 4 service complete and deployed; successful run + remaining UI wiring pending funding for two licenses/second asset.
+**Project state:** End-to-end testnet demonstration complete. Three assets and three licenses are on-chain; a three-round Flower run completed with live Portaldot snapshots; a license revoked after round 2`s snapshot was excluded from round 3. The reference-image UI is implemented.
+**Current phase:** Phase 7 complete (reference UI). Phase 8 docs/frontend completeness, Phase 9 release review, and Phase 10 demo video remain.
 
 ## Phase 3 deployment evidence
 
@@ -82,6 +82,8 @@ Current network references recorded in `ARCHITECTURE.md`:
 | Production URL | Out of scope for the MVP; `main` is the Vercel default production branch by project convention |
 | Database | Neon project `zorq-db` (`still-bonus-67603921`), branch `br-solitary-frost-bcm6xvxx`, database `neondb`, region us-east-1 — connected |
 | Render FL service | `https://zorq-fl-service.onrender.com` (service `srv-dbmbfht9fdbs73ccvj5g`, live, health/ready 200) |
+| Demo run | `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` — completed 3/3 |
+| Final model hash | `0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf` |
 | Portaldot contract address | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
 | Contract deployment transaction | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block `337014`) |
 | Testnet asset transaction | `0x2befac3470e0cfa45667266275624428f7b553e20dd98b03811ba56c34303fb0` (block `337097`) |
@@ -119,7 +121,7 @@ Current network references recorded in `ARCHITECTURE.md`:
 ## Known issues / risks / blockers
 
 1. **Resolved — Portaldot contract deployment:** `ZorqRegistry` deployed successfully at `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` in block `337014`.
-2. **Current — successful FL run funding:** testnet asset registration and job creation succeeded, but a license mint needs more storage than the remaining ~19.1 tPOTv3. A successful run needs a second active asset plus two licenses; approximate total additional funding is 70–100 tPOTv3. The Render FL service fail-closed path is verified; the authorized path is blocked on these licenses.
+2. **Resolved — successful FL run:** three assets and three licenses are active; run `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` completed three rounds. Token 3 was revoked at block 341655 and excluded at the round 3 snapshot (block 341656).
 2. **Resolved — Neon terms of service:** operator accepted the marketplace terms; the Neon integration is provisioned and `DATABASE_URL` works against preview and local.
 3. **Environment limitation — Vercel edge checkpoint:** bulk/headless requests to `*.vercel.app` trigger a security checkpoint. CLI access is restored with the operator-supplied `VERCEL_TOKEN`; deployed preview evidence uses a headful xvfb Playwright smoke script. See L-004.
 4. Portaldot native FL API and ZKP API are not established by the public developer docs reviewed. Do not claim native integration.
@@ -194,6 +196,23 @@ Coverage: registration/deactivation, job windows and state transitions, license 
 Deployment: **complete**. Contract `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`, extrinsic `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834`, block `337014`. Read verification passed for `owner`, `supportsInterface`, `name`, `symbol` and `creationPaused`; `eth_getCode` returns 6,861 bytes.
 ```
 
+## Phase 4/5 end-to-end run evidence
+
+```text
+Job: a37f6074-bd7d-44fc-a00c-c737b8a78b77 (chain id 0x98f6b7a3...), created block 341500.
+Assets: partition 0 (0xed1505...), partition 1 (0x03acb2...), partition 2 (0xb5c072...).
+Licenses: token 1 (asset 0), token 2 (asset 1), token 3 (asset 2), all active before the run.
+Run: e18c1749-21f4-4cf4-b74a-2ed107f5d6cf.
+Round 1: snapshot block 341642; 3 authorized, 3 aggregated; loss 0.587897, accuracy 0.71875.
+Round 2: snapshot block 341651; 3 authorized, 3 aggregated; loss 0.515531, accuracy 0.810547.
+Revocation: token 3 revoked in block 341655 (tx 0xd89a1d66d9a4c00e08faf38e5808065f2c6ca4402d9769a9ef2aae0890332028), after round 2 snapshot.
+Round 3: snapshot block 341656; 2 authorized, 2 aggregated; token 3 denied REVOKED; loss 0.462994, accuracy 0.857422.
+Status: completed; final model hash 0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf.
+Evidence file: docs/evidence/demo-run.json.
+```
+
+The sequence demonstrates the exact rule: revocation after a snapshot does not retroactively remove the participant from the round already admitted, and the next snapshot excludes it. The run still completes because two authorized assets remain.
+
 ## Phase 2 completion report
 
 ```text
@@ -260,6 +279,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 **D-011 — 2026-11-05 — Phase 4 — Render Docker service uses the free plan, Oregon region, one instance and `/health`.** Env vars are set from the generated local secret; the service is deployed from `apps/fl-service` on `main`. Files: `apps/fl-service/Dockerfile`, `AI_HANDOFF.md`.
 
 **D-012 — 2026-11-05 — Phase 4 — Render build uses CPU-only PyTorch and no Ray.** `torch==2.9.1+cpu` is resolved from the PyTorch CPU index; the Flower Ray simulation extra was removed because the service uses in-process NumPyClient/FedAvg. This keeps the free-plan image within disk/memory limits. Files: `apps/fl-service/pyproject.toml`, `apps/fl-service/uv.lock`, `apps/fl-service/Dockerfile`.
+
+**D-013 — 2026-11-05 — Phase 5 — Demo job uses three assets so revocation can be shown without stopping the run.** The operator requested two licenses, but a two-asset cohort would fail the next round after revoking one (minimum two authorized assets). A third synthetic asset/license lets round 2 include all three and round 3 continue with two after the revocation. This stays within the 2–5 cohort limit. Files: `apps/web/tests/integration/demo-*.ts`, `AI_HANDOFF.md`.
 
 ## Known Limitations
 

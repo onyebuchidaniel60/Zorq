@@ -12,7 +12,14 @@ export const metadata: Metadata = { title: "Asset detail" };
 export default async function AssetDetailPage({ params }: { params: Promise<{ assetId: string }> }) {
   const session = await getSessionFromCookies();
   const { assetId } = await params;
-  if (!session) return <SignedOutCard feature="Asset detail" />;
+  if (!session) {
+    return (
+      <>
+        <PageHeader eyebrow="Data asset" title="Asset detail" description="Connect your wallet to view owner-only asset metadata." />
+        <SignedOutCard feature="Asset detail" />
+      </>
+    );
+  }
   let asset;
   try { asset = await getAssetForOwner(assetId, session.walletAddress); } catch { notFound(); }
 

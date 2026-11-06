@@ -91,3 +91,18 @@ At minimum: `INVALID_INPUT`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `WRONG
 - Start-run requires `Idempotency-Key`; only one active run per job.
 - Draft/confirmation dedupe by wallet + idempotency key or entity + transaction hash.
 - Internal events/snapshots dedupe by run ID + round number + event type/snapshot ID.
+
+
+## Runs and internal FL endpoints (implemented)
+
+| Method | Path | Auth | Result |
+|---|---|---|---|
+| POST | `/api/jobs/{jobId}/runs` | Session + creator + `Idempotency-Key` | Creates a queued run and calls the FL service; 422 below two active licenses |
+| GET | `/api/runs/{runId}` | Session; creator or participant owner | Role-filtered run, rounds and authorization checks |
+| GET | `/api/runs/{runId}/rounds` | Session; creator or participant owner | Round snapshots and decisions |
+| POST | `/api/internal/runs/{runId}/authorization-snapshot` | Internal bearer | One-block contract snapshot + allow/deny decisions |
+| POST | `/api/internal/runs/{runId}/events` | Internal bearer | Round progress and aggregate metrics |
+| POST | `/api/internal/runs/{runId}/complete` | Internal bearer | Final model hash and aggregate metrics |
+| POST | `/api/internal/runs/{runId}/fail` | Internal bearer | Sanitized failure state |
+
+The internal endpoints are not browser-accessible and require `FL_SERVICE_SHARED_SECRET`. Snapshot evidence is stored in `training_rounds` and `authorization_checks`.

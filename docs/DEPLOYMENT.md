@@ -81,3 +81,17 @@ Do not ask for or log seed phrases/private keys. Store deployment key in secure 
 5. Preserve sanitized audit/transaction evidence.
 6. Do not alter contract data or admin ownership under pressure without operator approval.
 7. Record incident, impact, rollback and recovery steps.
+
+
+## Current deployment record (6 November 2026)
+
+| Item | Value |
+|---|---|
+| Vercel project | `uhhh2/zorq`; stable preview `https://zorq-preview-uhhh2.vercel.app` |
+| Contract | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` on Portaldot V3 testnet |
+| Deployment tx | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` (block 337014) |
+| Render service | `https://zorq-fl-service.onrender.com` (`srv-dbmbfht9fdbs73ccvj5g`) |
+| Neon project | `still-bonus-67603921`, branch `br-solitary-frost-bcm6xvxx` |
+| Demo run | `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf`, completed 3/3 |
+
+Render builds `apps/fl-service/Dockerfile` with CPU-only PyTorch. Vercel Preview carries the contract address, Render URL, service token and Neon URL. Production is out of scope.

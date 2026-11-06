@@ -12,7 +12,14 @@ export const metadata: Metadata = { title: "Run monitor" };
 export default async function RunDetailPage({ params }: { params: Promise<{ runId: string }> }) {
   const session = await getSessionFromCookies();
   const { runId } = await params;
-  if (!session) return <SignedOutCard feature="Run monitor" />;
+  if (!session) {
+    return (
+      <>
+        <PageHeader eyebrow="Federated run" title="Run monitor" description="Connect your wallet to view this run." />
+        <SignedOutCard feature="Run monitor" />
+      </>
+    );
+  }
   let result;
   try { result = await getRunForWallet(runId, session.walletAddress); } catch { notFound(); }
   const { run, rounds, checks } = result!;

@@ -13,7 +13,14 @@ export const metadata: Metadata = { title: "License detail" };
 export default async function LicenseDetailPage({ params }: { params: Promise<{ licenseId: string }> }) {
   const session = await getSessionFromCookies();
   const { licenseId } = await params;
-  if (!session) return <SignedOutCard feature="License detail" />;
+  if (!session) {
+    return (
+      <>
+        <PageHeader eyebrow="DataLicense" title="License detail" description="Connect your wallet to view this license." />
+        <SignedOutCard feature="License detail" />
+      </>
+    );
+  }
   let result;
   try { result = await getLicense(licenseId, session.walletAddress); } catch { notFound(); }
   const { license, job, isOwner } = result!;

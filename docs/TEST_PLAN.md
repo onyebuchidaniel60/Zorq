@@ -123,3 +123,18 @@ Every checkpoint records commit SHA, exact commands, pass/fail output, E2E URL, 
 | Readiness | `GET /api/ready` | 503 with database connected, chain verified, contract not deployed |
 
 The deployed preview smoke requires a display because Vercel's edge checkpoint rejects headless bulk traffic from this environment; use `xvfb-run` on Linux. The script never prints tokens, connection strings or signatures.
+
+
+## Phase 4/5 live run evidence (6 November 2026)
+
+| Check | Result |
+|---|---|
+| Contract tests | 11/11 passing |
+| FL simulation tests | 3/3 passing |
+| Web unit/scaffold | 10/10 Vitest + 4/4 scaffold |
+| Local Playwright | 40/40 desktop + mobile |
+| Preview smoke | All routes, sr25519 sign-in, cookie flags, replay rejection, logout |
+| Preview data UI | Deployer session; assets/jobs/licenses/job detail/run monitor; run page shows `REVOKED` and `completed` |
+| Three-round run | `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` completed 3/3 |
+| Revocation rule | Token 3 revoked block `341655`, denied at round-3 snapshot `341656`, rounds 1–2 included it |
+| Final model hash | `0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf` |

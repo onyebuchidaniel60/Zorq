@@ -13,7 +13,14 @@ export const metadata: Metadata = { title: "Job detail" };
 export default async function JobDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
   const session = await getSessionFromCookies();
   const { jobId } = await params;
-  if (!session) return <SignedOutCard feature="Job detail" />;
+  if (!session) {
+    return (
+      <>
+        <PageHeader eyebrow="Federated-learning job" title="Job detail" description="Connect your wallet to view this job." />
+        <SignedOutCard feature="Job detail" />
+      </>
+    );
+  }
   let result;
   try { result = await getJob(jobId, session.walletAddress); } catch { notFound(); }
   const { job } = result!;

@@ -87,3 +87,15 @@ Only the job creator can change job state. Pause blocks future admission/rounds.
 ## Support
 
 Use only the actual support link published in the deployed app. This guide does not invent a contact address.
+
+
+## Current testnet workflow
+
+1. Open `https://zorq-preview-uhhh2.vercel.app/app` with a Substrate wallet extension (polkadot.js, Talisman or SubWallet).
+2. Connect the wallet and sign the SIWE message; this creates an eight-hour session.
+3. Register a synthetic asset (partition 0–4). The wallet signs `registerAsset`.
+4. Create a job with a public purpose and a 2–5 asset cohort cap. The wallet signs `createJob`.
+5. On the job detail, issue a DataLicense for an owned active asset. The wallet signs `issueLicense`.
+6. Repeat for at least two distinct assets, then start the three-round run.
+7. Open the run monitor to see each round's snapshot block, authorized/aggregated count and aggregate metrics.
+8. Revoke a license between rounds. The next snapshot denies it; if at least two authorized assets remain, later rounds continue.

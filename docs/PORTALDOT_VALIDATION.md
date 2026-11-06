@@ -74,3 +74,17 @@ Do not implement a `PortaldotNativeFLProvider` or Portaldot ZKP adapter from hig
 - Portaldot Hacker House listing: https://dorahacks.io/hackathon/portaldot-hacker-house-2026/detail
 
 This document is a validation checklist, not a claim that all checks have already passed.
+
+
+## Phase 3/4 live deployment evidence (6 November 2026)
+
+- `ZorqRegistry`: `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`
+- Deployment extrinsic: `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834`, block `337014`
+- `owner()`: `0xFb7E252faE2D9e5A849361C22d7E4F8be2BB32Bf`
+- `supportsInterface(0x80ac58cd)`: `true`
+- Runtime code: 6,861 bytes (`eth_getCode`)
+- Testnet asset txs: block `337097` (partition 0), `341505` (partition 1), `341508` (partition 2)
+- Testnet job tx: block `341500`
+- License txs: blocks `341528`, `341533`, `341536`
+- Revocation tx: `0xd89a1d66d9a4c00e08faf38e5808065f2c6ca4402d9769a9ef2aae0890332028`, block `341655`
+- Next snapshot block `341656` denied the revoked token; run completed 3/3 with two remaining assets.

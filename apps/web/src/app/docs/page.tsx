@@ -13,7 +13,7 @@ const sections = [
   {
     id: "overview",
     title: "Overview",
-    body: "Zorq is a programmable authorization layer for federated machine learning. A data owner grants one asset the right to participate in one training job for a bounded time window. The right is represented by a non-transferable ERC-721 DataLicense on the Portaldot V3 EVM testnet.",
+    body: "Zorq is a programmable authorization layer for federated machine learning. A data owner grants one asset the right to participate in one training job for a bounded time window. The right is represented by a non-transferable ERC-721 DataLicense on the Portaldot V3 EVM testnet. The live demo contract is 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff.",
   },
   {
     id: "license-lifecycle",
@@ -23,7 +23,7 @@ const sections = [
   {
     id: "round-snapshots",
     title: "Round snapshots",
-    body: "Before admission and before every training round, the coordinator asks the Zorq backend for one authorization snapshot. All candidate licenses are read from the contract at one confirmed block number and hash. Only the returned allowlist may train and contribute to that round.",
+    body: "Before admission and before every training round, the coordinator asks the Zorq backend for one authorization snapshot. All candidate licenses are read from the contract at one confirmed block number and hash. Only the returned allowlist may train and contribute to that round. The demo run completed three rounds; a license revoked after round 2's snapshot was denied at round 3.",
   },
   {
     id: "revocation",
@@ -83,11 +83,10 @@ export default function DocsPage() {
           <section className="rounded-xl border border-border bg-slate-50 p-6">
             <h2 className="text-lg font-semibold">Prototype status</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              The application is delivered in phases. Asset registration, job
-              creation, licensing and Flower training are not yet available in
-              this preview. Each unfinished screen is labelled with the phase
-              that will deliver it. Do not treat a placeholder as evidence that
-              a transaction or training run succeeded.
+              Asset registration, job creation, license issuance/revocation and
+              the three-round Flower demonstration are live on the Portaldot V3
+              testnet. Only synthetic data is used. Wallet-signed actions require
+              a Substrate extension and testnet POT for gas/storage deposits.
             </p>
             <p className="mt-3 text-sm leading-6 text-muted">
               Project source and issue tracking:{" "}

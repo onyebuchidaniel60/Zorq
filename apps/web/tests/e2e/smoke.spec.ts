@@ -45,14 +45,14 @@ test.describe("public and app shell", () => {
     }
   });
 
-  test("keeps unfinished controls visibly disabled", async ({ page }) => {
+  test("authenticated actions ask for a wallet session", async ({ page }) => {
+    for (const route of ["/app/assets/new", "/app/jobs/new"]) {
+      await page.goto(route);
+      await expect(page.getByRole("heading", { name: "Connect a wallet to continue" })).toBeVisible();
+      await expect(page.getByRole("button", { name: /connect wallet/i }).first()).toBeVisible();
+    }
     await page.goto("/app/assets");
-    await expect(page.getByRole("button", { name: /register asset/i })).toBeDisabled();
-    await page.goto("/app/jobs");
-    await expect(page.getByRole("button", { name: /create job/i })).toBeDisabled();
-    await page.goto("/app/assets/new");
-    await expect(page.getByLabel("Display name")).toBeDisabled();
-    await expect(page.getByText("Form preview · Phase 3")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Register asset" })).toBeVisible();
   });
 
   test("health endpoint is liveness-only", async ({ request }) => {

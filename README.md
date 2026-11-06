@@ -19,14 +19,15 @@ Zorq lets a data owner authorize one of their registered data assets to particip
 
 ## Status
 
-**Phase 3/4 in progress — Portaldot contract deployed; wallet authentication, database and domain APIs live; Flower FL service implemented.**
+**Testnet MVP complete — Portaldot contract deployed, three-round Flower run completed, revocation exclusion proven, and the reference-image UI implemented.**
 
 - Stable preview: <https://zorq-preview-uhhh2.vercel.app>
 - Portaldot V3 testnet contract: `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`
 - FL service: <https://zorq-fl-service.onrender.com>
+- Demo run: `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` (3/3 rounds, final hash `0x1368046d…602caf`)
 - Wallet sign-in uses an EIP-4361 SIWE message signed by the user's Substrate sr25519 account; the server verifies the signature and binds the SS58 account to its chain-derived H160.
 - Postgres (Neon via Vercel) stores users, one-use nonces, audit events, idempotency records and rate-limit buckets. Migrations are versioned in `packages/db/migrations`.
-- Asset and job transactions are implemented and confirmed on testnet. License issuance/revocation APIs are implemented; the testnet license mint currently needs a small additional storage-deposit top-up (see `AI_HANDOFF.md`).
+- Asset, job and license transactions are confirmed on Portaldot V3 testnet. The coordinator uses one confirmed snapshot per round; a license revoked after round 2 was excluded at round 3 while the run still completed with two authorized assets.
 - Flower FL service: see [`docs/FL_SERVICE.md`](./docs/FL_SERVICE.md).
 - Portaldot V3 EVM testnet chain ID `420420777` is verified live. The contract is not deployed yet.
 - Design reference images and a reference video are committed under `docs/design/reference/` and `docs/demo/reference/`. They are not used for styling until Phase 7 and demo production.
