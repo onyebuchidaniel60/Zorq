@@ -147,6 +147,11 @@ export function RunLive({
           <div>
             {rounds.map((round) => {
               const roundChecks = checks.filter((check) => check.roundId === round.id);
+              const failedParticipants = Array.isArray(
+                round.aggregateMetrics?.failedParticipants,
+              )
+                ? (round.aggregateMetrics.failedParticipants as Array<Record<string, unknown>>)
+                : [];
               return (
                 <article key={round.id} className="z-round-card">
                   <div className="z-round-head">
@@ -187,6 +192,15 @@ export function RunLive({
                       >
                         {check.allowed ? "ALLOWED" : "DENIED"} · {check.licenseId.slice(0, 8)}… ·{" "}
                         {check.reasonCode}
+                      </span>
+                    ))}
+                    {failedParticipants.map((participant, index) => (
+                      <span
+                        key={`failed-${index}`}
+                        className="z-check z-check-deny"
+                      >
+                        DATA FAILED · {String(participant.assetId ?? "participant").slice(0, 8)}… ·{" "}
+                        {String(participant.reason ?? "UNAVAILABLE")}
                       </span>
                     ))}
                   </div>

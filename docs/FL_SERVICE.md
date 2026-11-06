@@ -56,3 +56,8 @@ The tests cover three-round completion with two authorized clients, fail-closed 
 - Dockerfile: `apps/fl-service/Dockerfile`; root directory `apps/fl-service`
 - Plan: free; region: Oregon; health check: `/health`
 - CPU-only PyTorch (`torch==2.9.1+cpu`) to fit the free build/runtime footprint.
+
+
+## External database participants
+
+An authorized external asset carries `dataSource: "external"`, an encrypted-at-rest database URL, a table name and a label column in the internal snapshot. The coordinator uses SQLAlchemy with psycopg and pandas to read up to 1,000 rows, select up to eight numeric features, normalize a binary label and build train/evaluation tensors. If the connection or normalization fails, that participant is marked as a data failure and skipped; the run continues only if at least two participants load successfully. Raw rows are not persisted.

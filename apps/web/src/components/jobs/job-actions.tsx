@@ -4,21 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
-import { contractAddress, getContractClients } from "@/lib/wallet-client";
+import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   fetchWithAuth,
+  logClientError,
   readApiError,
   readJsonObject,
-  transactionHash,
   userFacingError,
 } from "@/lib/client-api";
-import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 
 type Asset = {
   id: string;
   displayName: string;
   status: string;
-  demoPartitionId: number;
+  dataSource: string;
+  demoPartitionId: number | null;
 };
 type Job = {
   id: string;
@@ -37,7 +37,9 @@ function isAsset(value: unknown): value is Asset {
     typeof (value as Asset).id === "string" &&
     typeof (value as Asset).displayName === "string" &&
     typeof (value as Asset).status === "string" &&
-    typeof (value as Asset).demoPartitionId === "number"
+    typeof (value as Asset).dataSource === "string" &&
+    ((value as Asset).demoPartitionId === null ||
+      typeof (value as Asset).demoPartitionId === "number")
   );
 }
 
@@ -89,6 +91,7 @@ export function JobActions({ job }: { job: Job }) {
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
+          logClientError("job.assets", cause);
           setError(userFacingError(cause, "Your assets could not be loaded."));
         }
       });
@@ -99,10 +102,7 @@ export function JobActions({ job }: { job: Job }) {
   }, [user, signIn]);
 
   async function withWallet(
-    action: (
-      clients: Awaited<ReturnType<typeof getContractClients>>,
-      activeWallet: NonNullable<typeof wallet>,
-    ) => Promise<void>,
+    action: (activeWallet: NonNullable<typeof wallet>) => Promise<void>,
   ) {
     setError(null);
     try {
@@ -116,9 +116,10 @@ export function JobActions({ job }: { job: Job }) {
       } else if (!activeWallet) {
         activeWallet = await ensureWallet();
       }
-      await action(await getContractClients(activeWallet), activeWallet);
+      await action(activeWallet);
       router.refresh();
     } catch (cause) {
+      logClientError("job.action", cause);
       setError(userFacingError(cause, "The action could not be completed."));
       setStatus(null);
     }
@@ -126,7 +127,7 @@ export function JobActions({ job }: { job: Job }) {
 
   async function issueLicense(event: React.FormEvent) {
     event.preventDefault();
-    await withWallet(async ({ walletClient, publicClient }, activeWallet) => {
+    await withWallet(async (activeWallet) => {
       setStatus("Preparing the license draft…");
       const response = await fetchWithAuth(
         "/api/licenses/drafts",
@@ -161,33 +162,24 @@ export function JobActions({ job }: { job: Job }) {
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const hash = transactionHash(
-        await walletClient.writeContract({
-          address: contractAddress(),
-          abi: ZORQ_REGISTRY_ABI,
-          functionName: "issueLicense",
-          args: [
-            draft.args[0] as `0x${string}`,
-            draft.args[1] as `0x${string}`,
-            BigInt(Math.trunc(Number(draft.args[2]))),
-            BigInt(Math.trunc(Number(draft.args[3]))),
-          ],
-          account: activeWallet.walletAddress as `0x${string}`,
-          chain: null,
-        }),
+      const { hash, blockHash } = await submitContractTransaction(
+        activeWallet,
+        "issueLicense",
+        [
+          draft.args[0] as `0x${string}`,
+          draft.args[1] as `0x${string}`,
+          BigInt(Math.trunc(Number(draft.args[2]))),
+          BigInt(Math.trunc(Number(draft.args[3]))),
+        ],
       );
 
       setStatus("Waiting for block confirmation…");
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 120_000,
-      });
       const confirm = await fetchWithAuth(
         `/api/licenses/${draft.licenseId}/confirm`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+          body: JSON.stringify({ txHash: hash, blockHash }),
         },
         signIn,
         activeWallet,
@@ -225,29 +217,20 @@ export function JobActions({ job }: { job: Job }) {
   }
 
   async function setState(next: "paused" | "closed" | "open") {
-    await withWallet(async ({ walletClient, publicClient }, activeWallet) => {
+    await withWallet(async (activeWallet) => {
       setStatus(`Updating job state to ${next}…`);
       const enumValue = next === "open" ? 0 : next === "paused" ? 1 : 2;
-      const hash = transactionHash(
-        await walletClient.writeContract({
-          address: contractAddress(),
-          abi: ZORQ_REGISTRY_ABI,
-          functionName: "setJobState",
-          args: [job.chainJobId as `0x${string}`, enumValue],
-          account: activeWallet.walletAddress as `0x${string}`,
-          chain: null,
-        }),
+      const { hash, blockHash } = await submitContractTransaction(
+        activeWallet,
+        "setJobState",
+        [job.chainJobId as `0x${string}`, enumValue],
       );
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 120_000,
-      });
       const confirm = await fetchWithAuth(
         `/api/jobs/${job.id}/state/confirm`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expectedState: next, txHash: hash, blockHash: receipt.blockHash }),
+          body: JSON.stringify({ expectedState: next, txHash: hash, blockHash }),
         },
         signIn,
         activeWallet,
@@ -340,7 +323,7 @@ export function JobActions({ job }: { job: Job }) {
               >
                 {assets.map((asset) => (
                   <option key={asset.id} value={asset.id}>
-                    {asset.displayName} · partition {asset.demoPartitionId}
+                    {asset.displayName} · {asset.dataSource === "external" ? "external database" : `partition ${asset.demoPartitionId}`}
                   </option>
                 ))}
               </select>

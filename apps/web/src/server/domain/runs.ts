@@ -16,6 +16,7 @@ import { contractAddress, getPublicClient } from "../chain/contract";
 import { ZORQ_REGISTRY_ABI } from "../chain/zorq-registry-abi";
 import { getServerEnv } from "../env";
 import { startFlRun } from "../fl/client";
+import { decryptDbUrl } from "./external-db";
 
 const REASONS = [
   "AUTHORIZED",
@@ -70,6 +71,9 @@ export async function startRun(input: {
       licenseId: jobParticipants.licenseId,
       ownerWallet: jobParticipants.ownerWallet,
       partitionId: dataAssets.demoPartitionId,
+      dataSource: dataAssets.dataSource,
+      dbTable: dataAssets.dbTable,
+      labelColumn: dataAssets.labelColumn,
       licenseStatus: licenses.statusMirror,
     })
     .from(jobParticipants)
@@ -126,6 +130,9 @@ export async function startRun(input: {
       participants: eligible.map((participant) => ({
         assetId: participant.assetId,
         partitionId: participant.partitionId,
+        dataSource: participant.dataSource === "external" ? "external" : "demo",
+        dbTable: participant.dbTable,
+        labelColumn: participant.labelColumn,
         ownerWallet: participant.ownerWallet,
       })),
     });
@@ -183,6 +190,53 @@ export async function authorizationSnapshot(input: {
       .select()
       .from(authorizationChecks)
       .where(eq(authorizationChecks.roundId, existingRound.id));
+    const existingCandidates = await db
+      .select({
+        assetId: jobParticipants.assetId,
+        licenseId: jobParticipants.licenseId,
+        ownerWallet: jobParticipants.ownerWallet,
+        partitionId: dataAssets.demoPartitionId,
+        dataSource: dataAssets.dataSource,
+        dbUrl: dataAssets.dbUrl,
+        dbTable: dataAssets.dbTable,
+        labelColumn: dataAssets.labelColumn,
+      })
+      .from(jobParticipants)
+      .innerJoin(dataAssets, eq(dataAssets.id, jobParticipants.assetId))
+      .where(eq(jobParticipants.jobId, run.jobId));
+    const candidateByLicense = new Map(
+      existingCandidates.map((candidate) => [candidate.licenseId, candidate]),
+    );
+    const enrich = (check: (typeof checks)[number]) => {
+      const candidate = candidateByLicense.get(check.licenseId);
+      if (!candidate) {
+        return {
+          licenseId: check.licenseId,
+          participantWallet: check.participantWallet,
+        };
+      }
+      const external = candidate.dataSource === "external";
+      let dbUrl: string | null = null;
+      let dbError: string | null = null;
+      if (external && candidate.dbUrl) {
+        try {
+          dbUrl = decryptDbUrl(candidate.dbUrl);
+        } catch {
+          dbError = "External database reference unavailable.";
+        }
+      }
+      return {
+        licenseId: check.licenseId,
+        participantWallet: check.participantWallet,
+        assetId: candidate.assetId,
+        partitionId: candidate.partitionId,
+        dataSource: external ? "external" : "demo",
+        dbUrl,
+        dbTable: candidate.dbTable,
+        labelColumn: candidate.labelColumn,
+        ...(dbError ? { dbError } : {}),
+      };
+    };
     return {
       runId: run.id,
       roundNumber: input.roundNumber,
@@ -191,12 +245,7 @@ export async function authorizationSnapshot(input: {
         blockHash: existingRound.snapshotBlockHash,
         blockTimestamp: existingRound.snapshotBlockTimestamp?.toISOString(),
       },
-      allowed: checks
-        .filter((check) => check.allowed)
-        .map((check) => ({
-          licenseId: check.licenseId,
-          participantWallet: check.participantWallet,
-        })),
+      allowed: checks.filter((check) => check.allowed).map(enrich),
       denied: checks
         .filter((check) => !check.allowed)
         .map((check) => ({
@@ -219,6 +268,10 @@ export async function authorizationSnapshot(input: {
       ownerWallet: jobParticipants.ownerWallet,
       partitionId: dataAssets.demoPartitionId,
       chainAssetId: dataAssets.chainAssetId,
+      dataSource: dataAssets.dataSource,
+      dbUrl: dataAssets.dbUrl,
+      dbTable: dataAssets.dbTable,
+      labelColumn: dataAssets.labelColumn,
     })
     .from(jobParticipants)
     .innerJoin(dataAssets, eq(dataAssets.id, jobParticipants.assetId))
@@ -306,11 +359,26 @@ export async function authorizationSnapshot(input: {
       });
 
       if (allowedFlag) {
+        const external = candidate.dataSource === "external";
+        let dbUrl: string | null = null;
+        let dbError: string | null = null;
+        if (external && candidate.dbUrl) {
+          try {
+            dbUrl = decryptDbUrl(candidate.dbUrl);
+          } catch {
+            dbError = "External database reference unavailable.";
+          }
+        }
         allowed.push({
           licenseId,
           assetId: candidate.assetId,
           participantWallet: candidate.ownerWallet,
           partitionId: candidate.partitionId,
+          dataSource: external ? "external" : "demo",
+          dbUrl,
+          dbTable: candidate.dbTable,
+          labelColumn: candidate.labelColumn,
+          ...(dbError ? { dbError } : {}),
           tokenId: latestToken.toString(),
         });
       } else {

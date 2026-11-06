@@ -3,15 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
-import { contractAddress, getContractClients } from "@/lib/wallet-client";
+import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   fetchWithAuth,
+  logClientError,
   readApiError,
   readJsonObject,
-  transactionHash,
   userFacingError,
 } from "@/lib/client-api";
-import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 
 const PARTITIONS = [0, 1, 2, 3, 4] as const;
 
@@ -30,6 +29,10 @@ export function NewAssetForm({
   const { wallet, user, ensureWallet, signIn } = useWallet();
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
+  const [dataSource, setDataSource] = useState<"demo" | "external">("demo");
+  const [dbUrl, setDbUrl] = useState("");
+  const [dbTable, setDbTable] = useState("");
+  const [labelColumn, setLabelColumn] = useState("label");
   const [usedPartitions] = useState<number[]>(
     [...new Set(initialUsedPartitions)].sort((left, right) => left - right),
   );
@@ -41,8 +44,13 @@ export function NewAssetForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (partition === null) {
+    const isExternal = dataSource === "external";
+    if (!isExternal && partition === null) {
       setError("No data partition is available. Deactivate an unused asset before registering another.");
+      return;
+    }
+    if (isExternal && (!dbUrl.trim() || !dbTable.trim())) {
+      setError("Enter the external database URL and table name.");
       return;
     }
     setError(null);
@@ -68,7 +76,14 @@ export function NewAssetForm({
           body: JSON.stringify({
             displayName,
             description,
-            demoPartitionId: partition,
+            dataSource,
+            ...(isExternal
+              ? {
+                  dbUrl: dbUrl.trim(),
+                  dbTable: dbTable.trim(),
+                  labelColumn: labelColumn.trim() || "label",
+                }
+              : { demoPartitionId: partition }),
             idempotencyKey: crypto.randomUUID(),
           }),
         },
@@ -91,29 +106,19 @@ export function NewAssetForm({
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const { walletClient, publicClient } = await getContractClients(activeWallet);
-      const hash = transactionHash(
-        await walletClient.writeContract({
-          address: contractAddress(),
-          abi: ZORQ_REGISTRY_ABI,
-          functionName: "registerAsset",
-          args: [draft.chainAssetId, draft.metadataCommitment],
-          account: activeWallet.walletAddress as `0x${string}`,
-          chain: null,
-        }),
+      const { hash, blockHash } = await submitContractTransaction(
+        activeWallet,
+        "registerAsset",
+        [draft.chainAssetId, draft.metadataCommitment],
       );
 
       setStatus("Waiting for block confirmation…");
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 120_000,
-      });
       const confirmResponse = await fetchWithAuth(
         `/api/assets/${draft.assetId}/confirm`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+          body: JSON.stringify({ txHash: hash, blockHash }),
         },
         signIn,
         activeWallet,
@@ -125,6 +130,7 @@ export function NewAssetForm({
       setStatus("Asset registered");
       router.push(`/app/assets/${draft.assetId}`);
     } catch (cause) {
+      logClientError("asset.register", cause);
       setError(
         userFacingError(
           cause,
@@ -181,6 +187,96 @@ export function NewAssetForm({
             />
           </div>
 
+          <fieldset className="z-field">
+            <legend className="z-label">Data Source</legend>
+            <div className="z-source-toggle">
+              <label className={`z-source-option ${dataSource === "demo" ? "is-active" : ""}`}>
+                <input
+                  type="radio"
+                  name="data-source"
+                  value="demo"
+                  checked={dataSource === "demo"}
+                  onChange={() => setDataSource("demo")}
+                  className="sr-only"
+                />
+                <span>Demo Partition</span>
+                <small>Generated eight-feature evaluation data</small>
+              </label>
+              <label className={`z-source-option ${dataSource === "external" ? "is-active" : ""}`}>
+                <input
+                  type="radio"
+                  name="data-source"
+                  value="external"
+                  checked={dataSource === "external"}
+                  onChange={() => setDataSource("external")}
+                  className="sr-only"
+                />
+                <span>External Database</span>
+                <small>Read-only PostgreSQL table</small>
+              </label>
+            </div>
+          </fieldset>
+
+          {dataSource === "external" ? (
+            <>
+              <div className="z-field">
+                <label htmlFor="asset-db-url" className="z-label">
+                  Database URL
+                </label>
+                <input
+                  id="asset-db-url"
+                  type="password"
+                  value={dbUrl}
+                  onChange={(event) => setDbUrl(event.target.value)}
+                  required
+                  autoComplete="off"
+                  placeholder="postgresql://user:password@host:5432/database"
+                  className="z-input"
+                />
+                <p className="z-help">
+                  Encrypted at rest and sent only to the internal coordinator. It is
+                  never returned to the browser or shown to other users.
+                </p>
+              </div>
+              <div className="z-field-grid">
+                <div className="z-field">
+                  <label htmlFor="asset-db-table" className="z-label">
+                    Table Name
+                  </label>
+                  <input
+                    id="asset-db-table"
+                    value={dbTable}
+                    onChange={(event) => setDbTable(event.target.value)}
+                    required
+                    placeholder="public.training_rows"
+                    className="z-input"
+                  />
+                </div>
+                <div className="z-field">
+                  <label htmlFor="asset-label-column" className="z-label">
+                    Target Label Column
+                  </label>
+                  <input
+                    id="asset-label-column"
+                    value={labelColumn}
+                    onChange={(event) => setLabelColumn(event.target.value)}
+                    required
+                    placeholder="label"
+                    className="z-input"
+                  />
+                </div>
+              </div>
+              <div className="z-alert z-alert-info">
+                <span className="z-alert-mark">i</span>
+                <p>
+                  The coordinator runs a read-only{" "}
+                  <code className="z-code">SELECT * FROM {dbTable || "table"} LIMIT 1000</code>,
+                  normalizes up to eight numeric features and discards the raw rows
+                  after training.
+                </p>
+              </div>
+            </>
+          ) : (
           <div className="z-field">
             <div className="z-label-row">
               <label htmlFor="asset-partition" className="z-label">
@@ -215,11 +311,15 @@ export function NewAssetForm({
               read from the database and disabled before submission.
             </p>
           </div>
+          )}
 
           <div className="z-form-actions">
             <button
               type="submit"
-              disabled={Boolean(status && status !== "Asset registered") || freeCount === 0}
+              disabled={
+                Boolean(status && status !== "Asset registered") ||
+                (dataSource === "demo" && freeCount === 0)
+              }
               className="z-button"
             >
               {status ?? (user ? "Register asset" : "Sign in and register")}
@@ -255,10 +355,13 @@ export function NewAssetForm({
 
         <section className="z-card z-card-lime z-side-card">
           <p className="z-eyebrow z-eyebrow-dark">Data boundary</p>
-          <h2 className="z-title-md z-text-dark">Commitment, not custody</h2>
+          <h2 className="z-title-md z-text-dark">
+            {dataSource === "external" ? "Read-only by design" : "Commitment, not custody"}
+          </h2>
           <p className="z-copy z-text-dark-soft">
-            A salted commitment is integrity evidence. Raw data partitions never
-            leave the provider&apos;s runtime.
+            {dataSource === "external"
+              ? "Connection details are encrypted at rest. The coordinator reads up to 1,000 rows for training and discards the raw result after the round."
+              : "A salted commitment is integrity evidence. Raw data partitions never leave the provider's runtime."}
           </p>
         </section>
 

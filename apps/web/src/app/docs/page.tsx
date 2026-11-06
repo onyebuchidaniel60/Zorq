@@ -35,6 +35,18 @@ const sections: DocsSection[] = [
     ],
   },
   {
+    id: "external-databases",
+    title: "External databases",
+    body: "Asset registration supports generated demo partitions or a read-only external PostgreSQL table. External connection URLs are encrypted at rest and are never returned by browser-facing APIs. The coordinator decrypts the reference only for the internal authorization snapshot.",
+    points: [
+      "PostgreSQL URLs, table names and target-label columns are validated server-side.",
+      "The coordinator reads at most 1,000 rows with SQLAlchemy and pandas.",
+      "Up to eight numeric columns become model features; the label is normalized to a binary target.",
+      "Raw rows are discarded after training and are never written to Zorq storage.",
+      "A failed external connection marks that participant as a data failure and skips it without crashing the run.",
+    ],
+  },
+  {
     id: "license-lifecycle",
     title: "License lifecycle",
     body: "A license is issued by the registered asset owner, bound to a single job and valid only inside [validFrom, validUntil). It can be revoked by the owner; revocation is terminal for that token. A later revision may be issued after revocation or expiry while the asset and job remain eligible.",
@@ -112,8 +124,8 @@ const sections: DocsSection[] = [
     body: "The verification suite covers the contract, FL coordinator, authentication, domain APIs, client parsing and responsive browser routes.",
     points: [
       "Solidity tests: 11/11",
-      "FL service tests: 3/3",
-      "Web unit and scaffold tests: 21/21 + 4/4",
+      "FL service tests: 7/7",
+      "Web unit and scaffold tests: 27/27 + 4/4",
       "Playwright desktop + mobile: 40/40",
       "Deployed sign-in and data-page smoke: pass",
     ],

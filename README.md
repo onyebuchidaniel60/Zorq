@@ -35,6 +35,23 @@ flowchart LR
 
 The browser never receives database credentials, service tokens or private keys. The FL service calls the web app's internal API only; it does not connect to PostgreSQL directly.
 
+## External databases
+
+Asset registration supports two data sources:
+
+- **Demo Partition** — generated eight-feature evaluation data, one active asset per partition (0–4).
+- **External Database** — a read-only PostgreSQL table supplied by the asset owner.
+
+For an external asset the browser sends a PostgreSQL URL, table name and target-label column. The URL is encrypted at rest with AES-256-GCM derived from `SESSION_SECRET`; it is never returned by the asset APIs. The coordinator decrypts it only for the internal authorization snapshot and uses SQLAlchemy/pandas to run:
+
+```sql
+SELECT * FROM "table" LIMIT 1000
+```
+
+Table and label identifiers are validated against a strict identifier grammar and quoted. The coordinator uses up to eight numeric feature columns, normalizes a binary target, splits rows into train/evaluation tensors and discards the raw rows after the round. If an external connection fails, that participant is marked as a data failure and skipped; the run continues if at least two authorized participants load successfully. External database credentials are testnet/demo credentials only and should never be production secrets.
+
+The schema migration for this feature is `packages/db/migrations/0003_abandoned_vivisector.sql`.
+
 ## Live deployment
 
 | Item | Value |

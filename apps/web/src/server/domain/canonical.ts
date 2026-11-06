@@ -71,7 +71,10 @@ export function metadataCommitment(input: {
   ownerWallet: string;
   displayName: string;
   description: string | null;
-  demoPartitionId: number;
+  dataSource?: "demo" | "external";
+  demoPartitionId: number | null;
+  dbTable?: string | null;
+  labelColumn?: string | null;
   salt: string;
 }): `0x${string}` {
   const digest = hashText(
@@ -80,7 +83,10 @@ export function metadataCommitment(input: {
       ownerAddressLowercase: input.ownerWallet.toLowerCase(),
       displayName: input.displayName,
       description: input.description ?? "",
+      dataSource: input.dataSource ?? "demo",
       demoPartitionId: input.demoPartitionId,
+      dbTable: input.dbTable ?? null,
+      labelColumn: input.labelColumn ?? null,
     }),
   );
 

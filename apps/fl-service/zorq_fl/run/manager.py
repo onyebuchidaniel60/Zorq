@@ -7,6 +7,7 @@ from typing import Any
 
 from zorq_fl.backend.client import BackendError, ZorqBackendClient
 from zorq_fl.flower_app.client import ZorqClient
+from zorq_fl.model.external import ExternalDataError
 from zorq_fl.flower_app.strategy import (
     AuthorizationFedAvg,
     InsufficientAuthorizedParticipants,
@@ -20,8 +21,11 @@ from zorq_fl.model.synthetic import (
     model_hash,
     set_parameters,
 )
+import logging
 import torch
 from types import SimpleNamespace
+
+logger = logging.getLogger(__name__)
 from flwr.common import (
     Code,
     FitRes,
@@ -103,6 +107,7 @@ async def run_simulation(
     participant_partitions = {
         str(participant["assetId"]): int(participant["partitionId"])
         for participant in state.participants
+        if participant.get("partitionId") is not None
     }
 
     try:
@@ -116,36 +121,81 @@ async def run_simulation(
                     "Fewer than two distinct authorized assets remain.",
                 )
 
-            allowed_clients: list[tuple[str, int]] = []
+            allowed_clients: list[dict[str, Any]] = []
+            failed_participants: list[dict[str, str]] = []
             for entry in allowed:
                 asset_id = str(entry.get("assetId", ""))
+                source = str(entry.get("dataSource") or "demo")
+                if source == "external":
+                    db_url = entry.get("dbUrl")
+                    db_table = entry.get("dbTable")
+                    if not db_url or not db_table:
+                        failed_participants.append(
+                            {"assetId": asset_id, "reason": "EXTERNAL_DATABASE_UNAVAILABLE"}
+                        )
+                        continue
+                    allowed_clients.append(
+                        {
+                            "cid": f"ext-{asset_id}",
+                            "assetId": asset_id,
+                            "partitionId": None,
+                            "external": {
+                                "dbUrl": str(db_url),
+                                "dbTable": str(db_table),
+                                "labelColumn": str(entry.get("labelColumn") or "label"),
+                            },
+                        }
+                    )
+                    continue
                 partition_id = entry.get("partitionId")
                 if partition_id is None:
                     partition_id = participant_partitions.get(asset_id)
                 if partition_id is None:
                     raise RunFailure(
                         "INVALID_SNAPSHOT",
-                        "An authorized asset has no synthetic partition mapping.",
+                        "An authorized asset has no data-source mapping.",
                     )
-                allowed_clients.append((f"p{int(partition_id)}", int(partition_id)))
+                allowed_clients.append(
+                    {
+                        "cid": f"p{int(partition_id)}",
+                        "assetId": asset_id,
+                        "partitionId": int(partition_id),
+                        "external": None,
+                    }
+                )
 
-            allowed_cids = {cid for cid, _ in allowed_clients}
+            allowed_cids = {entry["cid"] for entry in allowed_clients}
             if len(allowed_cids) != len(allowed_clients):
                 raise RunFailure(
-                    "INVALID_SNAPSHOT", "Duplicate synthetic partitions in the snapshot."
+                    "INVALID_SNAPSHOT", "Duplicate data-source mappings in the snapshot."
                 )
 
             strategy.set_allowed(allowed_cids)
             results: list[tuple[SimpleNamespace, FitRes]] = []
 
-            for cid, partition_id in sorted(allowed_clients):
-                client = ZorqClient(partition_id, seed)
-                arrays, examples, metrics = client.fit(
-                    parameters_to_ndarrays(parameters), {"round": round_number}
-                )
+            for entry in sorted(allowed_clients, key=lambda item: item["cid"]):
+                try:
+                    client = ZorqClient(
+                        entry["partitionId"],
+                        seed,
+                        external=entry["external"],
+                    )
+                    arrays, examples, metrics = client.fit(
+                        parameters_to_ndarrays(parameters), {"round": round_number}
+                    )
+                except ExternalDataError as exc:
+                    failed_participants.append(
+                        {"assetId": entry["assetId"], "reason": "EXTERNAL_DATA_FAILED"}
+                    )
+                    logger.warning(
+                        "External data source unavailable for authorized asset %s: %s",
+                        entry["assetId"],
+                        exc,
+                    )
+                    continue
                 results.append(
                     (
-                        SimpleNamespace(cid=cid),
+                        SimpleNamespace(cid=entry["cid"]),
                         FitRes(
                             status=Status(code=Code.OK, message=""),
                             parameters=ndarrays_to_parameters(arrays),
@@ -153,6 +203,12 @@ async def run_simulation(
                             metrics=metrics,
                         ),
                     )
+                )
+
+            if len(results) < 2:
+                raise RunFailure(
+                    "INSUFFICIENT_DATA_PARTICIPANTS",
+                    "Fewer than two authorized participants could load their data.",
                 )
 
             aggregated, _ = strategy.aggregate_fit(round_number, results, [])
@@ -171,6 +227,7 @@ async def run_simulation(
                 "accuracy": round(accuracy, 6),
                 "authorizedCount": len(allowed_clients),
                 "aggregatedCount": len(results),
+                "failedParticipants": failed_participants,
             }
             state.metrics.append(round_metrics)
 
@@ -182,6 +239,7 @@ async def run_simulation(
                     "metrics": {
                         "loss": round_metrics["loss"],
                         "accuracy": round_metrics["accuracy"],
+                        "failedParticipants": failed_participants,
                     },
                     "authorizedCount": round_metrics["authorizedCount"],
                     "aggregatedCount": round_metrics["aggregatedCount"],

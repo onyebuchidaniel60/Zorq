@@ -81,7 +81,7 @@ export default async function AssetsPage() {
                         {asset.description ?? "No description"}
                       </span>
                     </td>
-                    <td>Partition {asset.demoPartitionId}</td>
+                    <td>{asset.dataSource === "external" ? "External database" : `Partition ${asset.demoPartitionId}`}</td>
                     <td>
                       <StatusBadge tone={tone(asset.status)}>
                         {asset.status.replace("_", " ")}

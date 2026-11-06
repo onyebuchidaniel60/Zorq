@@ -82,3 +82,8 @@ Federated learning avoids sending raw source partitions to a central data lake i
 ## Responsible disclosure / support
 
 Support contact destination must be provided by the operator before public launch. Do not invent an email, security address, Discord channel or legal contact. The MVP is an experimental testnet application and is not suitable for regulated data or production workloads.
+
+
+## External database credentials
+
+External PostgreSQL URLs are encrypted at rest with AES-256-GCM using a key derived from `SESSION_SECRET`. They are never returned by the browser-facing asset APIs, never included in asset commitments, and are decrypted only for the internal coordinator snapshot. Table and label names are validated and quoted before use. The coordinator reads at most 1,000 rows, normalizes eight numeric features and discards raw rows after training. External database access must use a read-only testnet role; do not supply production credentials.

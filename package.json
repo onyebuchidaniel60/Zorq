@@ -2,7 +2,7 @@
   "name": "zorq",
   "version": "0.1.0",
   "private": true,
-  "description": "Zorq — programmable authorization for federated machine learning",
+  "description": "Zorq \u2014 programmable authorization for federated machine learning",
   "engines": {
     "node": "22.x"
   },
@@ -18,6 +18,7 @@
     "test": "npm run test --workspace @zorq/web",
     "test:e2e": "npm run test:e2e --workspace @zorq/web",
     "db:generate": "npm run db:generate --workspace @zorq/db",
-    "db:migrate": "npm run db:migrate --workspace @zorq/db"
+    "db:migrate": "npm run db:migrate --workspace @zorq/db",
+    "db:reset-test-data": "node scripts/db/reset-test-data.mjs"
   }
 }

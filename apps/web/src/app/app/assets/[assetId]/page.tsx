@@ -60,9 +60,21 @@ export default async function AssetDetailPage({
           </div>
           <dl className="z-kv">
             <div>
-              <dt>Data partition</dt>
-              <dd>Partition {asset!.demoPartitionId}</dd>
+              <dt>Data source</dt>
+              <dd>{asset!.dataSource === "external" ? "External database" : `Partition ${asset!.demoPartitionId}`}</dd>
             </div>
+            {asset!.dataSource === "external" ? (
+              <>
+                <div>
+                  <dt>External table</dt>
+                  <dd>{asset!.dbTable ?? "Not configured"}</dd>
+                </div>
+                <div>
+                  <dt>Target label column</dt>
+                  <dd>{asset!.labelColumn ?? "label"}</dd>
+                </div>
+              </>
+            ) : null}
             <div>
               <dt>Registered</dt>
               <dd>{new Date(asset!.createdAt).toLocaleString()}</dd>

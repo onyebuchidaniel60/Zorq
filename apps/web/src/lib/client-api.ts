@@ -72,6 +72,13 @@ export function transactionHash(value: unknown): `0x${string}` {
   return value as `0x${string}`;
 }
 
+export function logClientError(context: string, cause: unknown): void {
+  console.error(`[zorq:${context}]`, cause);
+  if (cause instanceof Error && cause.cause) {
+    console.error(`[zorq:${context}:cause]`, cause.cause);
+  }
+}
+
 export function userFacingError(cause: unknown, fallback: string): string {
   const message = cause instanceof Error ? cause.message.trim() : "";
 
@@ -82,8 +89,12 @@ export function userFacingError(cause: unknown, fallback: string): string {
   ) {
     return "The wallet request was rejected. Nothing was submitted.";
   }
-  if (/insufficient|balance too low|not enough funds/i.test(message)) {
-    return "The wallet does not have enough testnet POT to complete this transaction.";
+  if (
+    /StorageDeposit(?:LimitExhausted|NotEnoughFunds)|storage deposit|insufficient|balance too low|not enough funds|payment/i.test(
+      message,
+    )
+  ) {
+    return "Insufficient testnet POT for the storage deposit. Fund the wallet and retry.";
   }
   if (/cannot read properties of null|undefined is not an object/i.test(message)) {
     return `${fallback} The wallet or server returned an empty response; retry once.`;

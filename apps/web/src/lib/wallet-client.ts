@@ -2,6 +2,8 @@
 
 import { ss58ToH160 } from "@polkadot-apps/address";
 import { createTwinKeyProvider, fromExtension, getApi } from "twinkey-provider";
+import { encodeFunctionData } from "viem";
+import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 import {
   createPublicClient,
   createWalletClient,
@@ -10,7 +12,11 @@ import {
 } from "viem";
 
 type InjectedExtension = {
+  accounts?: {
+    get?: () => Promise<Array<{ address: string; name?: string }>>;
+  };
   signer?: {
+    signPayload?: (payload: unknown) => Promise<{ id?: number; signature: string }>;
     signRaw?: (payload: {
       address: string;
       data: string;
@@ -137,7 +143,16 @@ export async function getContractClients(wallet: ConnectedWallet) {
       "The wallet signer is unavailable. Disconnect, reconnect and approve the transaction again.",
     );
   }
+  if (wallet.injected.accounts?.get) {
+    const accounts = await wallet.injected.accounts.get();
+    if (accounts.length === 0) {
+      throw new Error(
+        "The wallet returned no accounts. Unlock the extension, reconnect and retry.",
+      );
+    }
+  }
   const api = await getApi();
+  await api.isReady;
   const provider = createTwinKeyProvider({
     signer: wallet.signer as Parameters<typeof createTwinKeyProvider>[0]["signer"],
   });
@@ -158,4 +173,102 @@ export function contractAddress(): `0x${string}` {
     throw new Error("NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS is not configured");
   }
   return address as `0x${string}`;
+}
+
+export async function submitContractTransaction(
+  wallet: ConnectedWallet,
+  functionName: string,
+  args: readonly unknown[],
+  storageDepositLimitPot = 25n,
+): Promise<{ hash: `0x${string}`; blockHash: `0x${string}` }> {
+  if (!wallet.injected.signer) {
+    throw new Error(
+      "The wallet signer is unavailable. Reconnect the extension and retry the transaction.",
+    );
+  }
+  const api = await getApi();
+  await api.isReady;
+  const revive = api.tx.revive;
+  if (!revive?.call) {
+    throw new Error("The Portaldot revive transaction API is unavailable.");
+  }
+
+  const data = encodeFunctionData({
+    abi: ZORQ_REGISTRY_ABI,
+    functionName: functionName as never,
+    args: args as never,
+  });
+  const tx = revive.call(
+    contractAddress(),
+    0n,
+    { refTime: 500_000_000_000n, proofSize: 5_000_000n },
+    storageDepositLimitPot * 100_000_000_000_000n,
+    data,
+  );
+
+  return new Promise((resolve, reject) => {
+    let unsub: (() => void) | undefined;
+    let settling = false;
+    const timer = setTimeout(() => {
+      unsub?.();
+      reject(new Error("The transaction was not included before the timeout."));
+    }, 180_000);
+
+    async function settleIncluded(hash: `0x${string}`, blockHash: `0x${string}`) {
+      if (settling) return;
+      settling = true;
+      try {
+        const includedHeader = await api.rpc.chain.getHeader(blockHash);
+        const included = includedHeader.number.toNumber();
+        const requiredDepth = 8;
+        while (true) {
+          const head = await api.rpc.chain.getHeader();
+          if (head.number.toNumber() - included >= requiredDepth) break;
+          await new Promise((wait) => setTimeout(wait, 2_000));
+        }
+        clearTimeout(timer);
+        unsub?.();
+        console.info(`[zorq:tx] confirmed ${hash} at ${blockHash}`);
+        resolve({ hash, blockHash });
+      } catch (error) {
+        clearTimeout(timer);
+        unsub?.();
+        reject(error);
+      }
+    }
+
+    void tx
+      .signAndSend(
+        wallet.ss58Address,
+        { signer: wallet.injected.signer as never },
+        (result) => {
+          if (result.dispatchError) {
+            clearTimeout(timer);
+            unsub?.();
+            let message = result.dispatchError.toString();
+            if (result.dispatchError.isModule) {
+              const decoded = api.registry.findMetaError(result.dispatchError.asModule);
+              message = `${decoded.section}.${decoded.name}: ${decoded.docs.join(" ")}`;
+            }
+            reject(new Error(message));
+            return;
+          }
+          const status = result.status;
+          if (status.isInBlock || status.isFinalized) {
+            const blockHash = (status.isFinalized
+              ? status.asFinalized
+              : status.asInBlock
+            ).toHex() as `0x${string}`;
+            void settleIncluded(result.txHash.toHex() as `0x${string}`, blockHash);
+          }
+        },
+      )
+      .then((stop) => {
+        unsub = stop;
+      })
+      .catch((error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
 }

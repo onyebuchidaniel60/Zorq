@@ -25,14 +25,18 @@ export async function POST(request: Request) {
 
     const parsed = assetDraftSchema.safeParse(await readJson(request));
     if (!parsed.success) {
-      throw new ApiError(400, "INVALID_INPUT", "Check the asset name, description and partition.");
+      throw new ApiError(400, "INVALID_INPUT", "Check the asset name, description and data source.");
     }
 
     const draft = await createAssetDraft({
       walletAddress: session.walletAddress,
       displayName: parsed.data.displayName,
       description: parsed.data.description,
+      dataSource: parsed.data.dataSource,
       demoPartitionId: parsed.data.demoPartitionId,
+      dbUrl: parsed.data.dbUrl,
+      dbTable: parsed.data.dbTable,
+      labelColumn: parsed.data.labelColumn,
       idempotencyKey: parsed.data.idempotencyKey,
       requestId,
     });

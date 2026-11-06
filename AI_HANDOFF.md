@@ -3,7 +3,7 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy and new Zorq mark applied, README/in-app docs expanded, repository artifacts cleaned, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build; the new UI is verified on `zorq-six` and the preview branch alias (L-012).
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, test data cleared, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build (L-012), and the deployer balance is below the next testnet job/license storage deposits (L-013).
 **Current phase:** Phase 10 and final polish complete. Final handoff below.
 
 ## Phase 3 deployment evidence
@@ -284,6 +284,10 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-014 — 2026-11-06 — Post-Phase 10 hotfix — SIWE accepts only an exact set of trusted public origins, bound per challenge.** The failing browser was on `https://zorq-six.vercel.app`, a production alias, while `APP_ORIGIN` was `https://zorq-uhhh2.vercel.app`. Keeping a single canonical origin would break other official aliases; allowing arbitrary `Host` values would weaken the check. The server now accepts `APP_ORIGIN`, `NEXT_PUBLIC_APP_URL`, an optional comma-separated `ALLOWED_ORIGINS`, and the known Vercel production/preview aliases. It normalizes the browser `Origin` with `new URL(raw).origin`, never trusts `Host`/`x-forwarded-host`, and binds the SIWE domain/URI to the validated request origin stored with the nonce; verification compares against that stored origin. Preview remains exactly `https://zorq-preview-uhhh2.vercel.app`; production remains its own canonical `https://zorq-uhhh2.vercel.app` with `zorq-six` explicitly allowed. Files: `apps/web/src/server/env.ts`, `apps/web/src/server/http/request.ts`, `apps/web/src/server/auth/siwe.ts`, `apps/web/src/server/auth/service.ts`, `apps/web/src/app/api/auth/nonce/route.ts`, `apps/web/tests/unit/origin.test.ts`.
 
+**D-019 — 2026-11-06 — External-database assets.** Asset drafts accept `dataSource: "demo" | "external"`, optional `dbUrl`, `dbTable`, `labelColumn` and nullable `demoPartitionId`. PostgreSQL URLs are encrypted at rest with AES-256-GCM derived from `SESSION_SECRET`; table/label identifiers are validated and quoted. The coordinator receives the URL only in the internal snapshot, reads at most 1,000 rows with pandas/SQLAlchemy, normalizes up to eight numeric features and a binary label, discards raw rows, and skips a failed external participant without crashing the run. Migration: `packages/db/migrations/0003_abandoned_vivisector.sql`. Files: `apps/web/src/server/domain/external-db.ts`, `apps/web/src/components/forms/new-asset-form.tsx`, `apps/fl-service/zorq_fl/model/external.py`, `apps/fl-service/zorq_fl/run/manager.py`.
+
+**D-020 — 2026-11-06 — Contract writes use direct `revive.call` with the injected Substrate signer.** The previous viem/twinkey write path could surface opaque provider errors and event-decoding failures. `submitContractTransaction()` builds the revive call, submits through the injected signer, decodes module dispatch errors, waits for eight confirmations, and returns the extrinsic hash and block hash for API confirmation. This keeps the contract interaction and authorization semantics unchanged while making wallet failures actionable. Files: `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/forms/**`, `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/components/licenses/revoke-license-button.tsx`.
+
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
 **D-015 — 2026-11-06 — Final polish — Reference image 3 becomes the definitive UI direction.** The dark near-black canvas, lime accent, dot grid, metric cards, icon rail and dense table language replace the earlier light dashboard. Public pages reuse the same palette with dark content cards. The implementation follows Stageshow craft rules but does not copy the kit or reference assets. No route, permission, contract, database or API behaviour changes. Files: `apps/web/src/app/globals.css`, `apps/web/src/components/**`, `apps/web/src/app/**/page.tsx`, `docs/DESIGN_DECISIONS.md`.
@@ -299,6 +303,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 Append-only. One entry per limitation accepted by the agent rather than fixed, including the reason and any user-facing consequence.
 
 Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — consequence — mitigation-if-any`
+
+**L-013 — 2026-11-06 — Final verification — Deployer balance is below the remaining storage deposits for a fresh asset/job/license proof.** After the testnet activity and failed probes, the deployer holds ~5.08 tPOTv3. A fresh asset registration requires ~11.52 tPOTv3 and a job creation ~15.37 tPOTv3; the POT Starter Hub is on a 24-hour cooldown until 08:04 UTC. A fresh Playwright run reached wallet sign-in and asset-draft creation, and a registration transaction was mined (`assets(0xa12be287a2fba330af8a6f6bd8e59a169cd4f4dd18b83503b226907a984432f1)` returns active), but the full DB-confirmed asset -> job -> license proof could not be completed. Consequence: the UI/API transaction path is implemented and the exact insufficient-funds message is verified, but a fully confirmed fresh on-chain flow needs funding. Mitigation: fund the deployer or wait for the faucet cooldown, then run `apps/web/tests/fresh-user-flow.mjs` against a clean DB. Files: `apps/web/tests/fresh-user-flow.mjs`, `scripts/db/reset-test-data.mjs`, `AI_HANDOFF.md`.
 
 **L-012 — 2026-11-06 — Final polish — The custom `zorq-preview` alias still serves the previous UI build.** Vercel CLI alias mutation endpoints remain challenge-blocked from this environment (`login_required` / security checkpoint), so the new UI cannot be force-promoted to the manually maintained custom alias. Consequence: the stable custom preview URL shows the older light UI, while the new UI is live and verified on the production alias `https://zorq-six.vercel.app` and the preview branch alias `https://zorq-git-preview-uhhh2.vercel.app`. Mitigation: provide a fresh `VERCEL_TOKEN` and run `vercel alias set` for the latest preview deployment, or point the custom domain at the preview branch in the Vercel dashboard. Files: `AI_HANDOFF.md`, `docs/evidence/preview-signin.txt`.
 
@@ -380,10 +386,10 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 **Verification**
 
 - `npm run typecheck`, `npm run lint`, `npm run build` — pass.
-- Web unit/scaffold — 21/21 Vitest + 4/4 scaffold.
+- Web unit/scaffold — 27/27 Vitest + 4/4 scaffold.
 - Local Playwright — 40/40 desktop + mobile.
 - Auth integration — pass (nonce, signature, cookie flags, replay, invalid signature, wrong origin, logout, rate limit).
-- Contract — 11/11; FL service — 3/3.
+- Contract — 11/11; FL service — 7/7.
 - Deployed sign-in and data-page smoke — pass on `https://zorq-six.vercel.app` and `https://zorq-git-preview-uhhh2.vercel.app`.
 - Evidence: `docs/evidence/signin-zorq-six.png`, `docs/evidence/signin-preview.png`, `docs/evidence/ui-overview.png`, `docs/evidence/ui-landing.png`.
 
@@ -397,7 +403,15 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 - **Documentation:** `README.md` now includes a project overview, Mermaid architecture diagram, repository layout, local setup, environment variable table, Portaldot deployment evidence and testing/security guidance. `/docs` now covers architecture, lifecycle, snapshots, auth, APIs, local development, deployment and testing.
 - **Declutter:** removed `.next`, Playwright reports, test results, TypeScript build info, demo raw captures and log artifacts from the working tree; tightened `.gitignore`; no temporary debugging scripts remain under `scripts/`.
 - **Video:** re-rendered against the final logo and enterprise copy at 122.5s; the capture aborts on failed auth and the evidence card was updated to evaluation-deployment wording.
-- **Verification:** web unit/scaffold 21/21 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 3/3; typecheck/lint/build pass.
+- **Verification:** web unit/scaffold 27/27 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 7/7; typecheck/lint/build pass.
+
+## DB reset, transaction hardening and external databases (6 November 2026)
+
+- **Test data cleared:** `scripts/db/reset-test-data.mjs` deletes `authorization_checks`, `training_rounds`, `training_runs`, `job_participants`, `licenses`, `chain_transactions`, `fl_jobs`, `data_assets` and stale idempotency records in dependency order. It was run successfully; all listed tables ended at zero.
+- **Transaction hardening:** asset/job/license/revocation writes now use the injected Substrate signer through direct `revive.call`, decode module errors, wait for eight confirmations and return the hash/block hash. Exact failures are logged to the browser console and shown in the UI. `StorageDepositNotEnoughFunds` maps to “Insufficient testnet POT for the storage deposit. Fund the wallet and retry.”
+- **External database feature:** implemented end-to-end across the asset form, Zod/Drizzle schema and migration, encrypted credential storage, internal snapshot enrichment, and the Python coordinator. External participants are normalized to the eight-feature model; a failed source is marked `DATA FAILED` and skipped, and the run fails closed only if fewer than two participants load.
+- **Tests:** web unit/scaffold 27/27 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 7/7; typecheck/lint/build pass. External loader tests cover SQLite fixtures, missing labels and failure isolation.
+- **Known verification gap:** L-013. The deployer balance is insufficient for the remaining fresh asset/job/license storage deposits and the faucet is on cooldown. The DB is nevertheless clean and the exact insufficient-funds message is verified.
 
 ## Phase 8/9/10 completion report
 
@@ -411,8 +425,8 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 18 (D-001 … D-018)
-Total known limitations: 12 (L-001 … L-012)
+Total decisions logged: 20 (D-001 … D-020)
+Total known limitations: 13 (L-001 … L-013)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
 Deployment tx: 0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834

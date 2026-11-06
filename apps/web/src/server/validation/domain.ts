@@ -5,12 +5,50 @@ export const bytes32Schema = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 export const txHashSchema = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 export const idempotencyKeySchema = z.string().min(8).max(128);
 
-export const assetDraftSchema = z.object({
-  displayName: z.string().trim().min(3).max(80),
-  description: z.string().trim().max(500).optional().default(""),
-  demoPartitionId: z.coerce.number().int().min(0).max(4),
-  idempotencyKey: idempotencyKeySchema,
-});
+const dbIdentifierSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/);
+
+export const assetDraftSchema = z
+  .object({
+    displayName: z.string().trim().min(3).max(80),
+    description: z.string().trim().max(500).optional().default(""),
+    dataSource: z.enum(["demo", "external"]).default("demo"),
+    demoPartitionId: z.coerce.number().int().min(0).max(4).optional(),
+    dbUrl: z.string().trim().max(2048).url().optional(),
+    dbTable: dbIdentifierSchema.optional(),
+    labelColumn: dbIdentifierSchema.optional(),
+    idempotencyKey: idempotencyKeySchema,
+  })
+  .superRefine((value, ctx) => {
+    if (value.dataSource === "demo") {
+      if (value.demoPartitionId === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["demoPartitionId"],
+          message: "Choose a data partition.",
+        });
+      }
+      return;
+    }
+    if (!value.dbUrl) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["dbUrl"],
+        message: "Enter a PostgreSQL database URL.",
+      });
+    }
+    if (!value.dbTable) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["dbTable"],
+        message: "Enter the table name.",
+      });
+    }
+  });
 
 export const jobDraftSchema = z.object({
   title: z.string().trim().min(3).max(100),

@@ -317,7 +317,7 @@ export default async function AppOverviewPage() {
                   <Link key={asset.id} href={`/app/assets/${asset.id}`} className="z-list-row">
                     <span className="z-list-main">
                       <span className="z-list-title">{asset.displayName}</span>
-                      <span className="z-list-meta">Partition {asset.demoPartitionId}</span>
+                      <span className="z-list-meta">{asset.dataSource === "external" ? "External database" : `Partition ${asset.demoPartitionId}`}</span>
                     </span>
                     <span className="z-chip z-chip-muted">{asset.status}</span>
                   </Link>

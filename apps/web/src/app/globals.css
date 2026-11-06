@@ -883,6 +883,55 @@ a {
   gap: 1rem;
 }
 
+.z-source-toggle {
+  display: grid;
+  gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+  .z-source-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.z-source-option {
+  display: grid;
+  gap: 0.22rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #0c0e0a;
+  padding: 0.8rem 0.9rem;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.z-source-option span {
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.z-source-option small {
+  color: var(--faint);
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.z-source-option:hover {
+  border-color: rgba(217, 255, 99, 0.35);
+}
+
+.z-source-option.is-active {
+  border-color: var(--lime);
+  background: rgba(217, 255, 99, 0.08);
+}
+
+.z-source-option.is-active span {
+  color: var(--lime);
+}
+
 @media (min-width: 640px) {
   .z-field-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -53,7 +53,7 @@ test("asset and job forms are real client forms", () => {
     const content = readFileSync(path.join(root, file), "utf8");
     assert.match(content, /use client/);
     assert.match(content, /<form onSubmit/);
-    assert.match(content, /walletClient\.writeContract/);
+    assert.match(content, /submitContractTransaction/);
   }
 });
 

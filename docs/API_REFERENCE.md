@@ -35,7 +35,7 @@ The challenge request must include both the H160 `address` and the `ss58Address`
 | Method | Path | Auth | Request | Result |
 |---|---|---|---|---|
 | GET | `/api/assets` | Session | `status?` | Own assets plus global reserved partition IDs for the registration form |
-| POST | `/api/assets/drafts` | Session | `{displayName,description,demoPartitionId,idempotencyKey}` | Draft + opaque on-chain ID + commitment + tx args |
+| POST | `/api/assets/drafts` | Session | `{displayName,description,dataSource,demoPartitionId?,dbUrl?,dbTable?,labelColumn?,idempotencyKey}` | Draft + opaque on-chain ID + commitment + tx args; external URLs are encrypted and never returned |
 | GET | `/api/assets/{assetId}` | Session | — | Owner-only private metadata; other users receive 404 |
 | POST | `/api/assets/{assetId}/confirm` | Session | `{txHash}` | Verify receipt/event and activate asset |
 | POST | `/api/assets/{assetId}/deactivate/confirm` | Session | `{txHash}` | Verify owner-signed deactivation |

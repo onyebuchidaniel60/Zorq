@@ -14,7 +14,11 @@ from zorq_fl.run.manager import RunManager
 
 class Participant(BaseModel):
     assetId: str = Field(min_length=1, max_length=128)
-    partitionId: int = Field(ge=0, le=4)
+    partitionId: int | None = Field(default=None, ge=0, le=4)
+    dataSource: str = Field(default="demo", pattern="^(demo|external)$")
+    dbUrl: str | None = Field(default=None, max_length=2048)
+    dbTable: str | None = Field(default=None, max_length=128)
+    labelColumn: str | None = Field(default=None, max_length=128)
     ownerWallet: str | None = Field(default=None, max_length=42)
 
 

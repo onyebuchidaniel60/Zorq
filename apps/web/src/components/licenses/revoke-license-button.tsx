@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
-import { contractAddress, getContractClients } from "@/lib/wallet-client";
+import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   fetchWithAuth,
+  logClientError,
   readApiError,
-  transactionHash,
   userFacingError,
 } from "@/lib/client-api";
-import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 
 export function RevokeLicenseButton({
   licenseId,
@@ -47,28 +46,18 @@ export function RevokeLicenseButton({
       }
 
       setStatus("Confirm the revocation in your wallet…");
-      const { walletClient, publicClient } = await getContractClients(activeWallet);
-      const hash = transactionHash(
-        await walletClient.writeContract({
-          address: contractAddress(),
-          abi: ZORQ_REGISTRY_ABI,
-          functionName: "revokeLicense",
-          args: [BigInt(tokenId)],
-          account: activeWallet.walletAddress as `0x${string}`,
-          chain: null,
-        }),
+      const { hash, blockHash } = await submitContractTransaction(
+        activeWallet,
+        "revokeLicense",
+        [BigInt(tokenId)],
       );
       setStatus("Waiting for block confirmation…");
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 120_000,
-      });
       const response = await fetchWithAuth(
         `/api/licenses/${licenseId}/revoke/confirm`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+          body: JSON.stringify({ txHash: hash, blockHash }),
         },
         signIn,
         activeWallet,
@@ -79,6 +68,7 @@ export function RevokeLicenseButton({
       setStatus("Revoked");
       router.refresh();
     } catch (cause) {
+      logClientError("license.revoke", cause);
       setError(
         userFacingError(
           cause,

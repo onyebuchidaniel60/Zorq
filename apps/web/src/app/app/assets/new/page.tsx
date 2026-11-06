@@ -16,7 +16,7 @@ export default async function NewAssetPage() {
       <PageHeader
         eyebrow="Data provider"
         title="Register a data asset"
-        description="Create an opaque on-chain asset reference plus a salted metadata commitment. No file upload exists."
+        description="Register a data asset from a demo partition or a read-only external PostgreSQL database. No file upload exists."
       />
       {session ? (
         <NewAssetForm initialUsedPartitions={usedPartitions} />

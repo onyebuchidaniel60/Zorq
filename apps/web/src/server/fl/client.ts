@@ -3,7 +3,11 @@ import { getServerEnv } from "../env";
 
 export type FlParticipant = {
   assetId: string;
-  partitionId: number;
+  partitionId: number | null;
+  dataSource?: "demo" | "external";
+  dbUrl?: string | null;
+  dbTable?: string | null;
+  labelColumn?: string | null;
   ownerWallet: string;
 };
 

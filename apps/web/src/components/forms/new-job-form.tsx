@@ -3,15 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
-import { contractAddress, getContractClients } from "@/lib/wallet-client";
+import { submitContractTransaction } from "@/lib/wallet-client";
 import {
   fetchWithAuth,
+  logClientError,
   readApiError,
   readJsonObject,
-  transactionHash,
   userFacingError,
 } from "@/lib/client-api";
-import { ZORQ_REGISTRY_ABI } from "@/server/chain/zorq-registry-abi";
 
 type Draft = {
   jobId: string;
@@ -101,36 +100,26 @@ export function NewJobForm() {
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const { walletClient, publicClient } = await getContractClients(activeWallet);
-      const hash = transactionHash(
-        await walletClient.writeContract({
-          address: contractAddress(),
-          abi: ZORQ_REGISTRY_ABI,
-          functionName: "createJob",
-          args: [
-            draft.chainJobId,
-            draft.purposeHash,
-            draft.modelConfigHash,
-            BigInt(Math.trunc(Number(draft.args[3]))),
-            BigInt(Math.trunc(Number(draft.args[4]))),
-            Number(draft.args[5]),
-          ],
-          account: activeWallet.walletAddress as `0x${string}`,
-          chain: null,
-        }),
+      const { hash, blockHash } = await submitContractTransaction(
+        activeWallet,
+        "createJob",
+        [
+          draft.chainJobId,
+          draft.purposeHash,
+          draft.modelConfigHash,
+          BigInt(Math.trunc(Number(draft.args[3]))),
+          BigInt(Math.trunc(Number(draft.args[4]))),
+          Number(draft.args[5]),
+        ],
       );
 
       setStatus("Waiting for block confirmation…");
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 120_000,
-      });
       const confirm = await fetchWithAuth(
         `/api/jobs/${draft.jobId}/confirm`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash: receipt.blockHash }),
+          body: JSON.stringify({ txHash: hash, blockHash }),
         },
         signIn,
         activeWallet,
@@ -140,6 +129,7 @@ export function NewJobForm() {
       }
       router.push(`/app/jobs/${draft.jobId}`);
     } catch (cause) {
+      logClientError("job.publish", cause);
       setError(
         userFacingError(
           cause,

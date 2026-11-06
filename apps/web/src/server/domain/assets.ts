@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { dataAssets, getDb } from "@zorq/db";
 import { ApiError } from "../http/api";
 import { appendAuditEvent } from "../audit";
@@ -9,6 +9,7 @@ import { verifyContractEvent } from "../chain/verify";
 import { contractAddress } from "../chain/contract";
 import { recordChainTransaction } from "./chain-tx";
 import { getServerEnv } from "../env";
+import { encryptDbUrl, isSupportedExternalDbUrl } from "./external-db";
 
 const ROUTE_KEY = "assets.drafts";
 
@@ -16,7 +17,11 @@ export async function createAssetDraft(input: {
   walletAddress: string;
   displayName: string;
   description: string;
-  demoPartitionId: number;
+  dataSource: "demo" | "external";
+  demoPartitionId?: number;
+  dbUrl?: string;
+  dbTable?: string;
+  labelColumn?: string;
   idempotencyKey: string;
   requestId: string;
 }) {
@@ -31,19 +36,36 @@ export async function createAssetDraft(input: {
     return existing;
   }
 
-  const partition = await db
-    .select({ id: dataAssets.id })
-    .from(dataAssets)
-    .where(
-      and(
-        eq(dataAssets.demoPartitionId, input.demoPartitionId),
-        inArray(dataAssets.status, ["draft", "pending_chain", "active"]),
-      ),
-    )
-    .limit(1);
+  const isExternal = input.dataSource === "external";
+  const dbTable = input.dbTable?.trim() || null;
+  const labelColumn = input.labelColumn?.trim() || "label";
+  const demoPartitionId = isExternal ? null : input.demoPartitionId ?? null;
 
-  if (partition.length > 0) {
-    throw new ApiError(409, "INVALID_INPUT", "That data partition is already in use.");
+  if (!isExternal) {
+    if (demoPartitionId === null) {
+      throw new ApiError(400, "INVALID_INPUT", "Choose a data partition.");
+    }
+    const partition = await db
+      .select({ id: dataAssets.id })
+      .from(dataAssets)
+      .where(
+        and(
+          eq(dataAssets.demoPartitionId, demoPartitionId),
+          inArray(dataAssets.status, ["draft", "pending_chain", "active"]),
+        ),
+      )
+      .limit(1);
+
+    if (partition.length > 0) {
+      throw new ApiError(409, "INVALID_INPUT", "That data partition is already in use.");
+    }
+  } else {
+    if (!input.dbUrl || !isSupportedExternalDbUrl(input.dbUrl)) {
+      throw new ApiError(400, "INVALID_INPUT", "Enter a PostgreSQL database URL.");
+    }
+    if (!dbTable) {
+      throw new ApiError(400, "INVALID_INPUT", "Enter the external table name.");
+    }
   }
 
   const id = randomUUID();
@@ -54,9 +76,13 @@ export async function createAssetDraft(input: {
     ownerWallet: input.walletAddress,
     displayName: input.displayName,
     description: input.description || null,
-    demoPartitionId: input.demoPartitionId,
+    dataSource: input.dataSource,
+    demoPartitionId,
+    dbTable,
+    labelColumn,
     salt,
   });
+  const encryptedDbUrl = isExternal && input.dbUrl ? encryptDbUrl(input.dbUrl) : null;
   const now = new Date();
 
   const response = {
@@ -76,7 +102,11 @@ export async function createAssetDraft(input: {
       ownerWallet: input.walletAddress,
       displayName: input.displayName,
       description: input.description || null,
-      demoPartitionId: input.demoPartitionId,
+      dataSource: input.dataSource,
+      demoPartitionId,
+      dbUrl: encryptedDbUrl,
+      dbTable,
+      labelColumn: isExternal ? labelColumn : null,
       metadataCommitment: commitment,
       metadataSalt: salt,
       status: "draft",
@@ -239,7 +269,22 @@ export async function deactivateAsset(input: {
 export async function listAssets(walletAddress: string) {
   const db = getDb();
   return db
-    .select()
+    .select({
+      id: dataAssets.id,
+      chainAssetId: dataAssets.chainAssetId,
+      ownerWallet: dataAssets.ownerWallet,
+      displayName: dataAssets.displayName,
+      description: dataAssets.description,
+      dataSource: dataAssets.dataSource,
+      demoPartitionId: dataAssets.demoPartitionId,
+      dbTable: dataAssets.dbTable,
+      labelColumn: dataAssets.labelColumn,
+      status: dataAssets.status,
+      chainTxHash: dataAssets.chainTxHash,
+      chainBlockNumber: dataAssets.chainBlockNumber,
+      createdAt: dataAssets.createdAt,
+      updatedAt: dataAssets.updatedAt,
+    })
     .from(dataAssets)
     .where(eq(dataAssets.ownerWallet, walletAddress));
 }
@@ -249,8 +294,15 @@ export async function listReservedPartitions(): Promise<number[]> {
   const rows = await db
     .selectDistinct({ demoPartitionId: dataAssets.demoPartitionId })
     .from(dataAssets)
-    .where(inArray(dataAssets.status, ["draft", "pending_chain", "active"]));
-  return rows.map((row) => row.demoPartitionId);
+    .where(
+      and(
+        isNotNull(dataAssets.demoPartitionId),
+        inArray(dataAssets.status, ["draft", "pending_chain", "active"]),
+      ),
+    );
+  return rows
+    .map((row) => row.demoPartitionId)
+    .filter((value): value is number => value !== null);
 }
 
 export async function getAssetForOwner(assetId: string, walletAddress: string) {
