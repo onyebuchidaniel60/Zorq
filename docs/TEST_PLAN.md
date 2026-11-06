@@ -152,6 +152,7 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 | Deployed sign-in (`zorq-six`) | nonce 200, verify 200, signed-in UI |
 | Deployed sign-in (preview branch) | nonce 200, verify 200, signed-in UI |
 | Deployed data pages | Overview, assets, jobs, run monitor, revoked license, docs |
+| External DB form | Toggle hides partitions and shows URL/table/label fields |
 | Auth-state hydration | Session present, wallet disconnected, 401 auto re-auth, retry |
 | Partition UI | Reserved partitions 0–3 disabled, partition 4 selected |
 | Demo video | 122.5s, 1280×720, H.264/AAC, under 3:00 |

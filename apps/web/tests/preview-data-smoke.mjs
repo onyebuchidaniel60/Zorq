@@ -55,11 +55,11 @@ try {
   await open("/app","Authorization overview");
   await open("/app/assets","Data assets");
   await open("/app/assets/new","Data Partition");
-  await page.getByLabel("External Database").click();
+  await page.locator('input[name="data-source"][value="external"]').check({ force: true });
   await page.locator("#asset-db-url").waitFor({ state: "visible", timeout: 12000 });
   await page.locator("#asset-db-table").waitFor({ state: "visible", timeout: 12000 });
   await page.locator("#asset-label-column").waitFor({ state: "visible", timeout: 12000 });
-  await page.getByLabel("Demo Partition").click();
+  await page.locator('input[name="data-source"][value="demo"]').check({ force: true });
   pass("external database form toggle");
   await open("/app/jobs","Training jobs");
   await open(`/app/jobs/${jobId}`,"Job controls");
