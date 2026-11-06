@@ -6,6 +6,7 @@ import { consumeRateLimit } from "@/server/rate-limit";
 import { createAuthNonce } from "@/server/auth/service";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const bodySchema = z.object({
   address: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
@@ -34,11 +35,24 @@ export async function POST(request: Request) {
       throw new ApiError(400, "INVALID_INPUT", "Enter a valid wallet address.");
     }
 
-    const created = await createAuthNonce({
-      walletAddress: parsed.data.address,
-      ss58Address: parsed.data.ss58Address,
-      requestId,
-    });
+    const create = () =>
+      createAuthNonce({
+        walletAddress: parsed.data.address,
+        ss58Address: parsed.data.ss58Address,
+        requestId,
+      });
+
+    let created;
+    try {
+      created = await create();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const transient = /timeout|ECONNRESET|ECONNREFUSED|too many connections|57P01|08006/i.test(message);
+      if (!transient) throw error;
+      logEvent("warn", "auth.nonce.retry", { requestId });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      created = await create();
+    }
 
     logEvent("info", "auth.nonce.created", {
       requestId,
@@ -52,7 +66,8 @@ export async function POST(request: Request) {
     logEvent("warn", "auth.nonce.failed", {
       requestId,
       code: error instanceof ApiError ? error.code : "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message.slice(0, 200) : "unknown",
     });
-    return jsonError(error, requestId, "The sign-in challenge could not be created.");
+    return jsonError(error, requestId, "The sign-in service is temporarily unavailable. Retry in a moment.");
   }
 }

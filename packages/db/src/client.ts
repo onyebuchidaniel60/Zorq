@@ -26,8 +26,8 @@ export function getDb(): Database {
     const sql = postgres(connectionString(), {
       prepare: false,
       max: 1,
-      idle_timeout: 20,
-      connect_timeout: 10,
+      idle_timeout: 30,
+      connect_timeout: 30,
       onnotice: () => undefined,
     });
     globalForDb.__zorqDb = {

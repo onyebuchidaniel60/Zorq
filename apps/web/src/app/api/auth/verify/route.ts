@@ -11,6 +11,7 @@ import {
 } from "@/server/auth/session";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const bodySchema = z.object({
   message: z.string().min(80).max(4096),
