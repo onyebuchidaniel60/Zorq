@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, test data cleared, and the demo video re-rendered at 2:02. The custom `zorq-preview` alias still serves the previous build (L-012), and the deployer balance is below the next testnet job/license storage deposits (L-013).
-**Current phase:** Phase 10 and final polish complete. Final handoff below.
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, test data cleared, and the demo video re-rendered at 2:02. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
+**Current phase:** Phase 10 and final polish complete. Automated agent work is closed; the operator owns live testnet verification.
 
 ## Phase 3 deployment evidence
 
@@ -304,7 +304,7 @@ Append-only. One entry per limitation accepted by the agent rather than fixed, i
 
 Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — consequence — mitigation-if-any`
 
-**L-013 — 2026-11-06 — Final verification — Deployer balance is below the remaining storage deposits for a fresh asset/job/license proof.** After the testnet activity and failed probes, the deployer holds ~5.08 tPOTv3. A fresh asset registration requires ~11.52 tPOTv3 and a job creation ~15.37 tPOTv3; the POT Starter Hub is on a 24-hour cooldown until 08:04 UTC. A fresh Playwright run reached wallet sign-in and asset-draft creation, and a registration transaction was mined (`assets(0xa12be287a2fba330af8a6f6bd8e59a169cd4f4dd18b83503b226907a984432f1)` returns active), but the full DB-confirmed asset -> job -> license proof could not be completed. Consequence: the UI/API transaction path is implemented and the exact insufficient-funds message is verified, but a fully confirmed fresh on-chain flow needs funding. Mitigation: fund the deployer or wait for the faucet cooldown, then run `apps/web/tests/fresh-user-flow.mjs` against a clean DB. Files: `apps/web/tests/fresh-user-flow.mjs`, `scripts/db/reset-test-data.mjs`, `AI_HANDOFF.md`.
+**L-013 — 2026-11-06 — Final verification — Live testnet end-to-end verification is operator-owned.** The automated fresh-user run reached wallet sign-in and asset-draft creation, and a registration transaction was mined (`assets(0xa12be287a2fba330af8a6f6bd8e59a169cd4f4dd18b83503b226907a984432f1)` returns active), but the full DB-confirmed asset -> job -> license proof was not completed because the deployer needed funding. Per operator instruction, the operator is funding the wallet and will handle the final live testnet verification manually in a real browser; the agent has stopped automated testing. Consequence: automated evidence ends at the verified sign-in/draft/transaction path; the operator owns the live end-to-end result. Files: `apps/web/tests/fresh-user-flow.mjs`, `scripts/db/reset-test-data.mjs`, `AI_HANDOFF.md`.
 
 **L-012 — 2026-11-06 — Final polish — The custom `zorq-preview` alias still serves the previous UI build.** Vercel CLI alias mutation endpoints remain challenge-blocked from this environment (`login_required` / security checkpoint), so the new UI cannot be force-promoted to the manually maintained custom alias. Consequence: the stable custom preview URL shows the older light UI, while the new UI is live and verified on the production alias `https://zorq-six.vercel.app` and the preview branch alias `https://zorq-git-preview-uhhh2.vercel.app`. Mitigation: provide a fresh `VERCEL_TOKEN` and run `vercel alias set` for the latest preview deployment, or point the custom domain at the preview branch in the Vercel dashboard. Files: `AI_HANDOFF.md`, `docs/evidence/preview-signin.txt`.
 
@@ -411,7 +411,15 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 - **Transaction hardening:** asset/job/license/revocation writes now use the injected Substrate signer through direct `revive.call`, decode module errors, wait for eight confirmations and return the hash/block hash. Exact failures are logged to the browser console and shown in the UI. `StorageDepositNotEnoughFunds` maps to “Insufficient testnet POT for the storage deposit. Fund the wallet and retry.”
 - **External database feature:** implemented end-to-end across the asset form, Zod/Drizzle schema and migration, encrypted credential storage, internal snapshot enrichment, and the Python coordinator. External participants are normalized to the eight-feature model; a failed source is marked `DATA FAILED` and skipped, and the run fails closed only if fewer than two participants load. Deployed evidence: `docs/evidence/external-database-form.png`; smoke script: `apps/web/tests/external-form-smoke.mjs`.
 - **Tests:** web unit/scaffold 27/27 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 7/7; typecheck/lint/build pass. External loader tests cover SQLite fixtures, missing labels and failure isolation.
-- **Known verification gap:** L-013. The deployer balance is insufficient for the remaining fresh asset/job/license storage deposits and the faucet is on cooldown. The DB is nevertheless clean and the exact insufficient-funds message is verified.
+- **Live verification owner:** L-013. The operator is funding the deployer and performing the final fresh asset -> job -> license check manually in a real browser. The DB is clean and the automated work is closed.
+
+## Operator manual verification handoff (6 November 2026)
+
+- The operator is funding the deployer wallet and will complete the live testnet end-to-end flow manually in a real browser.
+- The agent has stopped all automated testing and script generation per operator instruction.
+- The Neon test-data tables are clean: `data_assets`, `fl_jobs`, `licenses`, `job_participants`, `training_runs`, `training_rounds`, `authorization_checks`, `chain_transactions` and stale idempotency records all report zero rows.
+- The external-database feature, transaction hardening, enterprise copy/logo, README/docs and `/docs` are implemented and pushed.
+- Latest deployed web alias: `https://zorq-six.vercel.app`; preview branch: `https://zorq-git-preview-uhhh2.vercel.app`; FL service: `https://zorq-fl-service.onrender.com`.
 
 ## Phase 8/9/10 completion report
 
@@ -461,4 +469,4 @@ Verification steps:
 
 ## Exact next task
 
-Submission handoff is complete except for L-012. Provide a fresh `VERCEL_TOKEN` or point the `zorq-preview` custom domain at the preview branch in the Vercel dashboard, then re-run the published sign-in and data-page checks. Remaining optional work: L-010 (Google AI Studio voice) and the dependency advisories.
+Operator manual testnet verification. The agent has completed and stopped; no further automated tests or scripts are to be run by the agent.

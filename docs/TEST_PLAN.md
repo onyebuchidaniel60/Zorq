@@ -166,3 +166,8 @@ The deployed preview smoke requires a display because Vercel's edge checkpoint r
 cd apps/web
 PREVIEW_ORIGIN=http://127.0.0.1:3100 npm run test:auth-state
 ```
+
+
+## Operator manual verification (6 November 2026)
+
+The final live testnet asset -> job -> license flow is being verified manually by the operator in a real browser after funding the deployer wallet. Automated testing and script generation by the agent have stopped. The automated suites in this document remain the recorded evidence for the code, contract, FL service and deployed sign-in paths.

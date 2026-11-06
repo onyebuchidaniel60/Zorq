@@ -185,6 +185,7 @@ See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). The current suite covers:
 - Unit tests for domain formatting, SIWE construction, origin validation and safe client parsing
 - Playwright desktop + mobile route/state coverage (`40/40`)
 - Deployed-preview sign-in and data-page verification
+- Final live testnet end-to-end verification is being completed manually by the operator in a real browser. The automated suite above is complete; the agent has stopped.
 
 Every claim in the UI is intended to be backed by a command, a contract read or a recorded run artifact. Do not claim a test passed unless the command actually ran.
 
