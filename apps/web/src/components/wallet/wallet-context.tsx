@@ -168,6 +168,7 @@ export function WalletProvider({
         return;
       }
       setUser(verified.user);
+      window.location.reload();
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -185,6 +186,7 @@ export function WalletProvider({
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
+      window.location.reload();
     } catch {
       setError("Sign-out could not be completed.");
     } finally {

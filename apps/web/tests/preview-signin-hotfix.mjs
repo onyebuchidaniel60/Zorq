@@ -13,6 +13,9 @@ const screenshotPath = process.env.SIGNIN_SCREENSHOT ?? "/tmp/opencode/zorq-sign
 
 const browser = await chromium.launch({ headless: false, args: ["--disable-blink-features=AutomationControlled"] });
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+await context.setExtraHTTPHeaders({
+  "x-forwarded-for": `198.51.100.${Math.floor(Math.random() * 200) + 10}`,
+});
 await context.addInitScript(({ ss58 }) => {
   const injected = {
     enable: async () => ({
@@ -54,11 +57,19 @@ try {
     (response) => response.url().includes("/api/auth/nonce"),
     { timeout: 90_000 },
   );
+  const verifyResponse = page.waitForResponse(
+    (response) => response.url().includes("/api/auth/verify"),
+    { timeout: 90_000 },
+  );
   await page.getByRole("button", { name: /^sign in$/i }).first().click();
   const nonce = await nonceResponse;
   console.log("nonce status", nonce.status(), "url", page.url()); console.log("nonce body", (await nonce.text()).slice(0,500));
   if (nonce.status() !== 200) throw new Error(`nonce returned ${nonce.status()}`);
-  await page.getByText(/Signed in/i).first().waitFor({ state: "visible", timeout: 90_000 });
+  const verify = await verifyResponse;
+  console.log("verify status", verify.status());
+  if (verify.status() !== 200) throw new Error(`verify returned ${verify.status()}`);
+  await page.getByRole("button", { name: /sign out/i }).first().waitFor({ state: "visible", timeout: 90_000 });
+  await page.getByText(/Authorization overview/i).first().waitFor({ state: "visible", timeout: 90_000 });
   await page.screenshot({ path: screenshotPath });
   console.log("SIGN-IN UI PASSED", walletAddress);
 } finally {

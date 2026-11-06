@@ -8,7 +8,7 @@ const key = JSON.parse(fs.readFileSync("/root/Zorq/.secrets/deployer.json", "utf
 await cryptoWaitReady();
 const pair = new Keyring({ type: "sr25519", ss58Format: 42 }).addFromSeed(Buffer.from(key.seed.slice(2), "hex"));
 const walletAddress = ss58ToH160(pair.address).toLowerCase();
-const origin = "https://zorq-preview-uhhh2.vercel.app";
+const origin = process.env.PREVIEW_ORIGIN ?? "https://zorq-preview-uhhh2.vercel.app";
 const jobId = "a37f6074-bd7d-44fc-a00c-c737b8a78b77";
 const runId = "e18c1749-21f4-4cf4-b74a-2ed107f5d6cf";
 const revokedLicenseId = "88a3af2f-58ba-4092-b900-3ffa0b0294ed";
@@ -52,10 +52,10 @@ try {
     }
     pass(`${path}`);
   }
-  await open("/app","Authorization workspace");
+  await open("/app","Authorization overview");
   await open("/app/assets","Data assets");
   await open("/app/jobs","Training jobs");
-  await open(`/app/jobs/${jobId}`,"Creator controls");
+  await open(`/app/jobs/${jobId}`,"Job controls");
   await open(`/app/runs/${runId}`,"Round snapshots");
   const runText=await page.locator("body").innerText();
   if(!runText.includes("REVOKED")) fail("run page missing REVOKED"); else pass("run shows REVOKED exclusion");
