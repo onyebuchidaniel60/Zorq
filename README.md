@@ -246,3 +246,10 @@ See [`docs/SECURITY_AND_PRIVACY.md`](./docs/SECURITY_AND_PRIVACY.md).
 - **In-app documentation:** `/docs`
 - **GitHub:** <https://github.com/onyebuchidaniel60/Zorq>
 - **Portaldot explorer:** <https://scanner-testnet-v3.portaldot.dev/>
+- 
+## 🗺️ Future Roadmap
+Zorq's architecture is built to be modular and future-proof. While this MVP uses an open-source Flower adapter for Federated Learning execution, we are actively monitoring Portaldot's roadmap for developer-ready APIs. 
+
+- **Native Portaldot FL:** Once Portaldot releases the SDK for its native Federated Learning framework, we will swap the `FlowerDemoProvider` for a `PortaldotNativeFLProvider`. Our `FLExecutionProvider` interface is designed to make this a plug-and-play upgrade without changing the core DataLicense contracts.
+- **Native ZK & Homomorphic Encryption:** We plan to integrate Portaldot's native ZK/HE features to mathematically verify model updates and ensure that not even the weights shared during training can be reverse-engineered.
+- **Production Worker Nodes:** Transitioning from simulated partitions to distributed Zorq Worker Nodes deployed inside enterprise VPCs for real-world healthcare and financial datasets.
