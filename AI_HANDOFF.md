@@ -488,6 +488,41 @@ Verification steps:
 9. Read AI_HANDOFF.md Decision Log and Known Limitations before submission.
 ```
 
+## Post-handoff hardening completion report
+
+```text
+Assigned phase/task: Phase 10 post-handoff — ghost draft/pending cleanup, optimistic pending-to-active lists, and back navigation
+Commit SHA: 51f5151 (code/docs); this report is committed immediately after
+Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
+Deployed commit/deployment ID: Vercel auto-deploy from 51f5151. Both aliases were observed serving the new `Back to assets` markup on /app/assets/new. The dashboard deployment ID is not exposed by the deployment headers from this environment (L-001).
+Changes visible:
+- Drafts are excluded from asset, job and license lists.
+- Failed/rejected/insufficient-tPOT transactions delete the unsubmitted draft; ambiguous timeouts keep it hidden for the 30-minute cleanup.
+- Successful inclusion redirects to the parent list, shows a pending badge, and polls /confirm every 4 seconds until active/open.
+- ← Back links on asset, job, license and run detail/creation pages.
+Intentionally incomplete areas:
+- Live wallet-level checks with a real extension, a 0-tPOT account and a funded successful transaction remain operator-owned (L-013). No automated test fabricates a wallet signature or transaction.
+- Revoke and job-state actions retain the eight-confirmation synchronous wait; only creation flows are optimistic.
+Tests (exact commands + actual results):
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm test` — 28/28 Vitest, 4/4 scaffold.
+- `npm run build` — pass; `/api/{assets,jobs,licenses}/[id]/pending` and DELETE handlers present in the route manifest.
+- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npx playwright test` — 40/40 desktop + mobile after warm-up. The first cold run timed out on two desktop routes during dev compilation; both passed on targeted warm rerun and the full warm suite passed.
+- Live DB reconciliation — read-only `latestLicenseId` returned 0 for three `pending_chain` licenses with null transaction hashes; those three ghosts and one stale draft asset were removed. Active assets and the open job were retained.
+Manual verification: Inspected the deployed `/app/assets/new` HTML on both aliases for the new back link. Confirmed the route manifest and DB post-cleanup counts. No wallet transaction was sent.
+Known issues/blockers: L-012 (custom alias) and L-013 (live wallet verification); no code blocker.
+Security notes: No key, seed, session cookie, database URL or service token was printed. Draft deletion is owner-scoped, same-origin and session-protected. Confirmation remains receipt/event-verified and fail-closed; cleanup never deletes active/revoked records.
+Design reference image status (supplied / missing / ambiguous): supplied and unchanged (`docs/design/reference/reference3.webp`); this pass adds no new visual direction.
+Operator approval status (visuals: waived): waived.
+README/docs status: README, API reference, user guide and test plan updated with the draft/pending lifecycle and the reconciliation evidence.
+Documentation footer URL: `/docs` (reachable on both deployed aliases).
+GitHub URL or documented reason absent: https://github.com/onyebuchidaniel60/Zorq
+Decisions logged this phase: D-021, D-022
+New Known Limitations this phase: none (L-012 and L-013 remain)
+Next single task: Operator manual testnet verification with a real wallet: attempt a 0-tPOT failure and confirm no ghost row, then complete a successful asset/job/license flow and watch pending become active.
+```
+
 ## Exact next task
 
 Operator manual testnet verification. The agent has completed the code and documentation changes; live wallet-level checks remain operator-owned.

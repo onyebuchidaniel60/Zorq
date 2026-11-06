@@ -180,6 +180,7 @@ PREVIEW_ORIGIN=http://127.0.0.1:3100 npm run test:auth-state
 | Production build | `npm run build` pass; new `/pending` and `DELETE` routes present in the route manifest |
 | Web unit/scaffold | 28/28 Vitest + 4/4 scaffold |
 | Local Playwright | 40/40 desktop + mobile on a warm dev server; the cold run hit two 30s compile timeouts, which passed on targeted rerun and the full warm rerun |
+| Deployed aliases | `/app/assets/new` served the new `Back to assets` markup on `https://zorq-six.vercel.app` and `https://zorq-git-preview-uhhh2.vercel.app` |
 | Live wallet verification | Operator-owned. A real extension and funded/empty testnet wallet are required; the agent did not fabricate a browser wallet transaction. |
 
 The list pages now poll `/confirm` every four seconds for rows with a submitted transaction hash. Confirmation updates `pending_chain` to `active` (or `open`) through the same receipt/event verification used by the synchronous path.
