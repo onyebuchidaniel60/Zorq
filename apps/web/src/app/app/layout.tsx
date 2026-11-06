@@ -79,6 +79,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <main className="app-content">
               <PrototypeNotice />
               {children}
+              <footer className="app-footer">
+                <span>© 2026 Zorq · synthetic data only</span>
+                <nav aria-label="App footer links">
+                  <Link href="/docs">Documentation</Link>
+                  <Link href="/privacy">Privacy</Link>
+                  <Link href="/terms">Terms</Link>
+                  <Link href="/support">Support</Link>
+                  <a
+                    href="https://github.com/onyebuchidaniel60/Zorq"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    GitHub
+                  </a>
+                </nav>
+              </footer>
             </main>
           </div>
         </div>

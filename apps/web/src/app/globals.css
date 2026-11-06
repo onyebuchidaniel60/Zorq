@@ -435,6 +435,33 @@ a {
   margin-top: 1.25rem;
 }
 
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line);
+  margin-top: 2rem;
+  padding-top: 0.9rem;
+  color: var(--faint);
+  font-size: 0.6rem;
+}
+
+.app-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.app-footer a {
+  color: var(--muted);
+}
+
+.app-footer a:hover {
+  color: var(--lime);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Typography                                                                 */
 /* -------------------------------------------------------------------------- */
