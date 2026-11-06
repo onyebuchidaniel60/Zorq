@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
+  discardDraft,
   fetchWithAuth,
   logClientError,
   readApiError,
   readJsonObject,
+  shouldDiscardDraft,
   userFacingError,
 } from "@/lib/client-api";
 
@@ -54,6 +56,7 @@ export function NewAssetForm({
       return;
     }
     setError(null);
+    let draftId: string | null = null;
 
     try {
       let activeWallet = wallet;
@@ -104,37 +107,56 @@ export function NewAssetForm({
       ) {
         throw new Error("The asset draft response was incomplete. Nothing was submitted.");
       }
+      draftId = draft.assetId;
 
       setStatus("Confirm the transaction in your wallet…");
-      const { hash, blockHash } = await submitContractTransaction(
-        activeWallet,
-        "registerAsset",
-        [draft.chainAssetId, draft.metadataCommitment],
-      );
+      let txHash: `0x${string}`;
+      let blockHash: `0x${string}`;
+      try {
+        const submitted = await submitContractTransaction(
+          activeWallet,
+          "registerAsset",
+          [draft.chainAssetId, draft.metadataCommitment],
+        );
+        txHash = submitted.hash;
+        blockHash = submitted.blockHash;
+      } catch (cause) {
+        if (shouldDiscardDraft(cause)) {
+          await discardDraft(`/api/assets/${draft.assetId}`, signIn, activeWallet);
+        }
+        throw cause;
+      }
 
-      setStatus("Waiting for block confirmation…");
-      const confirmResponse = await fetchWithAuth(
-        `/api/assets/${draft.assetId}/confirm`,
+      setStatus("Recording the submitted transaction…");
+      const pendingResponse = await fetchWithAuth(
+        `/api/assets/${draft.assetId}/pending`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash }),
+          body: JSON.stringify({ txHash, blockHash }),
         },
         signIn,
         activeWallet,
       );
-      if (!confirmResponse.ok) {
-        throw new Error(await readApiError(confirmResponse, "The asset confirmation failed."));
+      if (!pendingResponse.ok) {
+        throw new Error(
+          await readApiError(
+            pendingResponse,
+            "The transaction was submitted, but the asset could not be queued for confirmation. Refresh the assets page before retrying.",
+          ),
+        );
       }
 
-      setStatus("Asset registered");
-      router.push(`/app/assets/${draft.assetId}`);
+      setStatus("Submitted. Confirming on-chain…");
+      router.push("/app/assets");
     } catch (cause) {
       logClientError("asset.register", cause);
       setError(
         userFacingError(
           cause,
-          "The asset could not be registered. No transaction was confirmed.",
+          draftId
+            ? "The asset could not be queued for confirmation. Check the assets list before retrying."
+            : "The asset could not be registered. No transaction was confirmed.",
         ),
       );
       setStatus(null);
@@ -317,7 +339,7 @@ export function NewAssetForm({
             <button
               type="submit"
               disabled={
-                Boolean(status && status !== "Asset registered") ||
+                Boolean(status) ||
                 (dataSource === "demo" && freeCount === 0)
               }
               className="z-button"

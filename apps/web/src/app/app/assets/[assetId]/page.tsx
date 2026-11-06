@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { Icon } from "@/components/ui-icon";
@@ -20,6 +21,7 @@ export default async function AssetDetailPage({
   if (!session) {
     return (
       <>
+        <BackLink href="/app/assets" label="Back to assets" />
         <PageHeader
           eyebrow="Data asset"
           title="Asset detail"
@@ -39,13 +41,22 @@ export default async function AssetDetailPage({
 
   return (
     <>
+      <BackLink href="/app/assets" label="Back to assets" />
       <PageHeader
         eyebrow="Data asset"
         title={asset!.displayName}
         description={asset!.description ?? "Owner-only asset metadata."}
         actions={
-          <StatusBadge tone={asset!.status === "active" ? "success" : "neutral"}>
-            {asset!.status}
+          <StatusBadge
+            tone={
+              asset!.status === "active"
+                ? "success"
+                : asset!.status === "pending_chain"
+                  ? "warning"
+                  : "neutral"
+            }
+          >
+            {asset!.status === "pending_chain" ? "pending" : asset!.status}
           </StatusBadge>
         }
       />

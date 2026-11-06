@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
+  discardDraft,
   fetchWithAuth,
   logClientError,
   readApiError,
   readJsonObject,
+  shouldDiscardDraft,
   userFacingError,
 } from "@/lib/client-api";
 
@@ -56,6 +58,7 @@ export function NewJobForm() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    let draftId: string | null = null;
 
     try {
       let activeWallet = wallet;
@@ -98,42 +101,63 @@ export function NewJobForm() {
       if (!isDraft(draft)) {
         throw new Error("The job draft response was incomplete. Nothing was submitted.");
       }
+      draftId = draft.jobId;
 
       setStatus("Confirm the transaction in your wallet…");
-      const { hash, blockHash } = await submitContractTransaction(
-        activeWallet,
-        "createJob",
-        [
-          draft.chainJobId,
-          draft.purposeHash,
-          draft.modelConfigHash,
-          BigInt(Math.trunc(Number(draft.args[3]))),
-          BigInt(Math.trunc(Number(draft.args[4]))),
-          Number(draft.args[5]),
-        ],
-      );
+      let txHash: `0x${string}`;
+      let blockHash: `0x${string}`;
+      try {
+        const submitted = await submitContractTransaction(
+          activeWallet,
+          "createJob",
+          [
+            draft.chainJobId,
+            draft.purposeHash,
+            draft.modelConfigHash,
+            BigInt(Math.trunc(Number(draft.args[3]))),
+            BigInt(Math.trunc(Number(draft.args[4]))),
+            Number(draft.args[5]),
+          ],
+        );
+        txHash = submitted.hash;
+        blockHash = submitted.blockHash;
+      } catch (cause) {
+        if (shouldDiscardDraft(cause)) {
+          await discardDraft(`/api/jobs/${draft.jobId}`, signIn, activeWallet);
+        }
+        throw cause;
+      }
 
-      setStatus("Waiting for block confirmation…");
-      const confirm = await fetchWithAuth(
-        `/api/jobs/${draft.jobId}/confirm`,
+      setStatus("Recording the submitted transaction…");
+      const pendingResponse = await fetchWithAuth(
+        `/api/jobs/${draft.jobId}/pending`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash }),
+          body: JSON.stringify({ txHash, blockHash }),
         },
         signIn,
         activeWallet,
       );
-      if (!confirm.ok) {
-        throw new Error(await readApiError(confirm, "The job confirmation failed."));
+      if (!pendingResponse.ok) {
+        throw new Error(
+          await readApiError(
+            pendingResponse,
+            "The transaction was submitted, but the job could not be queued for confirmation. Refresh the jobs page before retrying.",
+          ),
+        );
       }
-      router.push(`/app/jobs/${draft.jobId}`);
+
+      setStatus("Submitted. Confirming on-chain…");
+      router.push("/app/jobs");
     } catch (cause) {
       logClientError("job.publish", cause);
       setError(
         userFacingError(
           cause,
-          "The job could not be published. No transaction was confirmed.",
+          draftId
+            ? "The job could not be queued for confirmation. Check the jobs list before retrying."
+            : "The job could not be published. No transaction was confirmed.",
         ),
       );
       setStatus(null);
@@ -256,7 +280,7 @@ export function NewJobForm() {
           <div className="z-form-actions">
             <button
               type="submit"
-              disabled={Boolean(status && status !== "Published")}
+              disabled={Boolean(status)}
               className="z-button"
             >
               {status ?? (user ? "Publish job" : "Sign in and publish")}

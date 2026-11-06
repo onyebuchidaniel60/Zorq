@@ -3,8 +3,8 @@
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
 **Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, test data cleared, and the demo video re-rendered at 2:02. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
-**Current phase:** Phase 10 and final polish complete. Automated agent work is closed; the operator owns live testnet verification.
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, and the demo video re-rendered at 2:02. A post-handoff hardening pass removed ghost draft/pending rows, added optimistic pending-to-active lists and back navigation, and cleaned three unsubmitted license ghosts plus one stale asset draft from the test database. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
+**Current phase:** Phase 10 and final polish complete. Post-handoff transaction UX hardening is complete; the operator owns live wallet verification.
 
 ## Phase 3 deployment evidence
 
@@ -286,7 +286,11 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-019 — 2026-11-06 — External-database assets.** Asset drafts accept `dataSource: "demo" | "external"`, optional `dbUrl`, `dbTable`, `labelColumn` and nullable `demoPartitionId`. PostgreSQL URLs are encrypted at rest with AES-256-GCM derived from `SESSION_SECRET`; table/label identifiers are validated and quoted. The coordinator receives the URL only in the internal snapshot, reads at most 1,000 rows with pandas/SQLAlchemy, normalizes up to eight numeric features and a binary label, discards raw rows, and skips a failed external participant without crashing the run. Migration: `packages/db/migrations/0003_abandoned_vivisector.sql`. Files: `apps/web/src/server/domain/external-db.ts`, `apps/web/src/components/forms/new-asset-form.tsx`, `apps/fl-service/zorq_fl/model/external.py`, `apps/fl-service/zorq_fl/run/manager.py`.
 
-**D-020 — 2026-11-06 — Contract writes use direct `revive.call` with the injected Substrate signer.** The previous viem/twinkey write path could surface opaque provider errors and event-decoding failures. `submitContractTransaction()` builds the revive call, submits through the injected signer, decodes module dispatch errors, waits for eight confirmations, and returns the extrinsic hash and block hash for API confirmation. This keeps the contract interaction and authorization semantics unchanged while making wallet failures actionable. Files: `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/forms/**`, `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/components/licenses/revoke-license-button.tsx`.
+**D-020 — 2026-11-06 — Contract writes use direct `revive.call` with the injected Substrate signer.** The previous viem/twinkey write path could surface opaque provider errors and event-decoding failures. `submitContractTransaction()` builds the revive call, submits through the injected signer, decodes module dispatch errors, waits for eight confirmations, and returns the extrinsic hash and block hash for API confirmation. This keeps the contract interaction and authorization semantics unchanged while making wallet failures actionable. Superseded for asset/job/license creation by D-022; revoke and job-state actions retain the eight-confirmation wait. Files: `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/forms/**`, `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/components/licenses/revoke-license-button.tsx`.
+
+**D-021 — 2026-11-06 — Post-handoff UX — Drafts are hidden, short-lived, and deleted on safe failure; pending rows are created only after a transaction hash exists.** Asset/job/license drafts are server-generated so the browser receives the exact identifiers and arguments without trusting client-supplied values. Lists exclude `draft`. On wallet rejection, insufficient tPOT/storage deposit or a decoded dispatch error, the client deletes the draft through an owner-scoped same-origin `DELETE`. On inclusion, the client calls `/pending` to store `{txHash, blockHash}` and redirects to the list. This satisfies the requirement that no ghost record appears while preserving server-generated chain arguments. Files: `apps/web/src/server/domain/**`, `apps/web/src/app/api/**`, `apps/web/src/components/forms/**`, `apps/web/src/components/jobs/job-actions.tsx`, `apps/web/src/lib/client-api.ts`.
+
+**D-022 — 2026-11-06 — Post-handoff UX — Transaction submission resolves at inclusion and confirmation is polled from the list page.** `submitContractTransaction()` returns as soon as the transaction is in a block (or final) instead of blocking for eight confirmations. Asset, job and license forms call `/pending` and navigate immediately; `PendingSync` polls `/confirm` every four seconds and refreshes the server-rendered list when the contract event is accepted. Revoke and job-state actions pass `waitForConfirmations: 8` to preserve their existing synchronous confirmation contract. Backend confirmation remains receipt/event-verified and fail-closed; only the client wait point changed. Cleanup also removes `pending_chain` rows with no transaction hash and drafts older than 30 minutes. Files: `apps/web/src/lib/wallet-client.ts`, `apps/web/src/components/pending-sync.tsx`, `apps/web/src/app/app/{assets,jobs,licenses}/page.tsx`, `apps/web/src/server/domain/{assets,jobs,licenses}.ts`.
 
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
@@ -304,7 +308,7 @@ Append-only. One entry per limitation accepted by the agent rather than fixed, i
 
 Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — consequence — mitigation-if-any`
 
-**L-013 — 2026-11-06 — Final verification — Live testnet end-to-end verification is operator-owned.** The automated fresh-user run reached wallet sign-in and asset-draft creation, and a registration transaction was mined (`assets(0xa12be287a2fba330af8a6f6bd8e59a169cd4f4dd18b83503b226907a984432f1)` returns active), but the full DB-confirmed asset -> job -> license proof was not completed because the deployer needed funding. Per operator instruction, the operator is funding the wallet and will handle the final live testnet verification manually in a real browser; the agent has stopped automated testing. Consequence: automated evidence ends at the verified sign-in/draft/transaction path; the operator owns the live end-to-end result. Files: `apps/web/tests/fresh-user-flow.mjs`, `scripts/db/reset-test-data.mjs`, `AI_HANDOFF.md`.
+**L-013 — 2026-11-06 — Final verification — Live wallet-level testnet verification is operator-owned.** The automated fresh-user run reached wallet sign-in and asset-draft creation, and a registration transaction was mined (`assets(0xa12be287a2fba330af8a6f6bd8e59a169cd4f4dd18b83503b226907a984432f1)` returns active), but the full DB-confirmed asset -> job -> license proof was not completed and this environment has no real injected wallet extension. Per operator instruction, the operator is funding the wallet and will handle the empty-balance failure and successful transaction checks manually in a real browser. Consequence: automated evidence ends at the verified sign-in/draft/transaction path and the post-handoff ghost reconciliation; the operator owns the live wallet-level result. Files: `apps/web/tests/fresh-user-flow.mjs`, `scripts/db/reset-test-data.mjs`, `AI_HANDOFF.md`.
 
 **L-012 — 2026-11-06 — Final polish — The custom `zorq-preview` alias still serves the previous UI build.** Vercel CLI alias mutation endpoints remain challenge-blocked from this environment (`login_required` / security checkpoint), so the new UI cannot be force-promoted to the manually maintained custom alias. Consequence: the stable custom preview URL shows the older light UI, while the new UI is live and verified on the production alias `https://zorq-six.vercel.app` and the preview branch alias `https://zorq-git-preview-uhhh2.vercel.app`. Mitigation: provide a fresh `VERCEL_TOKEN` and run `vercel alias set` for the latest preview deployment, or point the custom domain at the preview branch in the Vercel dashboard. Files: `AI_HANDOFF.md`, `docs/evidence/preview-signin.txt`.
 
@@ -411,14 +415,31 @@ Format: `L-NNN — YYYY-MM-DD — Phase N — short title — description — co
 - **Transaction hardening:** asset/job/license/revocation writes now use the injected Substrate signer through direct `revive.call`, decode module errors, wait for eight confirmations and return the hash/block hash. Exact failures are logged to the browser console and shown in the UI. `StorageDepositNotEnoughFunds` maps to “Insufficient testnet POT for the storage deposit. Fund the wallet and retry.”
 - **External database feature:** implemented end-to-end across the asset form, Zod/Drizzle schema and migration, encrypted credential storage, internal snapshot enrichment, and the Python coordinator. External participants are normalized to the eight-feature model; a failed source is marked `DATA FAILED` and skipped, and the run fails closed only if fewer than two participants load. Deployed evidence: `docs/evidence/external-database-form.png`; smoke script: `apps/web/tests/external-form-smoke.mjs`.
 - **Tests:** web unit/scaffold 27/27 + 4/4; local Playwright 40/40; auth integration pass; auth-state smoke pass; contract 11/11; FL 7/7; typecheck/lint/build pass. External loader tests cover SQLite fixtures, missing labels and failure isolation.
-- **Live verification owner:** L-013. The operator is funding the deployer and performing the final fresh asset -> job -> license check manually in a real browser. The DB is clean and the automated work is closed.
+- **Live verification owner:** L-013. The operator is funding the deployer and performing the final fresh asset -> job -> license check manually in a real browser. The post-handoff ghost reconciliation is complete and the remaining active test assets/job were retained.
+
+## Post-handoff transaction UX hardening (6 November 2026)
+
+**Symptoms reported on the live testnet:** failed wallet transactions left `draft`/`pending_chain` rows that appeared as ghost assets/licenses; license transactions that succeeded stayed `pending_chain`; the UI blocked for 10–15 seconds waiting for Substrate finality; detail/creation pages had no back navigation.
+
+**Fixes**
+
+- Asset, job and license drafts are now hidden from every list and are only used to obtain the server-generated chain identifiers and arguments. They are never presented as pending before the user signs.
+- After a wallet rejection, insufficient tPOT/storage deposit, or dispatch error, the client calls the new `DELETE /api/{assets|jobs|licenses}/{id}` endpoint and the draft is removed. Timeouts/network ambiguity retain the hidden draft for the 30-minute safety cleanup rather than deleting a possibly-settled transaction.
+- `submitContractTransaction` resolves immediately after block inclusion and returns `{hash, blockHash}`. Asset, job and license forms call the new `/pending` route and redirect to `/app/assets`, `/app/jobs` or `/app/licenses` without waiting for finality.
+- List pages render a **pending** badge and `PendingSync` polls `/confirm` every four seconds. The backend verifies the receipt/event and updates `pending_chain` to `active` (assets/licenses) or `open` (jobs). Synchronous revoke/job-state actions retain an eight-confirmation wait so their existing confirmation contracts do not regress.
+- Cleanup removes unsubmitted drafts older than 30 minutes and `pending_chain` rows with no transaction hash. These rows cannot be confirmed because no hash exists.
+- Detail and creation pages now show a compact `← Back` link to their parent list (`/app/assets`, `/app/jobs`, `/app/licenses`); the run monitor links back to its job.
+
+**Live database reconciliation:** Three license rows were `pending_chain` with `chain_tx_hash = NULL`. A read-only contract call for each asset/job pair returned `latestLicenseId = 0`, proving no token had been minted. Those three ghosts and one stale draft asset were deleted; active assets and the open job were retained. Post-cleanup: `0` ghost licenses, `0` unsubmitted asset drafts, `0` ghost jobs.
+
+**Verification:** `npm run typecheck`, `npm run lint` and `npm run build` pass. Web unit/scaffold is 28/28 + 4/4. Playwright desktop + mobile is 40/40 on a warm local dev server; the first cold run hit two 30-second compile timeouts on `/app` and `/app/assets`, and both passed on the targeted warm rerun before the full 40/40 pass. The production build manifest includes `/api/assets/[assetId]/pending`, `/api/jobs/[jobId]/pending`, `/api/licenses/[licenseId]/pending` and the `DELETE` handlers. A real injected wallet and funded/empty testnet account are not available in this environment, so the final wallet-level empty-balance and successful-transaction checks remain operator-owned (L-013).
 
 ## Operator manual verification handoff (6 November 2026)
 
 - The operator is funding the deployer wallet and will complete the live testnet end-to-end flow manually in a real browser.
-- The agent has stopped all automated testing and script generation per operator instruction.
-- The Neon test-data tables are clean: `data_assets`, `fl_jobs`, `licenses`, `job_participants`, `training_runs`, `training_rounds`, `authorization_checks`, `chain_transactions` and stale idempotency records all report zero rows.
-- The external-database feature, transaction hardening, enterprise copy/logo, README/docs and `/docs` are implemented and pushed.
+- The agent completed the ghost-record/optimistic-transaction hardening; live wallet-level verification remains operator-owned.
+- The Neon test-data tables are not zeroed because the operator's active test assets/job are retained. The post-handoff reconciliation removed the three unsubmitted license ghosts and one stale draft asset; there are now zero pending rows without a transaction hash and zero unsubmitted drafts.
+- The external-database feature, transaction hardening, optimistic pending-to-active lists, back navigation, enterprise copy/logo, README/docs and `/docs` are implemented and pushed.
 - Latest deployed web alias: `https://zorq-six.vercel.app`; preview branch: `https://zorq-git-preview-uhhh2.vercel.app`; FL service: `https://zorq-fl-service.onrender.com`.
 
 ## Phase 8/9/10 completion report
@@ -433,7 +454,7 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 20 (D-001 … D-020)
+Total decisions logged: 22 (D-001 … D-022)
 Total known limitations: 13 (L-001 … L-013)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
@@ -469,4 +490,4 @@ Verification steps:
 
 ## Exact next task
 
-Operator manual testnet verification. The agent has completed and stopped; no further automated tests or scripts are to be run by the agent.
+Operator manual testnet verification. The agent has completed the code and documentation changes; live wallet-level checks remain operator-owned.

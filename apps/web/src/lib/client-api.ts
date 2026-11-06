@@ -79,6 +79,28 @@ export function logClientError(context: string, cause: unknown): void {
   }
 }
 
+export function shouldDiscardDraft(cause: unknown): boolean {
+  const message = cause instanceof Error ? cause.message : String(cause ?? "");
+  return !/not included before the timeout|timed out|timeout|network|disconnected|connection|socket/i.test(
+    message,
+  );
+}
+
+export async function discardDraft(
+  path: string,
+  signIn: SignIn,
+  wallet?: ConnectedWallet,
+): Promise<void> {
+  try {
+    const response = await fetchWithAuth(path, { method: "DELETE" }, signIn, wallet);
+    if (!response.ok && response.status !== 404) {
+      console.warn(`[zorq:draft-cleanup] ${path} -> HTTP ${response.status}`);
+    }
+  } catch (cause) {
+    console.warn("[zorq:draft-cleanup] request failed", cause);
+  }
+}
+
 export function userFacingError(cause: unknown, fallback: string): string {
   const message = cause instanceof Error ? cause.message.trim() : "";
 

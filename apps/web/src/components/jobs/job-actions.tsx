@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/components/wallet/wallet-context";
 import { submitContractTransaction } from "@/lib/wallet-client";
 import {
+  discardDraft,
   fetchWithAuth,
   logClientError,
   readApiError,
   readJsonObject,
+  shouldDiscardDraft,
   userFacingError,
 } from "@/lib/client-api";
 
@@ -162,32 +164,50 @@ export function JobActions({ job }: { job: Job }) {
       }
 
       setStatus("Confirm the transaction in your wallet…");
-      const { hash, blockHash } = await submitContractTransaction(
-        activeWallet,
-        "issueLicense",
-        [
-          draft.args[0] as `0x${string}`,
-          draft.args[1] as `0x${string}`,
-          BigInt(Math.trunc(Number(draft.args[2]))),
-          BigInt(Math.trunc(Number(draft.args[3]))),
-        ],
-      );
+      let txHash: `0x${string}`;
+      let blockHash: `0x${string}`;
+      try {
+        const submitted = await submitContractTransaction(
+          activeWallet,
+          "issueLicense",
+          [
+            draft.args[0] as `0x${string}`,
+            draft.args[1] as `0x${string}`,
+            BigInt(Math.trunc(Number(draft.args[2]))),
+            BigInt(Math.trunc(Number(draft.args[3]))),
+          ],
+        );
+        txHash = submitted.hash;
+        blockHash = submitted.blockHash;
+      } catch (cause) {
+        if (shouldDiscardDraft(cause)) {
+          await discardDraft(`/api/licenses/${draft.licenseId}`, signIn, activeWallet);
+        }
+        throw cause;
+      }
 
-      setStatus("Waiting for block confirmation…");
-      const confirm = await fetchWithAuth(
-        `/api/licenses/${draft.licenseId}/confirm`,
+      setStatus("Recording the submitted transaction…");
+      const pendingResponse = await fetchWithAuth(
+        `/api/licenses/${draft.licenseId}/pending`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txHash: hash, blockHash }),
+          body: JSON.stringify({ txHash, blockHash }),
         },
         signIn,
         activeWallet,
       );
-      if (!confirm.ok) {
-        throw new Error(await readApiError(confirm, "The license confirmation failed."));
+      if (!pendingResponse.ok) {
+        throw new Error(
+          await readApiError(
+            pendingResponse,
+            "The transaction was submitted, but the license could not be queued for confirmation. Refresh the licenses page before retrying.",
+          ),
+        );
       }
-      setStatus("License issued");
+
+      setStatus("Submitted. Confirming on-chain…");
+      router.push("/app/licenses");
     });
   }
 
@@ -224,6 +244,7 @@ export function JobActions({ job }: { job: Job }) {
         activeWallet,
         "setJobState",
         [job.chainJobId as `0x${string}`, enumValue],
+        { waitForConfirmations: 8 },
       );
       const confirm = await fetchWithAuth(
         `/api/jobs/${job.id}/state/confirm`,
@@ -354,7 +375,7 @@ export function JobActions({ job }: { job: Job }) {
                 />
               </div>
             </div>
-            <button type="submit" className="z-button z-button-full">
+            <button type="submit" className="z-button z-button-full" disabled={Boolean(status)}>
               {status ?? "Issue DataLicense"}
             </button>
           </form>

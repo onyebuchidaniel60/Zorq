@@ -3,6 +3,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
+import { PendingSync } from "@/components/pending-sync";
+import { BackLink } from "@/components/back-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { listAssets } from "@/server/domain/assets";
 
@@ -19,9 +21,17 @@ function tone(status: string) {
 export default async function AssetsPage() {
   const session = await getSessionFromCookies();
   const assets = session ? await listAssets(session.walletAddress) : [];
+  const pending = assets
+    .filter((asset) => asset.status === "pending_chain" && asset.chainTxHash && asset.chainBlockHash)
+    .map((asset) => ({
+      id: asset.id,
+      txHash: asset.chainTxHash as string,
+      blockHash: asset.chainBlockHash as string,
+    }));
 
   return (
     <>
+      <BackLink href="/app" label="Back to overview" />
       <PageHeader
         eyebrow="Data provider"
         title="Data assets"
@@ -32,6 +42,7 @@ export default async function AssetsPage() {
           </Link>
         }
       />
+      <PendingSync kind="assets" items={pending} />
       {!session ? (
         <SignedOutCard feature="Asset management" />
       ) : assets.length === 0 ? (
@@ -84,7 +95,7 @@ export default async function AssetsPage() {
                     <td>{asset.dataSource === "external" ? "External database" : `Partition ${asset.demoPartitionId}`}</td>
                     <td>
                       <StatusBadge tone={tone(asset.status)}>
-                        {asset.status.replace("_", " ")}
+                        {asset.status === "pending_chain" ? "pending" : asset.status}
                       </StatusBadge>
                     </td>
                     <td>

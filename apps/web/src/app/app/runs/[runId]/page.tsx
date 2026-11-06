@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { RunLive } from "@/components/runs/run-live";
 import { getSessionFromCookies } from "@/server/auth/session";
@@ -15,6 +16,7 @@ export default async function RunDetailPage({ params }: { params: Promise<{ runI
   if (!session) {
     return (
       <>
+        <BackLink href="/app/jobs" label="Back to jobs" />
         <PageHeader eyebrow="Federated run" title="Run monitor" description="Connect your wallet to view this run." />
         <SignedOutCard feature="Run monitor" />
       </>
@@ -26,6 +28,7 @@ export default async function RunDetailPage({ params }: { params: Promise<{ runI
 
   return (
     <>
+      <BackLink href={`/app/jobs/${run.jobId}`} label="Back to job" />
       <PageHeader
         eyebrow="Federated run"
         title="Round authorization monitor"

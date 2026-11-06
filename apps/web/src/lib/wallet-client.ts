@@ -175,11 +175,16 @@ export function contractAddress(): `0x${string}` {
   return address as `0x${string}`;
 }
 
+export type SubmitContractTransactionOptions = {
+  storageDepositLimitPot?: bigint;
+  waitForConfirmations?: number;
+};
+
 export async function submitContractTransaction(
   wallet: ConnectedWallet,
   functionName: string,
   args: readonly unknown[],
-  storageDepositLimitPot = 25n,
+  options: SubmitContractTransactionOptions = {},
 ): Promise<{ hash: `0x${string}`; blockHash: `0x${string}` }> {
   if (!wallet.injected.signer) {
     throw new Error(
@@ -198,6 +203,7 @@ export async function submitContractTransaction(
     functionName: functionName as never,
     args: args as never,
   });
+  const storageDepositLimitPot = options.storageDepositLimitPot ?? 25n;
   const tx = revive.call(
     contractAddress(),
     0n,
@@ -207,33 +213,49 @@ export async function submitContractTransaction(
   );
 
   return new Promise((resolve, reject) => {
-    let unsub: (() => void) | undefined;
-    let settling = false;
+    let stop: (() => void) | undefined;
+    let settled = false;
+
+    function finish(
+      error?: unknown,
+      result?: { hash: `0x${string}`; blockHash: `0x${string}` },
+    ) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        stop?.();
+      } catch {
+        // The subscription may already be closed by the provider.
+      }
+      if (error) {
+        reject(error);
+      } else if (result) {
+        resolve(result);
+      }
+    }
+
     const timer = setTimeout(() => {
-      unsub?.();
-      reject(new Error("The transaction was not included before the timeout."));
+      finish(new Error("The transaction was not included before the timeout."));
     }, 180_000);
 
     async function settleIncluded(hash: `0x${string}`, blockHash: `0x${string}`) {
-      if (settling) return;
-      settling = true;
       try {
-        const includedHeader = await api.rpc.chain.getHeader(blockHash);
-        const included = includedHeader.number.toNumber();
-        const requiredDepth = 8;
-        while (true) {
-          const head = await api.rpc.chain.getHeader();
-          if (head.number.toNumber() - included >= requiredDepth) break;
-          await new Promise((wait) => setTimeout(wait, 2_000));
+        const waitFor = options.waitForConfirmations ?? 0;
+        if (waitFor > 0) {
+          const includedHeader = await api.rpc.chain.getHeader(blockHash);
+          const included = includedHeader.number.toNumber();
+          while (!settled) {
+            const head = await api.rpc.chain.getHeader();
+            if (head.number.toNumber() - included >= waitFor) break;
+            await new Promise((wait) => setTimeout(wait, 2_000));
+          }
+          if (settled) return;
         }
-        clearTimeout(timer);
-        unsub?.();
-        console.info(`[zorq:tx] confirmed ${hash} at ${blockHash}`);
-        resolve({ hash, blockHash });
+        console.info(`[zorq:tx] included ${hash} at ${blockHash}`);
+        finish(undefined, { hash, blockHash });
       } catch (error) {
-        clearTimeout(timer);
-        unsub?.();
-        reject(error);
+        finish(error);
       }
     }
 
@@ -242,15 +264,14 @@ export async function submitContractTransaction(
         wallet.ss58Address,
         { signer: wallet.injected.signer as never },
         (result) => {
+          if (settled) return;
           if (result.dispatchError) {
-            clearTimeout(timer);
-            unsub?.();
             let message = result.dispatchError.toString();
             if (result.dispatchError.isModule) {
               const decoded = api.registry.findMetaError(result.dispatchError.asModule);
               message = `${decoded.section}.${decoded.name}: ${decoded.docs.join(" ")}`;
             }
-            reject(new Error(message));
+            finish(new Error(message));
             return;
           }
           const status = result.status;
@@ -259,16 +280,30 @@ export async function submitContractTransaction(
               ? status.asFinalized
               : status.asInBlock
             ).toHex() as `0x${string}`;
+            if (status.isFinalized) {
+              console.info(`[zorq:tx] finalized ${result.txHash.toHex()}`);
+              finish(undefined, {
+                hash: result.txHash.toHex() as `0x${string}`,
+                blockHash,
+              });
+              return;
+            }
             void settleIncluded(result.txHash.toHex() as `0x${string}`, blockHash);
           }
         },
       )
-      .then((stop) => {
-        unsub = stop;
+      .then((unsub) => {
+        stop = unsub;
+        if (settled) {
+          try {
+            unsub();
+          } catch {
+            // The subscription is already closed.
+          }
+        }
       })
       .catch((error: unknown) => {
-        clearTimeout(timer);
-        reject(error);
+        finish(error);
       });
   });
 }

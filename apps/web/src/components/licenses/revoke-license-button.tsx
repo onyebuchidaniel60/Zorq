@@ -50,6 +50,7 @@ export function RevokeLicenseButton({
         activeWallet,
         "revokeLicense",
         [BigInt(tokenId)],
+        { waitForConfirmations: 8 },
       );
       setStatus("Waiting for block confirmation…");
       const response = await fetchWithAuth(

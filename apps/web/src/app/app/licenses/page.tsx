@@ -3,6 +3,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
+import { PendingSync } from "@/components/pending-sync";
+import { BackLink } from "@/components/back-link";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { listLicenses } from "@/server/domain/licenses";
 
@@ -19,14 +21,28 @@ function tone(status: string) {
 export default async function LicensesPage() {
   const session = await getSessionFromCookies();
   const rows = session ? await listLicenses(session.walletAddress) : [];
+  const pending = rows
+    .filter(
+      (license) =>
+        license.statusMirror === "pending_chain" &&
+        license.chainTxHash &&
+        license.chainBlockHash,
+    )
+    .map((license) => ({
+      id: license.id,
+      txHash: license.chainTxHash as string,
+      blockHash: license.chainBlockHash as string,
+    }));
 
   return (
     <>
+      <BackLink href="/app" label="Back to overview" />
       <PageHeader
         eyebrow="Data provider"
         title="Data licenses"
         description="Non-transferable rights issued by your wallet for one asset and one job."
       />
+      <PendingSync kind="licenses" items={pending} />
       {!session ? (
         <SignedOutCard feature="License management" />
       ) : rows.length === 0 ? (
@@ -78,7 +94,7 @@ export default async function LicensesPage() {
                     </td>
                     <td>
                       <StatusBadge tone={tone(license.statusMirror)}>
-                        {license.statusMirror.replace("_", " ")}
+                        {license.statusMirror === "pending_chain" ? "pending" : license.statusMirror}
                       </StatusBadge>
                     </td>
                     <td className="text-[11px]">

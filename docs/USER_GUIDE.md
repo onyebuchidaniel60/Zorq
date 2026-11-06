@@ -29,8 +29,8 @@ Zorq lets a data owner authorize one registered asset to participate in one part
 3. Select an available synthetic demo partition.
 4. Review the no-upload notice and confirm.
 5. Review the wallet transaction and sign `registerAsset`.
-6. Wait for chain confirmation and the app's event verification.
-7. Open the asset detail page to see active status and registration evidence.
+6. After your wallet includes the transaction, Zorq returns to the Assets list immediately and shows the new row with a **pending** badge.
+7. The list polls the backend every few seconds. The badge changes to **active** after the contract event is confirmed. Open the asset detail page to see registration evidence.
 
 ## Create a training job
 
@@ -39,7 +39,7 @@ Zorq lets a data owner authorize one registered asset to participate in one part
 3. Select the fixed `synthetic-binary-classifier-v1` preset (8 numeric features, logistic classifier, fixed three-round FedAvg settings; no arbitrary model uploads).
 4. Set valid start/end times within the product's maximum 30-day window.
 5. Review the three-round, 2–5 participant demo limits and publish transaction.
-6. After contract confirmation, the job becomes Open.
+6. After your wallet includes the transaction, Zorq returns to the Jobs list and shows the new job as **pending**. The list promotes it to **open** once the contract event is confirmed.
 
 ## Issue a DataLicense
 
@@ -48,7 +48,7 @@ Zorq lets a data owner authorize one registered asset to participate in one part
 3. Review job purpose/configuration and validity window.
 4. Confirm that the selected data is synthetic demo data.
 5. Sign the `issueLicense` transaction in your wallet.
-6. After confirmation, the non-transferable DataLicense appears in your Licenses list.
+6. After wallet inclusion, Zorq returns to the Licenses list and shows the new license as **pending**. The list promotes it to **active** after the mint event is confirmed.
 
 A license does not grant general dataset access or authorize other jobs. It is bound to the selected asset and job. Each unique asset consumes one of the job’s lifetime participant slots; revoking/expiring it does not let a different asset take that slot, although the same asset may be re-licensed.
 
@@ -78,8 +78,9 @@ Only the job creator can change job state. Pause blocks future admission/rounds.
 
 - **Wrong network:** switch wallet to chain ID `420420777`.
 - **Insufficient gas:** confirm the official testnet process for funding your EVM wallet. Do not assume a native SS58 address and EVM address share funds automatically.
-- **Transaction pending:** wait for confirmation; do not send repeated transactions. Refresh to inspect transaction status.
-- **Transaction failed:** review the failure message; the draft may need to be retried with a new idempotency key.
+- **Transaction pending:** the item appears in the relevant list with a **pending** badge. Keep the list open; it polls every few seconds and switches to **active** after confirmation. Do not send a second transaction.
+- **Transaction failed or rejected:** the wallet error is shown and the unsubmitted draft is discarded, so it cannot appear as a ghost row. If the wallet reports insufficient tPOT, fund the wallet and start a new attempt.
+- **Draft from an interrupted session:** unsubmitted drafts are hidden from all lists and are removed automatically after 30 minutes. Pending rows without a transaction hash are also cleaned up.
 - **License denied:** verify asset ownership, job state, validity interval, revocation and exact job binding.
 - **Run blocked:** ensure at least two distinct active licenses and that the chain/RPC and FL service are healthy.
 - **Run stopped:** the system fails closed if authorization cannot be established. Check the recorded error and try again only after the cause is resolved.

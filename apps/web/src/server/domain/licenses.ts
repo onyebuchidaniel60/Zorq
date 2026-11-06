@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or } from "drizzle-orm";
 import { dataAssets, flJobs, getDb, jobParticipants, licenses } from "@zorq/db";
 import { ApiError } from "../http/api";
 import { appendAuditEvent } from "../audit";
@@ -10,6 +10,20 @@ import { recordChainTransaction } from "./chain-tx";
 import { getServerEnv } from "../env";
 
 const ROUTE_KEY = "licenses.drafts";
+const DRAFT_TTL_MS = 30 * 60 * 1000;
+
+async function cleanupStaleLicenseDrafts(): Promise<void> {
+  const db = getDb();
+  const cutoff = new Date(Date.now() - DRAFT_TTL_MS);
+  await db
+    .delete(licenses)
+    .where(
+      or(
+        and(eq(licenses.statusMirror, "draft"), lt(licenses.createdAt, cutoff)),
+        and(eq(licenses.statusMirror, "pending_chain"), isNull(licenses.chainTxHash)),
+      ),
+    );
+}
 
 export async function createLicenseDraft(input: {
   walletAddress: string;
@@ -21,6 +35,7 @@ export async function createLicenseDraft(input: {
   requestId: string;
 }) {
   const db = getDb();
+  await cleanupStaleLicenseDrafts();
   const existing = await findIdempotentResponse(
     db,
     input.walletAddress,
@@ -77,8 +92,11 @@ export async function createLicenseDraft(input: {
   ) {
     throw new ApiError(409, "INVALID_INPUT", "An active license already exists for this asset/job pair.");
   }
+  if (current[0]?.statusMirror === "draft") {
+    await db.delete(licenses).where(eq(licenses.id, current[0].id));
+  }
 
-  const revision = (current[0]?.revision ?? 0) + 1;
+  const revision = (current[0]?.statusMirror === "draft" ? current[0].revision : (current[0]?.revision ?? 0) + 1);
   const id = randomUUID();
   const now = new Date();
 
@@ -95,7 +113,7 @@ export async function createLicenseDraft(input: {
       Math.floor(validFrom.getTime() / 1000),
       Math.floor(validUntil.getTime() / 1000),
     ],
-    status: "pending_chain",
+    status: "draft",
   };
 
   await db.transaction(async (tx) => {
@@ -107,7 +125,7 @@ export async function createLicenseDraft(input: {
       revision,
       validFrom,
       validUntil,
-      statusMirror: "pending_chain",
+      statusMirror: "draft",
       createdAt: now,
       updatedAt: now,
     });
@@ -129,6 +147,72 @@ export async function createLicenseDraft(input: {
   return response;
 }
 
+export async function markLicensePending(input: {
+  licenseId: string;
+  walletAddress: string;
+  txHash: `0x${string}`;
+  blockHash: `0x${string}`;
+}) {
+  const db = getDb();
+  const [license] = await db
+    .select()
+    .from(licenses)
+    .where(and(eq(licenses.id, input.licenseId), eq(licenses.assetOwnerWallet, input.walletAddress)))
+    .limit(1);
+  if (!license) {
+    throw new ApiError(404, "NOT_FOUND", "License not found.");
+  }
+  if (license.statusMirror === "active" && license.chainTxHash === input.txHash) {
+    return { licenseId: license.id, status: "active", txHash: input.txHash };
+  }
+  if (license.statusMirror === "pending_chain" && license.chainTxHash === input.txHash) {
+    return { licenseId: license.id, status: "pending_chain", txHash: input.txHash };
+  }
+  if (license.statusMirror !== "draft") {
+    throw new ApiError(409, "INVALID_INPUT", "This license is not awaiting a transaction.");
+  }
+  await db
+    .update(licenses)
+    .set({
+      statusMirror: "pending_chain",
+      chainTxHash: input.txHash,
+      chainBlockHash: input.blockHash,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(licenses.id, license.id), eq(licenses.statusMirror, "draft")));
+  return { licenseId: license.id, status: "pending_chain", txHash: input.txHash };
+}
+
+export async function deleteLicenseDraft(input: {
+  licenseId: string;
+  walletAddress: string;
+  requestId: string;
+}) {
+  const db = getDb();
+  const [license] = await db
+    .select()
+    .from(licenses)
+    .where(and(eq(licenses.id, input.licenseId), eq(licenses.assetOwnerWallet, input.walletAddress)))
+    .limit(1);
+  if (!license) {
+    throw new ApiError(404, "NOT_FOUND", "License not found.");
+  }
+  if (license.chainTxHash || !["draft", "pending_chain"].includes(license.statusMirror)) {
+    throw new ApiError(409, "INVALID_INPUT", "Only an unsubmitted license draft can be discarded.");
+  }
+  await db.transaction(async (tx) => {
+    await tx.delete(licenses).where(eq(licenses.id, license.id));
+    await appendAuditEvent(tx, {
+      actorWallet: input.walletAddress,
+      entityType: "license",
+      entityId: license.id,
+      action: "license.draft.discarded",
+      requestId: input.requestId,
+    });
+  });
+  return { licenseId: license.id, status: "discarded" };
+}
+
 export async function confirmLicense(input: {
   licenseId: string;
   walletAddress: string;
@@ -148,6 +232,13 @@ export async function confirmLicense(input: {
   if (license.statusMirror === "active" && license.chainTxHash === input.txHash) {
     return { licenseId: license.id, status: license.statusMirror, tokenId: license.tokenId };
   }
+  if (!["draft", "pending_chain"].includes(license.statusMirror)) {
+    throw new ApiError(409, "INVALID_INPUT", "This license is not awaiting confirmation.");
+  }
+  const txHash = (input.txHash ?? license.chainTxHash) as `0x${string}` | null;
+  if (!txHash) {
+    throw new ApiError(400, "INVALID_INPUT", "The license transaction hash is missing.");
+  }
 
   const [asset] = await db.select().from(dataAssets).where(eq(dataAssets.id, license.assetId)).limit(1);
   const [job] = await db.select().from(flJobs).where(eq(flJobs.id, license.jobId)).limit(1);
@@ -156,8 +247,8 @@ export async function confirmLicense(input: {
   }
 
   const verified = await verifyContractEvent({
-    txHash: input.txHash,
-    blockHash: input.blockHash,
+    txHash,
+    blockHash: (input.blockHash ?? license.chainBlockHash ?? undefined) as `0x${string}` | undefined,
     eventName: "LicenseIssued",
     args: {
       assetId: asset.chainAssetId,
@@ -300,11 +391,17 @@ export async function revokeLicense(input: {
 }
 
 export async function listLicenses(walletAddress: string) {
+  await cleanupStaleLicenseDrafts();
   const db = getDb();
   return db
     .select()
     .from(licenses)
-    .where(eq(licenses.assetOwnerWallet, walletAddress));
+    .where(
+      and(
+        eq(licenses.assetOwnerWallet, walletAddress),
+        inArray(licenses.statusMirror, ["pending_chain", "active", "revoked", "expired"]),
+      ),
+    );
 }
 
 export async function getLicense(licenseId: string, walletAddress: string) {

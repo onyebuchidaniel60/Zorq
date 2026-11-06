@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, or } from "drizzle-orm";
 import { flJobs, getDb, jobParticipants } from "@zorq/db";
 import { ApiError } from "../http/api";
 import { appendAuditEvent } from "../audit";
@@ -11,7 +11,21 @@ import { recordChainTransaction } from "./chain-tx";
 import { getServerEnv } from "../env";
 
 const ROUTE_KEY = "jobs.drafts";
+const DRAFT_TTL_MS = 30 * 60 * 1000;
 const STATE_TO_CHAIN = { open: 0, paused: 1, closed: 2 } as const;
+
+async function cleanupStaleJobDrafts(): Promise<void> {
+  const db = getDb();
+  const cutoff = new Date(Date.now() - DRAFT_TTL_MS);
+  await db
+    .delete(flJobs)
+    .where(
+      or(
+        and(eq(flJobs.status, "draft"), lt(flJobs.createdAt, cutoff)),
+        and(eq(flJobs.status, "pending_chain"), isNull(flJobs.chainTxHash)),
+      ),
+    );
+}
 
 export async function createJobDraft(input: {
   walletAddress: string;
@@ -25,6 +39,7 @@ export async function createJobDraft(input: {
   requestId: string;
 }) {
   const db = getDb();
+  await cleanupStaleJobDrafts();
   const existing = await findIdempotentResponse(
     db,
     input.walletAddress,
@@ -111,6 +126,72 @@ export async function createJobDraft(input: {
   return response;
 }
 
+export async function markJobPending(input: {
+  jobId: string;
+  walletAddress: string;
+  txHash: `0x${string}`;
+  blockHash: `0x${string}`;
+}) {
+  const db = getDb();
+  const [job] = await db
+    .select()
+    .from(flJobs)
+    .where(and(eq(flJobs.id, input.jobId), eq(flJobs.creatorWallet, input.walletAddress)))
+    .limit(1);
+  if (!job) {
+    throw new ApiError(404, "NOT_FOUND", "Job not found.");
+  }
+  if (job.status === "open" && job.chainTxHash === input.txHash) {
+    return { jobId: job.id, status: "open", txHash: input.txHash };
+  }
+  if (job.status === "pending_chain" && job.chainTxHash === input.txHash) {
+    return { jobId: job.id, status: "pending_chain", txHash: input.txHash };
+  }
+  if (job.status !== "draft") {
+    throw new ApiError(409, "INVALID_INPUT", "This job is not awaiting a transaction.");
+  }
+  await db
+    .update(flJobs)
+    .set({
+      status: "pending_chain",
+      chainTxHash: input.txHash,
+      chainBlockHash: input.blockHash,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(flJobs.id, job.id), eq(flJobs.status, "draft")));
+  return { jobId: job.id, status: "pending_chain", txHash: input.txHash };
+}
+
+export async function deleteJobDraft(input: {
+  jobId: string;
+  walletAddress: string;
+  requestId: string;
+}) {
+  const db = getDb();
+  const [job] = await db
+    .select()
+    .from(flJobs)
+    .where(and(eq(flJobs.id, input.jobId), eq(flJobs.creatorWallet, input.walletAddress)))
+    .limit(1);
+  if (!job) {
+    throw new ApiError(404, "NOT_FOUND", "Job not found.");
+  }
+  if (job.status !== "draft" || job.chainTxHash) {
+    throw new ApiError(409, "INVALID_INPUT", "Only an unsubmitted job draft can be discarded.");
+  }
+  await db.transaction(async (tx) => {
+    await tx.delete(flJobs).where(eq(flJobs.id, job.id));
+    await appendAuditEvent(tx, {
+      actorWallet: input.walletAddress,
+      entityType: "job",
+      entityId: job.id,
+      action: "job.draft.discarded",
+      requestId: input.requestId,
+    });
+  });
+  return { jobId: job.id, status: "discarded" };
+}
+
 export async function confirmJob(input: {
   jobId: string;
   walletAddress: string;
@@ -130,10 +211,17 @@ export async function confirmJob(input: {
   if (job.status === "open" && job.chainTxHash === input.txHash) {
     return { jobId: job.id, status: job.status, txHash: job.chainTxHash };
   }
+  if (!["draft", "pending_chain"].includes(job.status)) {
+    throw new ApiError(409, "INVALID_INPUT", "This job is not awaiting confirmation.");
+  }
+  const txHash = (input.txHash ?? job.chainTxHash) as `0x${string}` | null;
+  if (!txHash) {
+    throw new ApiError(400, "INVALID_INPUT", "The job transaction hash is missing.");
+  }
 
   const verified = await verifyContractEvent({
-    txHash: input.txHash,
-    blockHash: input.blockHash,
+    txHash,
+    blockHash: (input.blockHash ?? job.chainBlockHash ?? undefined) as `0x${string}` | undefined,
     eventName: "JobCreated",
     args: {
       jobId: job.chainJobId,
@@ -156,7 +244,7 @@ export async function confirmJob(input: {
         chainBlockHash: verified.blockHash,
         updatedAt: new Date(),
       })
-      .where(eq(flJobs.id, job.id));
+      .where(and(eq(flJobs.id, job.id), inArray(flJobs.status, ["draft", "pending_chain"])));
     await recordChainTransaction(tx, {
       txHash: verified.txHash,
       chainId: getServerEnv().PORTALDOT_CHAIN_ID,
@@ -180,11 +268,12 @@ export async function confirmJob(input: {
 }
 
 export async function listJobs() {
+  await cleanupStaleJobDrafts();
   const db = getDb();
   const jobs = await db
     .select()
     .from(flJobs)
-    .where(inArray(flJobs.status, ["open", "paused", "closed"]));
+    .where(inArray(flJobs.status, ["pending_chain", "open", "paused", "closed"]));
   return jobs;
 }
 

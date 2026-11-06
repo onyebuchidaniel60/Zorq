@@ -168,6 +168,22 @@ PREVIEW_ORIGIN=http://127.0.0.1:3100 npm run test:auth-state
 ```
 
 
+## Ghost-record and optimistic-transaction checks (6 November 2026)
+
+| Check | Result |
+|---|---|
+| Ghost license reconciliation | Three `pending_chain` rows had `chain_tx_hash = NULL`; `latestLicenseId(assetId, jobId)` returned `0` for each, so no token existed on-chain. Rows removed. |
+| Draft asset reconciliation | One stale `draft` asset with no transaction hash removed. Active assets and the open job retained. |
+| Post-cleanup query | `0` pending licenses without a transaction hash, `0` unsubmitted asset drafts, `0` pending jobs without a transaction hash. |
+| Web typecheck | `npm run typecheck` pass |
+| Web lint | `npm run lint` pass |
+| Production build | `npm run build` pass; new `/pending` and `DELETE` routes present in the route manifest |
+| Web unit/scaffold | 28/28 Vitest + 4/4 scaffold |
+| Local Playwright | 40/40 desktop + mobile on a warm dev server; the cold run hit two 30s compile timeouts, which passed on targeted rerun and the full warm rerun |
+| Live wallet verification | Operator-owned. A real extension and funded/empty testnet wallet are required; the agent did not fabricate a browser wallet transaction. |
+
+The list pages now poll `/confirm` every four seconds for rows with a submitted transaction hash. Confirmation updates `pending_chain` to `active` (or `open`) through the same receipt/event verification used by the synchronous path.
+
 ## Operator manual verification (6 November 2026)
 
-The final live testnet asset -> job -> license flow is being verified manually by the operator in a real browser after funding the deployer wallet. Automated testing and script generation by the agent have stopped. The automated suites in this document remain the recorded evidence for the code, contract, FL service and deployed sign-in paths.
+The final live testnet asset -> job -> license flow is being verified manually by the operator in a real browser after funding the deployer wallet. Live wallet-level checks remain operator-owned. The automated suites and the post-handoff ghost reconciliation in this document are the recorded evidence for the code, contract, FL service, database cleanup and deployed sign-in paths.

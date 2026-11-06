@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { NewAssetForm } from "@/components/forms/new-asset-form";
 import { getSessionFromCookies } from "@/server/auth/session";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
@@ -13,6 +14,7 @@ export default async function NewAssetPage() {
   const usedPartitions = session ? await listReservedPartitions() : [];
   return (
     <>
+      <BackLink href="/app/assets" label="Back to assets" />
       <PageHeader
         eyebrow="Data provider"
         title="Register a data asset"

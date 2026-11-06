@@ -34,32 +34,38 @@ The challenge request must include both the H160 `address` and the `ss58Address`
 
 | Method | Path | Auth | Request | Result |
 |---|---|---|---|---|
-| GET | `/api/assets` | Session | `status?` | Own assets plus global reserved partition IDs for the registration form |
-| POST | `/api/assets/drafts` | Session | `{displayName,description,dataSource,demoPartitionId?,dbUrl?,dbTable?,labelColumn?,idempotencyKey}` | Draft + opaque on-chain ID + commitment + tx args; external URLs are encrypted and never returned |
+| GET | `/api/assets` | Session | `status?` | Own assets plus global reserved partition IDs for the registration form; drafts are excluded and pending rows carry their submitted transaction hashes |
+| POST | `/api/assets/drafts` | Session | `{displayName,description,dataSource,demoPartitionId?,dbUrl?,dbTable?,labelColumn?,idempotencyKey}` | Server-generated draft (hidden from lists) + opaque on-chain ID + commitment + tx args; external URLs are encrypted and never returned |
 | GET | `/api/assets/{assetId}` | Session | — | Owner-only private metadata; other users receive 404 |
-| POST | `/api/assets/{assetId}/confirm` | Session | `{txHash}` | Verify receipt/event and activate asset |
-| POST | `/api/assets/{assetId}/deactivate/confirm` | Session | `{txHash}` | Verify owner-signed deactivation |
+| POST | `/api/assets/{assetId}/pending` | Session | `{txHash,blockHash}` | Promotes a draft to `pending_chain` after wallet inclusion so the list can poll confirmation |
+| POST | `/api/assets/{assetId}/confirm` | Session | `{txHash,blockHash?}` | Poll-safe receipt/event verification; activates the asset once the event is confirmed |
+| DELETE | `/api/assets/{assetId}` | Session | — | Discards an unsubmitted draft after wallet rejection or a safe transaction failure |
+| POST | `/api/assets/{assetId}/deactivate/confirm` | Session | `{txHash,blockHash?}` | Verify owner-signed deactivation |
 
 ## Jobs
 
 | Method | Path | Auth | Request | Result |
 |---|---|---|---|---|
-| GET | `/api/jobs` | Session | `status?`, `cursor?` | Public job metadata and counts; no private asset metadata |
-| POST | `/api/jobs/drafts` | Session | `{title,description,purposeText,startsAt,endsAt,idempotencyKey}` | Draft, purpose/config hashes and contract args |
+| GET | `/api/jobs` | Session | `status?`, `cursor?` | Public job metadata and counts; drafts are excluded and pending jobs carry their submitted transaction hashes |
+| POST | `/api/jobs/drafts` | Session | `{title,description,purposeText,startsAt,endsAt,idempotencyKey}` | Server-generated draft (hidden from lists), purpose/config hashes and contract args |
 | GET | `/api/jobs/{jobId}` | Session | — | Job data plus role-filtered participants |
-| POST | `/api/jobs/{jobId}/confirm` | Session | `{txHash}` | Verify `JobCreated` and publish |
-| POST | `/api/jobs/{jobId}/state/confirm` | Session | `{expectedState,txHash}` | Verify creator-signed pause/resume/close |
+| POST | `/api/jobs/{jobId}/pending` | Session | `{txHash,blockHash}` | Promotes a draft to `pending_chain` after wallet inclusion |
+| POST | `/api/jobs/{jobId}/confirm` | Session | `{txHash,blockHash?}` | Poll-safe `JobCreated` verification and publication |
+| DELETE | `/api/jobs/{jobId}` | Session | — | Discards an unsubmitted job draft after a safe transaction failure |
+| POST | `/api/jobs/{jobId}/state/confirm` | Session | `{expectedState,txHash,blockHash?}` | Verify creator-signed pause/resume/close |
 | POST | `/api/jobs/{jobId}/runs` | Session | `Idempotency-Key` header | Create run if job creator, no active run and enough valid licenses |
 
 ## Licenses
 
 | Method | Path | Auth | Request | Result |
 |---|---|---|---|---|
-| GET | `/api/licenses` | Session | `status?` | Licenses belonging to current wallet |
-| POST | `/api/licenses/drafts` | Session | `{assetId,jobId,validFrom,validUntil,idempotencyKey}` | Validated draft and `issueLicense` arguments |
+| GET | `/api/licenses` | Session | `status?` | Licenses belonging to current wallet; drafts are excluded and pending rows carry their submitted transaction hashes |
+| POST | `/api/licenses/drafts` | Session | `{assetId,jobId,validFrom,validUntil,idempotencyKey}` | Server-generated draft (hidden from lists) and `issueLicense` arguments |
 | GET | `/api/licenses/{licenseId}` | Session | — | Owner details; job creator receives sanitized job-bound state only |
-| POST | `/api/licenses/{licenseId}/confirm` | Session | `{txHash}` | Verify mint and record token/revision |
-| POST | `/api/licenses/{licenseId}/revoke/confirm` | Session | `{txHash}` | Verify owner-signed revoke |
+| POST | `/api/licenses/{licenseId}/pending` | Session | `{txHash,blockHash}` | Promotes a draft to `pending_chain` after wallet inclusion |
+| POST | `/api/licenses/{licenseId}/confirm` | Session | `{txHash,blockHash?}` | Poll-safe mint verification; records the token and activates the license |
+| DELETE | `/api/licenses/{licenseId}` | Session | — | Discards an unsubmitted license draft after a safe transaction failure |
+| POST | `/api/licenses/{licenseId}/revoke/confirm` | Session | `{txHash,blockHash?}` | Verify owner-signed revoke |
 
 ## Runs
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { RevokeLicenseButton } from "@/components/licenses/revoke-license-button";
@@ -21,6 +22,7 @@ export default async function LicenseDetailPage({
   if (!session) {
     return (
       <>
+        <BackLink href="/app/licenses" label="Back to licenses" />
         <PageHeader
           eyebrow="DataLicense"
           title="License detail"
@@ -47,12 +49,17 @@ export default async function LicenseDetailPage({
 
   return (
     <>
+      <BackLink href="/app/licenses" label="Back to licenses" />
       <PageHeader
         eyebrow="DataLicense"
         title={`License #${license.tokenId ?? "pending"}`}
         description="A non-transferable, job-scoped right to contribute one asset to one federated-learning job."
         actions={
-          <StatusBadge tone={tone}>{license.statusMirror.replace("_", " ")}</StatusBadge>
+          <StatusBadge tone={tone}>
+            {license.statusMirror === "pending_chain"
+              ? "pending"
+              : license.statusMirror.replace("_", " ")}
+          </StatusBadge>
         }
       />
       <div className="z-detail-grid">

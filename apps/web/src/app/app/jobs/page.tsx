@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
+import { PendingSync } from "@/components/pending-sync";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { getSessionFromCookies } from "@/server/auth/session";
@@ -11,16 +13,27 @@ export const metadata: Metadata = { title: "Training jobs" };
 
 function tone(status: string) {
   if (status === "open") return "success" as const;
-  if (status === "paused") return "warning" as const;
+  if (status === "paused" || status === "pending_chain") return "warning" as const;
   return "neutral" as const;
 }
 
 export default async function JobsPage() {
   const session = await getSessionFromCookies();
   const jobs = session ? await listJobs() : [];
+  const pending = jobs
+    .filter(
+      (job) =>
+        job.status === "pending_chain" && job.chainTxHash && job.chainBlockHash,
+    )
+    .map((job) => ({
+      id: job.id,
+      txHash: job.chainTxHash as string,
+      blockHash: job.chainBlockHash as string,
+    }));
 
   return (
     <>
+      <BackLink href="/app" label="Back to overview" />
       <PageHeader
         eyebrow="Researcher"
         title="Training jobs"
@@ -31,6 +44,7 @@ export default async function JobsPage() {
           </Link>
         }
       />
+      <PendingSync kind="jobs" items={pending} />
       {!session ? (
         <SignedOutCard feature="Job management" />
       ) : jobs.length === 0 ? (
@@ -81,7 +95,9 @@ export default async function JobsPage() {
                       </span>
                     </td>
                     <td>
-                      <StatusBadge tone={tone(job.status)}>{job.status}</StatusBadge>
+                      <StatusBadge tone={tone(job.status)}>
+                        {job.status === "pending_chain" ? "pending" : job.status}
+                      </StatusBadge>
                     </td>
                     <td className="text-[11px]">
                       {new Date(job.startsAt).toLocaleDateString()} →{" "}

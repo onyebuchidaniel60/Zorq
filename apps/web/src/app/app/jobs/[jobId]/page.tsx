@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { SignedOutCard } from "@/components/wallet/signed-out-card";
 import { JobActions } from "@/components/jobs/job-actions";
@@ -20,6 +21,7 @@ export default async function JobDetailPage({
   if (!session) {
     return (
       <>
+        <BackLink href="/app/jobs" label="Back to jobs" />
         <PageHeader
           eyebrow="Federated-learning job"
           title="Job detail"
@@ -37,15 +39,21 @@ export default async function JobDetailPage({
     notFound();
   }
   const { job } = result!;
-  const tone = job.status === "open" ? "success" : job.status === "paused" ? "warning" : "neutral";
+  const tone =
+    job.status === "open"
+      ? "success"
+      : job.status === "paused" || job.status === "pending_chain"
+        ? "warning"
+        : "neutral";
 
   return (
     <>
+      <BackLink href="/app/jobs" label="Back to jobs" />
       <PageHeader
         eyebrow="Federated-learning job"
         title={job.title}
         description={job.description ?? "Public job definition."}
-        actions={<StatusBadge tone={tone}>{job.status}</StatusBadge>}
+        actions={<StatusBadge tone={tone}>{job.status === "pending_chain" ? "pending" : job.status}</StatusBadge>}
       />
       <div className="z-detail-grid">
         <div>

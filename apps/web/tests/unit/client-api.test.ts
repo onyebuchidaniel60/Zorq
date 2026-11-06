@@ -3,6 +3,7 @@ import {
   fetchWithAuth,
   readApiError,
   readJsonObject,
+  shouldDiscardDraft,
   transactionHash,
   userFacingError,
 } from "@/lib/client-api";
@@ -44,6 +45,15 @@ describe("client API error handling", () => {
     expect(userFacingError(new Error("User rejected the request"), "The action failed.")).toBe(
       "The wallet request was rejected. Nothing was submitted.",
     );
+  });
+
+  it("discards drafts on safe transaction failures but keeps them on ambiguous timeouts", () => {
+    expect(shouldDiscardDraft(new Error("User rejected the request"))).toBe(true);
+    expect(shouldDiscardDraft(new Error("StorageDepositNotEnoughFunds"))).toBe(true);
+    expect(
+      shouldDiscardDraft(new Error("The transaction was not included before the timeout.")),
+    ).toBe(false);
+    expect(shouldDiscardDraft(new Error("WebSocket connection closed"))).toBe(false);
   });
 });
 

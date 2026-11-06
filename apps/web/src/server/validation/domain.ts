@@ -73,6 +73,11 @@ export const confirmSchema = z.object({
   blockHash: txHashSchema.optional(),
 });
 
+export const pendingTransactionSchema = z.object({
+  txHash: txHashSchema,
+  blockHash: txHashSchema,
+});
+
 export const jobStateConfirmSchema = z.object({
   expectedState: z.enum(["open", "paused", "closed"]),
   txHash: txHashSchema,
