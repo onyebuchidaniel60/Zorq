@@ -118,3 +118,17 @@ export function sessionCookieOptions(): {
     maxAge: SESSION_TTL_SECONDS,
   };
 }
+
+export async function getSessionFromCookies(): Promise<Session | null> {
+  const { cookies } = await import("next/headers");
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) {
+    return null;
+  }
+  try {
+    return await verifySessionToken(token);
+  } catch {
+    return null;
+  }
+}

@@ -1,7 +1,13 @@
 "use client";
 
 import { ss58ToH160 } from "@polkadot-apps/address";
-import { fromExtension } from "twinkey-provider";
+import { createTwinKeyProvider, fromExtension, getApi } from "twinkey-provider";
+import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  defineChain,
+} from "viem";
 
 type InjectedExtension = {
   signer?: {
@@ -17,6 +23,7 @@ export type ConnectedWallet = {
   ss58Address: string;
   walletAddress: string;
   injected: InjectedExtension;
+  signer: unknown;
 };
 
 let activeWallet: ConnectedWallet | undefined;
@@ -43,11 +50,12 @@ export function hasInjectedWallet(): boolean {
 }
 
 export async function connectSubstrateWallet(): Promise<ConnectedWallet> {
-  const { injected, address } = await fromExtension();
+  const { injected, address, signer } = await fromExtension();
   const wallet: ConnectedWallet = {
     ss58Address: address,
     walletAddress: ss58ToH160(address).toLowerCase(),
     injected: injected as InjectedExtension,
+    signer,
   };
   activeWallet = wallet;
   return wallet;
@@ -85,4 +93,43 @@ export async function signSiweMessage(
     });
     return { signature: result.signature, signatureType: "bytes" };
   }
+}
+
+
+export const zorqChain = defineChain({
+  id: 420420777,
+  name: "Portaldot V3 Testnet",
+  nativeCurrency: { name: "tPOT", symbol: "tPOT", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: [
+        process.env.NEXT_PUBLIC_PORTALDOT_RPC_URL ??
+          "https://test-evm-rpc-v3.portaldot.dev",
+      ],
+    },
+  },
+});
+
+export async function getContractClients(wallet: ConnectedWallet) {
+  const api = await getApi();
+  const provider = createTwinKeyProvider({
+    signer: wallet.signer as Parameters<typeof createTwinKeyProvider>[0]["signer"],
+  });
+  const walletClient = createWalletClient({
+    chain: zorqChain,
+    transport: custom(provider),
+  });
+  const publicClient = createPublicClient({
+    chain: zorqChain,
+    transport: custom(provider),
+  });
+  return { api, provider, walletClient, publicClient };
+}
+
+export function contractAddress(): `0x${string}` {
+  const address = process.env.NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS;
+  if (!address) {
+    throw new Error("NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS is not configured");
+  }
+  return address as `0x${string}`;
 }

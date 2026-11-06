@@ -1,121 +1,87 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { desc, eq } from "drizzle-orm";
+import { getDb, trainingRuns } from "@zorq/db";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { SignedOutCard } from "@/components/wallet/signed-out-card";
+import { getSessionFromCookies } from "@/server/auth/session";
+import { listAssets } from "@/server/domain/assets";
+import { listJobs } from "@/server/domain/jobs";
+import { listLicenses } from "@/server/domain/licenses";
 
-export const metadata: Metadata = {
-  title: "App overview",
-};
+export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "App overview" };
 
-const summaries = [
-  {
-    label: "Owned assets",
-    value: "—",
-    note: "Registration is delivered in Phase 3.",
-  },
-  {
-    label: "Open jobs",
-    value: "—",
-    note: "Job creation is delivered in Phase 3.",
-  },
-  {
-    label: "Active licenses",
-    value: "—",
-    note: "License issuance is delivered in Phase 3.",
-  },
-  {
-    label: "Recent runs",
-    value: "—",
-    note: "Flower orchestration is delivered in Phase 4.",
-  },
-];
+export default async function AppOverviewPage() {
+  const session = await getSessionFromCookies();
+  if (!session) {
+    return (
+      <>
+        <PageHeader eyebrow="Overview" title="Your authorization workspace" description="Sign in with a Substrate wallet to manage DataLicenses and runs." />
+        <SignedOutCard feature="The Zorq workspace" />
+      </>
+    );
+  }
 
-const quickLinks = [
-  { href: "/app/assets", label: "Assets", detail: "Register and manage synthetic asset commitments." },
-  { href: "/app/jobs", label: "Jobs", detail: "Publish a fixed-preset federated-learning job." },
-  { href: "/app/licenses", label: "Licenses", detail: "Issue, inspect and revoke job-bound rights." },
-];
+  const [assets, jobs, licenses] = await Promise.all([
+    listAssets(session.walletAddress),
+    listJobs(),
+    listLicenses(session.walletAddress),
+  ]);
+  const db = getDb();
+  const runs = await db.select().from(trainingRuns).where(eq(trainingRuns.requestedByWallet, session.walletAddress)).orderBy(desc(trainingRuns.createdAt)).limit(3);
+  const activeLicenses = licenses.filter((license) => license.statusMirror === "active").length;
 
-export default function AppOverviewPage() {
+  const stats = [
+    { label: "Active assets", value: assets.filter((asset) => asset.status === "active").length, href: "/app/assets" },
+    { label: "Open jobs", value: jobs.filter((job) => job.status === "open").length, href: "/app/jobs" },
+    { label: "Active licenses", value: activeLicenses, href: "/app/licenses" },
+    { label: "Completed runs", value: runs.filter((run) => run.status === "completed").length, href: "/app/jobs" },
+  ];
+
   return (
     <>
       <PageHeader
         eyebrow="Overview"
-        title="Your authorization workspace"
-        description="This dashboard will summarize assets, jobs, licenses and training runs once wallet authentication and the domain APIs are connected."
-        actions={<StatusBadge tone="neutral">Phase 1 shell</StatusBadge>}
+        title="Authorization workspace"
+        description="Assets, jobs, licenses and run evidence for the connected wallet."
+        actions={<Link href="/app/jobs/new" className="pill-button">New job</Link>}
       />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <Link key={stat.label} href={stat.href} className="rounded-[1.75rem] bg-white p-5 transition-transform hover:-translate-y-0.5">
+            <p className="text-xs text-[#8a8a8f]">{stat.label}</p>
+            <p className="mt-2 text-4xl font-semibold tracking-[-0.04em]">{stat.value}</p>
+          </Link>
+        ))}
+      </div>
 
-      <section aria-labelledby="summary-heading">
-        <h2 id="summary-heading" className="sr-only">
-          Workspace summary
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {summaries.map((summary) => (
-            <div key={summary.label} className="rounded-xl border border-border bg-surface p-5">
-              <p className="text-sm font-medium text-muted">{summary.label}</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-400">
-                {summary.value}
-              </p>
-              <p className="mt-2 text-xs leading-5 text-muted">{summary.note}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section aria-labelledby="start-heading" className="rounded-xl border border-border bg-surface p-6">
+      <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="start-heading" className="text-lg font-semibold">
-              Start here
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Pages are navigable now; mutations are intentionally disabled until
-              the chain and API layers exist.
-            </p>
+            <h2 className="text-lg font-semibold tracking-tight">Recent runs</h2>
+            <p className="mt-1 text-sm text-[#6f6f74]">Only runs requested by this wallet are listed.</p>
           </div>
-          <StatusBadge tone="warning">Not connected</StatusBadge>
+          <StatusBadge tone="success">Fail-closed snapshots</StatusBadge>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-lg border border-border p-4 transition-colors hover:border-accent"
-            >
-              <p className="font-semibold">{link.label}</p>
-              <p className="mt-1 text-sm leading-6 text-muted">{link.detail}</p>
-              <p className="mt-3 text-xs font-semibold text-accent-strong">Open {link.label.toLowerCase()} →</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="evidence-heading"
-        className="rounded-xl border border-dashed border-slate-300 bg-surface p-6"
-      >
-        <h2 id="evidence-heading" className="text-lg font-semibold">
-          Chain and environment evidence
-        </h2>
-        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="font-medium text-muted">Network</dt>
-            <dd className="mt-1 font-mono text-xs">Portaldot V3 testnet · 420420777</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-muted">Contract</dt>
-            <dd className="mt-1 font-mono text-xs text-slate-500">Not deployed yet</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-muted">Last authorization snapshot</dt>
-            <dd className="mt-1 text-xs text-slate-500">No runs recorded</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-muted">FL execution provider</dt>
-            <dd className="mt-1 text-xs text-slate-500">Flower demo adapter · planned Phase 4</dd>
-          </div>
-        </dl>
+        {runs.length === 0 ? (
+          <p className="mt-4 rounded-2xl bg-[#f7f7f8] p-4 text-sm text-[#6f6f74]">
+            No runs yet. Open a job with at least two active licenses to start the three-round demonstration.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {runs.map((run) => (
+              <li key={run.id}>
+                <Link href={`/app/runs/${run.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#f7f7f8] px-4 py-3 text-sm">
+                  <span className="font-mono text-xs">{run.id.slice(0, 8)}…</span>
+                  <span className="text-[#6f6f74]">round {run.currentRound}/{run.totalRounds}</span>
+                  <StatusBadge tone={run.status === "completed" ? "success" : run.status === "failed" ? "danger" : "warning"}>{run.status}</StatusBadge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </>
   );

@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f9;
+  --background: #eeeeef;
   --foreground: #15202b;
   --surface: #ffffff;
-  --border: #d9e0e7;
-  --muted: #5c6b7a;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
+  --border: #e3e3e5;
+  --muted: #8a8a8f;
+  --accent: #111111;
+  --accent-strong: #111111;
   --warning: #92400e;
-  --warning-surface: #fffbeb;
-  --danger: #b42318;
-  --danger-surface: #fef3f2;
+  --warning-surface: #f6f6f7;
+  --danger: #9f2d2d;
+  --danger-surface: #f8ecec;
 }
 
 @theme inline {
@@ -81,4 +81,78 @@ body {
 
 .skip-link:focus {
   top: 1rem;
+}
+
+
+.card-surface {
+  background: var(--surface);
+  border-radius: 1.75rem;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: #111111;
+  color: #ffffff;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.pill-button:hover {
+  background: #2a2a2a;
+}
+
+.pill-button:disabled {
+  cursor: not-allowed;
+  background: #d4d4d6;
+  color: #8a8a8f;
+}
+
+.pill-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: #f7f7f8;
+  color: #111111;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  background: #dff3e6;
+  color: #2d6a4a;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.icon-rail-link {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #9a9aa0;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.icon-rail-link:hover,
+.icon-rail-link[aria-current="page"] {
+  background: #ffffff;
+  color: #111111;
 }
