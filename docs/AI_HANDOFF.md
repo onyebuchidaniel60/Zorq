@@ -585,6 +585,44 @@ New Known Limitations this phase: none (L-012 and L-013 remain)
 Next single task: Operator manual testnet verification with a real wallet.
 ```
 
+## Open-source template completion report
+
+```text
+Assigned phase/task: Final cleanup — move internal docs under docs/, rewrite README as an open-source template and verify links
+Commit SHA: 6c205b8 (cleanup); this report is committed immediately after
+Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
+Deployed commit/deployment ID: Vercel auto-deploy from 6c205b8. Locally built and typechecked; aliases were checked after push. Dashboard deployment ID is not exposed by deployment headers from this environment (L-001).
+Changes visible:
+- Root tracked files are now README.md, package.json, package-lock.json, .env.example, .gitignore and .nvmrc.
+- AGENTS.md, AI_HANDOFF.md, ARCHITECTURE.md, BLUEPRINT_INDEX.md, IMPLEMENTATION_PLAN.md, PREREQUISITES.md and PROJECT_SPEC.md live under docs/.
+- Shared tsconfig.base.json lives at packages/tsconfig.base.json.
+- README is a centered, badge-led open-source landing page with live/demo/explorer links, three-step test guide, problem statement, key features, Mermaid architecture, build-your-own steps, local development and repository structure.
+Intentionally incomplete areas:
+- Live wallet-level testnet testing remains operator-owned (L-013).
+- The custom zorq-preview alias remains on the previous build (L-012); production and preview-branch aliases are current.
+Tests (exact commands + actual results):
+- `npm run typecheck` — pass after moving tsconfig.base.json.
+- `npm run lint` — pass.
+- `npm test` — 31/31 Vitest, 4/4 scaffold.
+- `npm run build` — pass after file moves.
+- Playwright — 40/40 from the last code change; this pass changed documentation, TypeScript config location and moving-only file paths.
+Manual verification:
+- Confirmed tracked root files with `git ls-files | awk -F/ 'NF==1'`.
+- Checked live app, /docs, demo file, GitHub, explorer contract/deployment links and all README local links.
+- Rendered the Mermaid diagram through mermaid.ink (HTTP 200, image/jpeg) and visually inspected the output.
+- Replaced the dead portaldot.dev badge link with the verified Portaldot developer documentation.
+Known issues/blockers: L-012 and L-013; no code or repository blocker.
+Security notes: No secret, seed, session cookie, database URL or service token was committed or printed. Local .env.local, .secrets/, .vercel/ and node_modules/ remain gitignored.
+Design reference image status: supplied and unchanged (docs/design/reference/reference3.webp).
+Operator approval status (visuals: waived): waived.
+README/docs status: README rewritten; docs/README.md is the full documentation index; developer setup and architecture layout updated to match the actual repository.
+Documentation footer URL: /docs (reachable on live aliases).
+GitHub URL or documented reason absent: https://github.com/onyebuchidaniel60/Zorq
+Decisions logged this phase: D-024
+New Known Limitations this phase: none (L-012 and L-013 remain)
+Next single task: Operator manual testnet verification with a real wallet.
+```
+
 ## Exact next task
 
 Operator manual testnet verification. The agent has completed the code and documentation changes; live wallet-level checks remain operator-owned.
