@@ -14,7 +14,7 @@
 
 ## Repository layout
 
-See `ARCHITECTURE.md` section 12. The monorepo contains `apps/web`, `apps/fl-service`, `packages/contracts`, `packages/db`, `packages/shared`, `packages/validation`, `tests` and `docs`.
+See `ARCHITECTURE.md` section 12 for the ownership boundaries. The actual monorepo contains `apps/web`, `apps/fl-service`, `packages/contracts`, `packages/db`, `packages/tsconfig.base.json`, `scripts`, `docs` and the root entry files.
 
 ## Initial setup sequence
 

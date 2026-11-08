@@ -1,248 +1,332 @@
+<div align="center">
+
 # Zorq
 
-**Programmable authorization for federated machine learning.**
+### Programmable Authorization for Privacy-Preserving Federated AI
 
-Zorq gives data owners execution-scoped control over their data. A non-transferable ERC-721 DataLicense binds one registered asset to one federated-learning job, its purpose and model-configuration commitments, its validity window and its owner. The Portaldot EVM contract is the authoritative source for that right; the coordinator reads contract state before admitting participants and at every training-round boundary.
+<p>
+  Job-scoped, non-transferable DataLicenses for federated learning on Portaldot.
+</p>
 
-The reference deployment demonstrates the complete lifecycle on Portaldot V3 testnet: asset registration, job publication, license issuance, a three-round Flower run, and revocation exclusion at the next round snapshot.
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636?style=for-the-badge&logo=solidity&logoColor=white)](https://soliditylang.org/)
+[![Portaldot](https://img.shields.io/badge/Portaldot-V3%20Testnet-0B7A53?style=for-the-badge)](https://portaldot-dev.readthedocs.io/en/latest/)
+[![Neon](https://img.shields.io/badge/Neon-PostgreSQL-00E599?style=for-the-badge&logo=neon&logoColor=black)](https://neon.tech/)
 
-> **Scope:** this is a testnet deployment using generated evaluation data and a Flower demonstration adapter. It does not accept real personal, medical, financial or customer data. It does not claim native Portaldot FL, ZKP, homomorphic-encryption, differential-privacy or secure-aggregation integration.
+<br/>
 
-## Quick Start
+[**Live App**](https://zorq-six.vercel.app) · [**Documentation**](https://zorq-six.vercel.app/docs) · [**Demo Video**](./docs/demo/zorq-demo.mp4) · [**Portaldot Explorer**](https://scanner-testnet-v3.portaldot.dev/#/accounts/0xa9ab18d404e2cd19c23f30e7d78a740b562685ff) · [**GitHub**](https://github.com/onyebuchidaniel60/Zorq)
 
-Test the core lifecycle on the Portaldot V3 testnet:
+</div>
 
-1. **Connect wallet and sign in.** Open <https://zorq-six.vercel.app/app> with polkadot.js, Talisman or SubWallet. Switch to chain ID `420420777` and sign the SIWE message. Sign-in does not send a transaction.
-2. **Register a data asset.** Open **Assets → Register asset**, select an unused **Demo Partition** (0–4), and sign `registerAsset`. The new row shows **pending**, then **active** after confirmation.
-3. **Create a training job.** Open **Jobs → Create job**, enter a purpose and a valid window, and sign `createJob`. The three-round binary-classifier configuration is fixed.
-4. **Issue a DataLicense.** Open the job, choose **License an asset**, and sign `issueLicense`. Repeat for a second distinct asset because a run requires at least two authorized assets. For the revocation demonstration, license a third asset.
-5. **Start the federated learning run.** As the job creator, choose **Start three-round run**. The coordinator reads a fresh contract authorization snapshot for every round.
-6. **Revoke the license mid-run.** Open one license and sign `revokeLicense` after round 1 or 2. The next snapshot excludes that token while the other two assets continue. With only two licenses, the next round fails closed because fewer than two authorized assets remain.
+---
 
-> **Testnet tPOT is required.** Portaldot charges gas and, for contract writes that add storage, a storage deposit. A zero-balance wallet cannot register an asset, publish a job or issue a license. Fund the EVM-mapped account through the official testnet method before starting; asset and job registration require materially more than a simple transfer.
+<a id="quick-start"></a>
 
-Confirmed assets, jobs and licenses include an external-link icon that opens the transaction in the [Portaldot scanner](https://scanner-testnet-v3.portaldot.dev/).
+## 🚀 Quickstart & Live Demo (Judges Start Here)
 
-## Project overview
+| Resource | Link |
+|---|---|
+| **Live application** | <https://zorq-six.vercel.app> |
+| **In-app documentation** | <https://zorq-six.vercel.app/docs> |
+| **Demo video** | [docs/demo/zorq-demo.mp4](./docs/demo/zorq-demo.mp4) |
+| **Deployed contract** | [`0xa9ab18d404e2cd19c23f30e7d78a740b562685ff`](https://scanner-testnet-v3.portaldot.dev/#/accounts/0xa9ab18d404e2cd19c23f30e7d78a740b562685ff) |
+| **Deployment transaction** | [`0xb39268c8…2a1834`](https://scanner-testnet-v3.portaldot.dev/#/extrinsics/0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834) |
+| **Network** | Portaldot V3 EVM testnet, chain ID `420420777` |
 
-- **Data owners** register an opaque asset commitment and issue a job-scoped DataLicense.
-- **Researchers** publish a fixed-purpose training job with a bounded window and cohort cap.
-- **The coordinator** requests one authorization snapshot at one confirmed block per round.
-- **The contract** decides authorization; PostgreSQL mirrors metadata and audit history but cannot grant a right the chain denies.
-- **Revocation** is terminal for a token and takes effect at the next round boundary. A round already admitted may finish.
+### How to Test in 3 Steps
 
-## Architecture
+1. **Connect and sign in.** Open the [live app](https://zorq-six.vercel.app/app), connect polkadot.js, Talisman or SubWallet on chain `420420777`, and sign the SIWE message. Sign-in does not send a transaction.
+2. **Create the rights.** Register at least two data assets on unused demo partitions, publish a training job, then issue a DataLicense from that job for each active asset. For the revocation demo, register and license a third asset.
+3. **Run and revoke.** Start the three-round federated learning run. After round 1 or 2, revoke one license. The next round snapshot excludes that token while the remaining two assets continue.
+
+> [!IMPORTANT]
+> **Portaldot testnet tPOT is required.** Contract writes need gas and, when they add storage, a Portaldot storage deposit. A zero-balance wallet cannot register an asset, publish a job or issue a license. Fund the EVM-mapped account through the official testnet method before starting; asset and job registration require materially more than a simple transfer.
+
+---
+
+## 🤔 The Core Problem
+
+Data owners often **cannot simply upload their datasets**. Healthcare, financial and customer data are constrained by privacy regulation, contractual obligations, competitive risk and the simple fact that copying raw data destroys control. Federated learning avoids the upload, but it still needs a trustworthy answer to one question:
+
+> **Who is allowed to contribute which data, to which computation, for how long, and under what purpose?**
+
+Current Web3 access controls usually fail that test:
+
+- **Token-gating is coarse.** A balance or NFT proves ownership, not permission for one specific job, model configuration and time window.
+- **Access tokens are transferable.** A right to train on a dataset can be sold or delegated to an unrelated party.
+- **Revocation is disconnected from compute.** Revoking a token does not automatically remove a participant at the next training-round boundary.
+- **There is no durable authorization snapshot.** A coordinator can read state at different blocks, mix stale and fresh data, or continue after an RPC failure.
+- **Purpose and configuration are not bound.** A license for one research purpose can be reused for an unrelated model or objective.
+
+Zorq turns authorization into an on-chain, job-scoped primitive. A **non-transferable ERC-721 DataLicense** binds one asset to one FL job, its purpose and model-configuration commitments, a `[validFrom, validUntil)` interval, and the asset owner's wallet. The contract is the authority. PostgreSQL mirrors metadata and audit history, but it cannot grant a right the chain denies.
+
+---
+
+## ✨ Key Features
+
+### 🔐 DataLicense — Job-scoped ERC-721
+
+One asset. One job. One purpose commitment. One model-configuration commitment. One validity window. One owner. The token is **non-transferable** and cannot be approved or delegated. The asset owner issues and revokes it; the job creator cannot mint rights for someone else's data.
+
+### ♻️ Live Revocation
+
+Revocation is terminal for that token and takes effect at the **next round snapshot**. A round already admitted may finish; the next round must read fresh chain state and exclude the revoked license. If fewer than two distinct assets remain authorized, the round fails closed.
+
+### 📸 Round-Level Authorization Snapshots
+
+Before admission and before every training round, the coordinator reads all candidate licenses from `ZorqRegistry` at **one confirmed block number and hash**. The same allowlist governs local training and aggregation for that round. RPC failure, ambiguous state or fewer than two authorized assets stops the run. No stale or cached allowlist is reused.
+
+### 🗄️ External Database Connector
+
+Asset owners can register a generated demo partition or a **read-only external PostgreSQL table**. The connection URL is encrypted at rest with AES-256-GCM, never returned to the browser, and decrypted only for the internal coordinator snapshot. The FL service reads at most 1,000 rows, normalizes up to eight numeric features and a binary label, then discards the raw rows. A failed external participant is skipped without exposing credentials or crashing the run.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-  Owner["Data owner wallet"] -->|"registerAsset / issueLicense / revokeLicense"| Contract["ZorqRegistry<br/>ERC-721 + authoritative registry"]
-  Researcher["Researcher wallet"] -->|"createJob / setJobState"| Contract
+  Wallet["Substrate Wallet<br/>polkadot.js · Talisman · SubWallet"]
 
-  Web["Next.js App Router<br/>SIWE session + domain APIs"] <-->|"authorization snapshot<br/>confirmed block"| Contract
-  Web <-->|"users, nonces, metadata,<br/>audit + run mirror"| DB[("PostgreSQL<br/>Neon")]
-  Web -->|"internal service token"| FL["Flower FL service<br/>FastAPI + PyTorch CPU"]
-  FL -->|"snapshot + progress events"| Web
-  Contract -->|"authoritative allowlist"| Web
+  subgraph Vercel["Vercel"]
+    Web["Next.js App Router<br/>SIWE session + domain APIs"]
+  end
 
-  Owner --> Web
-  Researcher --> Web
+  subgraph Neon["Neon"]
+    DB[("PostgreSQL<br/>metadata + audit mirror")]
+  end
+
+  subgraph Render["Render"]
+    FL["Flower FL Service<br/>FastAPI + PyTorch CPU"]
+  end
+
+  subgraph Portaldot["Portaldot V3 EVM"]
+    EVM["ZorqRegistry<br/>ERC-721 + authoritative registry"]
+  end
+
+  Wallet -->|"SIWE + wallet-signed writes"| Web
+  Wallet -->|"registerAsset / issueLicense / revokeLicense"| EVM
+  Web <-->|"Drizzle / Postgres.js"| DB
+  Web -->|"start run + round snapshots"| FL
+  FL -->|"progress + completion"| Web
+  Web <-->|"read state + verify events"| EVM
 ```
 
-The browser never receives database credentials, service tokens or private keys. The FL service calls the web app's internal API only; it does not connect to PostgreSQL directly.
+**Request path:** Next.js (Vercel) reads and writes metadata in Postgres (Neon), starts and monitors runs in the Flower service (Render), and treats the Portaldot EVM contract as the sole authority for assets, jobs, licenses and round authorization.
 
-## External databases
+The FL service **never connects to PostgreSQL directly**. It calls token-protected internal API endpoints on the Next.js application. The browser never receives database credentials, service tokens or private keys.
 
-Asset registration supports two data sources:
-
-- **Demo Partition** — generated eight-feature evaluation data, one active asset per partition (0–4).
-- **External Database** — a read-only PostgreSQL table supplied by the asset owner.
-
-For an external asset the browser sends a PostgreSQL URL, table name and target-label column. The URL is encrypted at rest with AES-256-GCM derived from `SESSION_SECRET`; it is never returned by the asset APIs. The coordinator decrypts it only for the internal authorization snapshot and uses SQLAlchemy/pandas to run:
-
-```sql
-SELECT * FROM "table" LIMIT 1000
-```
-
-Table and label identifiers are validated against a strict identifier grammar and quoted. The coordinator uses up to eight numeric feature columns, normalizes a binary target, splits rows into train/evaluation tensors and discards the raw rows after the round. If an external connection fails, that participant is marked as a data failure and skipped; the run continues if at least two authorized participants load successfully. External database credentials are testnet/demo credentials only and should never be production secrets.
-
-The schema migration for this feature is `packages/db/migrations/0003_abandoned_vivisector.sql`.
-
-## Transaction and draft lifecycle
-
-Zorq keeps transaction feedback optimistic without hiding the source of truth:
-
-1. The server creates a short-lived **draft** only to generate the opaque on-chain identifier, commitment and contract arguments. Drafts are excluded from every asset, job and license list.
-2. The wallet signs the contract call. If the wallet rejects it, the chain reports insufficient tPOT/storage deposit, or the call fails with a dispatch error, the client calls the draft-deletion endpoint immediately. The failed item never appears in a list.
-3. After the transaction is included in a block, the client records its hash and block hash through `/pending` and redirects to the relevant list. The item renders with a **pending** badge.
-4. The list polls `/confirm` every four seconds. The backend verifies the receipt/event and updates `pending_chain` to `active` (or `open` for a job). The page refreshes without blocking navigation. Pending jobs are visible only to their creator until the job is published.
-5. Unsubmitted drafts older than 30 minutes and pending rows without a transaction hash are removed by the list/draft cleanup routine. Ambiguous timeouts keep the hidden draft rather than deleting a transaction that may still settle.
-
-The EVM contract remains authoritative. PostgreSQL holds metadata, the confirmation mirror and the audit trail; it cannot grant a right the chain denies. Detail and creation pages include a back link to their parent list.
-
-## Live deployment
-
-| Item | Value |
-|---|---|
-| Web app | <https://zorq-six.vercel.app> (production alias) |
-| Preview branch | <https://zorq-git-preview-uhhh2.vercel.app> |
-| Contract | `0xa9ab18d404e2cd19c23f30e7d78a740b562685ff` |
-| Chain | Portaldot V3 EVM testnet, chain ID `420420777` |
-| Deployment transaction | `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834` |
-| Deployment block | `337014` |
-| FL service | <https://zorq-fl-service.onrender.com> |
-| Reference run | `e18c1749-21f4-4cf4-b74a-2ed107f5d6cf` — completed 3/3 |
-| Final model hash | `0x1368046d874980a3b0575c9299fe929dc1a29566728f7b105461ad8fef602caf` |
-| Revocation evidence | token 3 revoked at block `341655`; denied at snapshot block `341656` |
-| Demo video | [`docs/demo/zorq-demo.mp4`](./docs/demo/zorq-demo.mp4) — 2:02 |
-
-The custom `https://zorq-preview-uhhh2.vercel.app` alias currently serves the previous build because Vercel CLI alias mutation is challenge-blocked in this environment. See L-012 in [`AI_HANDOFF.md`](./AI_HANDOFF.md). The two URLs above serve the current UI.
-
-## Repository layout
+### Authorization Flow
 
 ```text
-apps/web/                 Next.js app, API routes, UI and Playwright tests
-apps/fl-service/          FastAPI + Flower + PyTorch CPU coordinator
-packages/contracts/       ZorqRegistry Solidity contract and Hardhat tests
-packages/db/              Drizzle schema, migrations and Postgres client
-scripts/demo-video/       Deterministic demo capture and render scripts
-docs/                     Architecture, API, deployment, security, testing and design records
+Asset owner                 ZorqRegistry                 Coordinator
+    │                            │                           │
+    ├── registerAsset ──────────►│                           │
+    ├── issueLicense ───────────►│                           │
+    │                            │◄── snapshot at block N ───┤
+    │                            │    confirmed hash         │
+    │                            ├── allowlist ─────────────►│
+    │                            │                           ├── train
+    │                            │                           ├── aggregate
+    ├── revokeLicense ──────────►│                           │
+    │                            │◄── fresh snapshot N+1 ────┤
+    │                            ├── excludes revoked ──────►│
 ```
 
-## Local setup
+---
 
-### Prerequisites
+## 🛠️ Build Your Own (Open Source Template)
 
-- Node.js `22.23.4` and npm
-- Python `3.12` with [`uv`](https://docs.astral.sh/uv/)
-- PostgreSQL 15+ locally, or a Neon connection string
-- Chromium for Playwright: `npx playwright install chromium`
-- Optional: `ffmpeg` for the demo video
+This repository is intentionally structured as a **forkable reference implementation**. The contract, web app, FL coordinator and database are separate packages, so you can replace the model, the data source or the hosting provider without rewriting the authorization model.
+
+### Step 1 — Prerequisites
+
+- **Node.js 22.23.4** (see `.nvmrc`) and npm
+- **Python 3.12** with [`uv`](https://docs.astral.sh/uv/)
+- **PostgreSQL 15+** locally or a [Neon](https://neon.tech/) project
+- **A funded Portaldot V3 testnet wallet** with tPOT for gas and storage deposits
+- A Substrate wallet extension (polkadot.js, Talisman or SubWallet) for browser signing
+
+```bash
+git clone https://github.com/onyebuchidaniel60/Zorq.git
+cd Zorq
+npm ci
+cp .env.example .env.local
+```
+
+Fill in `DATABASE_URL`, `SESSION_SECRET`, `RATE_LIMIT_SECRET`, the Portaldot RPC/chain values and the FL service token. Never put server-only values in `NEXT_PUBLIC_*` variables.
+
+### Step 2 — Contract Deployment (Hardhat)
+
+The `ZorqRegistry` contract combines the ERC-721 license and the authoritative registry in one non-upgradeable contract. Deploy it to Portaldot V3:
+
+```bash
+npm run build --workspace @zorq/contracts
+npm run deploy:portaldot --workspace @zorq/contracts
+```
+
+The deployment script reads `.env.local` and the gitignored `.secrets/deployer.json`:
+
+```json
+{
+  "seed": "0x...",
+  "ss58": "5...",
+  "h160": "0x..."
+}
+```
+
+Store the deployer key outside version control and set restrictive file permissions (`chmod 600 .secrets/deployer.json`). The script estimates the contract code storage deposit and aborts before sending if the account balance is insufficient.
+
+The deployment record is written to `packages/contracts/deployments/portaldot-v3.json`. Copy its `contractAddress` into both:
+
+```dotenv
+ZORQ_CONTRACT_ADDRESS=0x...
+NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS=0x...
+```
+
+### Step 3 — Backend & FL Service Deployment (Render, env setup)
+
+1. Create a Neon PostgreSQL database and set `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
+2. Apply the committed Drizzle migrations:
+
+   ```bash
+   npm run db:migrate
+   ```
+
+3. Deploy `apps/fl-service` to Render as a **Docker web service**:
+   - Root directory: `apps/fl-service`
+   - Dockerfile: `apps/fl-service/Dockerfile`
+   - Health check: `/health`
+4. Set the Render environment:
+
+   ```dotenv
+   FL_SERVICE_SHARED_SECRET=<high-entropy-token>
+   ZORQ_INTERNAL_API_BASE_URL=https://your-web-app.vercel.app
+   FL_SERVICE_MODE=simulation
+   FLOWER_MAX_CONCURRENT_RUNS=1
+   FLOWER_MAX_PARTICIPANTS=5
+   DEMO_DATA_SEED=20261104
+   PYTHONUNBUFFERED=1
+   ```
+
+5. On the web deployment, set `FL_SERVICE_URL` to the Render service URL and the **same** `FL_SERVICE_SHARED_SECRET`.
+
+The Render service uses CPU-only PyTorch. The internal endpoints require the shared bearer token and must not be exposed through the browser.
+
+### Step 4 — Frontend Deployment (Vercel)
+
+1. Import the repository into Vercel.
+2. Set **Root Directory** to `apps/web`, framework to **Next.js**, and Node.js to **22.x**.
+3. Add the environment variables from `.env.example`. At minimum:
+   - `APP_ORIGIN` and `NEXT_PUBLIC_APP_URL` — the canonical deployment origin
+   - `DATABASE_URL` — Neon pooled connection string
+   - `SESSION_SECRET`, `RATE_LIMIT_SECRET` — server-only secrets
+   - `ZORQ_CONTRACT_ADDRESS` and `NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS`
+   - `PORTALDOT_EVM_RPC_URL`, `NEXT_PUBLIC_PORTALDOT_RPC_URL`, `PORTALDOT_CHAIN_ID=420420777`
+   - `FL_SERVICE_URL`, `FL_SERVICE_SHARED_SECRET`
+4. Deploy and verify `/api/ready` reports the database, chain and contract as ready.
+5. If you use additional Vercel aliases, add their exact origins to `ALLOWED_ORIGINS`. Do not use wildcards.
+
+---
+
+## 💻 Local Development
 
 ### Web app
 
 ```bash
 nvm use
-npm install
+npm ci
 cp .env.example .env.local
-# Fill .env.local; never commit it.
+# Configure DATABASE_URL, SESSION_SECRET, RATE_LIMIT_SECRET and the Portaldot values.
 npm run db:migrate
 npm run dev -- --port 3100
 ```
 
-Open <http://localhost:3100>. The app expects a Substrate wallet extension (polkadot.js, Talisman or SubWallet) and testnet POT for on-chain actions.
-
-### Contracts
-
-```bash
-npm --workspace @zorq/contracts run compile
-npm --workspace @zorq/contracts test
-```
-
-The Portaldot deployment script is `packages/contracts/scripts/deploy-portaldot.ts`. It requires the deployer seed, RPC URL, chain ID and a funded H160 account. Never commit the deployer key.
+Open <http://localhost:3100>. The app uses a local PostgreSQL instance or Neon; no Docker is required locally. Use `npm run db:reset-test-data` to clear synthetic assets, jobs, licenses, runs and stale idempotency records.
 
 ### FL service
+
+In a second terminal:
 
 ```bash
 cd apps/fl-service
 uv sync
-uv run pytest -q
+FL_SERVICE_SHARED_SECRET=local-dev-token \
+ZORQ_INTERNAL_API_BASE_URL=http://localhost:3100 \
+FL_SERVICE_MODE=simulation \
 uv run uvicorn zorq_fl.main:app --host 127.0.0.1 --port 8000
 ```
 
-The service requires `FL_SERVICE_SHARED_SECRET` and the web app's internal URL. It has no direct database access.
+Set `FL_SERVICE_URL=http://localhost:8000` and the same shared secret in `.env.local`.
 
-### Checks
+### Tests and checks
 
 ```bash
 npm run typecheck
 npm run lint
+npm test
 npm run build
-npm run test
-npm run test:auth        # local API + database integration
-npm run test:e2e         # Playwright desktop + mobile
+npm run test:e2e
+
+npm --workspace @zorq/contracts test
+cd apps/fl-service && uv run pytest -q
 ```
 
-## Environment variables
+The browser suite covers desktop and mobile route/state rendering. Contract tests cover ownership, non-transferability, validity boundaries, revocation and authorization reason codes. FL tests cover three-round completion, fail-closed behavior and the FedAvg allowlist filter.
 
-Copy [`.env.example`](./.env.example) to `.env.local`. Server-only values must never be prefixed with `NEXT_PUBLIC_`.
+---
 
-| Variable | Scope | Purpose |
-|---|---|---|
-| `APP_ORIGIN` | Server | Canonical app origin used for SIWE fallback, session issuer and cookie policy. |
-| `NEXT_PUBLIC_APP_URL` | Public | Public app URL used in metadata and links. |
-| `ALLOWED_ORIGINS` | Server | Optional comma-separated additional trusted browser origins (exact origins only). |
-| `SESSION_SECRET` | Server | At least 32 bytes; signs the HttpOnly session token. |
-| `DATABASE_URL` | Server | Pooled PostgreSQL/Neon URL. Use `prepare: false` with the pooler. |
-| `PORTALDOT_CHAIN_ID` | Server | Must be `420420777` for the V3 testnet. |
-| `PORTALDOT_EVM_RPC_URL` | Server | Portaldot V3 EVM RPC endpoint. |
-| `PORTALDOT_CONFIRMATION_DEPTH` | Server | Confirmation depth used before accepting chain state. |
-| `ZORQ_CONTRACT_ADDRESS` | Server | Deployed `ZorqRegistry` address. |
-| `NEXT_PUBLIC_ZORQ_CONTRACT_ADDRESS` | Public | Contract address used by wallet clients. |
-| `NEXT_PUBLIC_PORTALDOT_CHAIN_ID` | Public | Chain ID exposed to the wallet client. |
-| `NEXT_PUBLIC_PORTALDOT_RPC_URL` | Public | RPC URL exposed to the wallet client. |
-| `NEXT_PUBLIC_PORTALDOT_EXPLORER_URL` | Public | Block explorer link for transaction evidence. |
-| `NEXT_PUBLIC_GITHUB_REPOSITORY_URL` | Public | Public repository link used by the UI. |
-| `RATE_LIMIT_SECRET` | Server | Secret used for rate-limit identifiers. |
-| `FL_SERVICE_URL` | Server | Render/FL coordinator URL. |
-| `FL_SERVICE_SHARED_SECRET` | Server | High-entropy service-to-service bearer token. |
-| `FL_SERVICE_TIMEOUT_MS` | Server | Internal FL request timeout. |
-| `ROUND_DELAY_MS` | FL service | Optional pacing delay between rounds. |
+## 📂 Repository Structure
 
-## Portaldot deployment details
+```text
+Zorq/
+├── apps/
+│   ├── web/                  Next.js App Router, SIWE auth, wallet UI, domain APIs
+│   └── fl-service/           FastAPI + Flower + PyTorch CPU coordinator
+├── packages/
+│   ├── contracts/            ZorqRegistry Solidity contract, Hardhat tests, deploy scripts
+│   ├── db/                   Drizzle schema, migrations, Postgres client
+│   └── tsconfig.base.json    Shared strict TypeScript configuration
+├── docs/
+│   ├── ARCHITECTURE.md       System, contract and authorization architecture
+│   ├── PROJECT_SPEC.md       Product scope, flows, data model and acceptance criteria
+│   ├── IMPLEMENTATION_PLAN.md  Phased implementation record
+│   ├── DEPLOYMENT.md         Vercel, Neon, Render and Portaldot runbook
+│   ├── API_REFERENCE.md      Implemented HTTP endpoints
+│   ├── SECURITY_AND_PRIVACY.md  Threat model and privacy boundaries
+│   ├── TEST_PLAN.md          Test matrix and recorded evidence
+│   ├── USER_GUIDE.md         Operator and tester walkthrough
+│   ├── AI_HANDOFF.md         Final state, decision log and known limitations
+│   └── demo/                 Demo video, narration and capture timeline
+├── scripts/
+│   ├── db/                   Test-data reset utility
+│   └── demo-video/           Playwright capture and ffmpeg render scripts
+├── .env.example
+├── .gitignore
+├── .nvmrc
+├── package.json
+├── package-lock.json
+└── README.md
+```
 
-- **Network:** Portaldot V3 EVM testnet
-- **Chain ID:** `420420777`
-- **Contract:** `ZorqRegistry` — ERC-721 DataLicense plus authoritative registry in one non-upgradeable contract
-- **Deployment:** `revive.instantiateWithCode` with the optimized runtime
-- **Deployment transaction:** `0xb39268c84b4b62465531cd00659d20364c1ea8ed91cf4995d0fe03e5a02a1834`
-- **Deployment block:** `337014`
-- **Runtime code:** `6,861` bytes
-- **Owner:** `0xFb7E252faE2D9e5A849361C22d7E4F8be2BB32Bf`
-- **`supportsInterface(0x80ac58cd)`:** `true`
+### What Lives Where
 
-The reference run used three active assets and three licenses. Rounds 1 and 2 admitted all three; token 3 was revoked after round 2's snapshot and excluded at the next snapshot while two authorized assets continued. See [`docs/evidence/demo-run.json`](./docs/evidence/demo-run.json) and [`docs/PORTALDOT_VALIDATION.md`](./docs/PORTALDOT_VALIDATION.md).
+- **`apps/web`** — the product surface: SIWE sessions, wallet-signed contract calls, owner-scoped metadata APIs, pending-to-active transaction UX, explorer links and the authorization snapshot service.
+- **`apps/fl-service`** — the execution adapter: a fixed three-round binary classifier, in-process Flower simulation, external-database loading and fail-closed round snapshots.
+- **`packages/contracts`** — the authoritative `ZorqRegistry`: ERC-721 DataLicenses, job/asset registries, revocation, ERC-721 transfer blocking and authorization queries.
+- **`packages/db`** — Drizzle schema and migrations for users, nonces, assets, jobs, licenses, runs, rounds, authorization checks and audit events.
+- **`docs/`** — the complete product, architecture, deployment, security, testing and decision record. Start with [docs/README.md](./docs/README.md).
 
-## Testing
+---
 
-See [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md). The current suite covers:
+<div align="center">
 
-- Solidity unit and integration tests (`11/11`)
-- FL simulation, external-data and contract-boundary tests (`7/7`)
-- SIWE authentication, replay rejection, origin checks and rate limits
-- Unit tests for domain formatting, SIWE construction, origin validation, explorer URL construction and safe client parsing
-- Playwright desktop + mobile route/state coverage (`40/40`)
-- Explorer deep links verified against the scanner's `#/extrinsics/<hash>` route
-- Deployed-preview sign-in and data-page verification
-- Ghost-record cleanup verified against the live test database: three `pending_chain` license rows had no transaction hash and `latestLicenseId` returned `0` for each, proving no on-chain mint; they and one stale draft asset were removed. Active assets and the open job were retained.
-- Final live wallet-level testnet verification is being completed manually by the operator in a real browser. The agent's code/build checks are complete; live wallet checks remain operator-owned.
+**Built for the Portaldot V3 testnet.**
 
-Every claim in the UI is intended to be backed by a command, a contract read or a recorded run artifact. Do not claim a test passed unless the command actually ran.
+This is an evaluation deployment. Do not use it with production, regulated or personal data. Federated learning is not automatically privacy-preserving against update leakage, poisoning or inference.
 
-## Security and privacy
+[Documentation](./docs/README.md) · [Security & Privacy](./docs/SECURITY_AND_PRIVACY.md) · [Portaldot Validation](./docs/PORTALDOT_VALIDATION.md) · [GitHub](https://github.com/onyebuchidaniel60/Zorq)
 
-See [`docs/SECURITY_AND_PRIVACY.md`](./docs/SECURITY_AND_PRIVACY.md).
-
-- Wallet actions are signed in the user's wallet; Zorq never holds a user private key.
-- SIWE sessions are HttpOnly, Secure and SameSite cookies; they are stateless and expire.
-- Raw evaluation data never leaves the worker runtime. Only commitments and aggregate metrics are retained.
-- FL does not automatically protect against update leakage, poisoning or inference.
-- The app is testnet-only; do not use it with production or regulated data.
-
-## Project documents
-
-- [`PROJECT_SPEC.md`](./PROJECT_SPEC.md) — product, MVP, flows, requirements and business rules
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system architecture, contract, stack and boundaries
-- [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — phased build sequence
-- [`AI_HANDOFF.md`](./AI_HANDOFF.md) — current state, decisions, evidence and known limitations
-- [`docs/API_REFERENCE.md`](./docs/API_REFERENCE.md) — implemented HTTP endpoints
-- [`docs/DEVELOPER_SETUP.md`](./docs/DEVELOPER_SETUP.md) — local setup detail
-- [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — Vercel, Neon and Render deployment
-- [`docs/FL_SERVICE.md`](./docs/FL_SERVICE.md) — coordinator service
-- [`docs/TEST_PLAN.md`](./docs/TEST_PLAN.md) — test matrix and evidence
-- [`docs/DESIGN_DECISIONS.md`](./docs/DESIGN_DECISIONS.md) — reference-image implementation record
-
-## Links
-
-- **In-app documentation:** `/docs`
-- **GitHub:** <https://github.com/onyebuchidaniel60/Zorq>
-- **Portaldot explorer:** <https://scanner-testnet-v3.portaldot.dev/>
+</div>

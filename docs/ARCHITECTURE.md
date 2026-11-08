@@ -574,58 +574,49 @@ Never expose `SESSION_SECRET`, `DATABASE_URL`, `FL_SERVICE_SHARED_SECRET`, `DEPL
 
 ```text
 zorq/
-├── PROJECT_SPEC.md
-├── ARCHITECTURE.md
-├── IMPLEMENTATION_PLAN.md
-├── AGENTS.md
-├── AI_HANDOFF.md
 ├── README.md
+├── package.json                 # npm workspace root
+├── package-lock.json
 ├── .env.example
 ├── .gitignore
 ├── .nvmrc
-├── package.json                 # npm workspace root
-├── package-lock.json
-├── docker-compose.yml            # local Postgres + FL service; optional web profile
 ├── apps/
-│   ├── web/                      # Next.js UI + Route Handlers
-│   │   ├── app/                  # public/app routes and API route handlers
-│   │   ├── components/           # shared behaviour components
-│   │   ├── lib/                  # auth, DB, chain, validation, API services
-│   │   ├── db/                   # Drizzle schema, migrations, seed scripts
-│   │   ├── public/               # favicon/static public assets
-│   │   └── tests/                # web unit/integration tests
-│   └── fl-service/               # Python FastAPI + Flower
+│   ├── web/                     # Next.js UI + Route Handlers
+│   │   ├── src/app/             # public/app routes and API route handlers
+│   │   ├── src/components/      # shared behaviour components
+│   │   ├── src/lib/             # wallet, auth, API and explorer helpers
+│   │   ├── src/server/          # auth, DB, chain, domain services and validation
+│   │   └── tests/               # web unit, integration and Playwright tests
+│   └── fl-service/              # Python FastAPI + Flower
 │       ├── zorq_fl/
-│       │   ├── api/              # internal FastAPI routes
-│       │   ├── flower_app/       # ServerApp, ClientApp, strategy
-│       │   ├── model/            # fixed model and synthetic data generation
-│       │   ├── auth/             # backend internal API client
-│       │   └── run/              # run process and lifecycle
 │       ├── tests/
 │       ├── pyproject.toml
 │       ├── uv.lock
 │       └── Dockerfile
 ├── packages/
-│   ├── contracts/               # Hardhat 3 project
+│   ├── contracts/               # Hardhat 3 project, Solidity tests, deploy scripts
 │   │   ├── contracts/
-│   │   ├── ignition/modules/
 │   │   ├── test/
 │   │   ├── scripts/
-│   │   └── hardhat.config.ts
-│   └── shared/                   # shared constants/schemas if needed; no secrets
+│   │   └── deployments/
+│   ├── db/                      # Drizzle schema, migrations and Postgres client
+│   └── tsconfig.base.json       # shared strict TypeScript configuration
 ├── docs/
+│   ├── README.md                # documentation index
+│   ├── PROJECT_SPEC.md
+│   ├── ARCHITECTURE.md
+│   ├── IMPLEMENTATION_PLAN.md
 │   ├── API_REFERENCE.md
-│   ├── DEVELOPER_SETUP.md
 │   ├── DEPLOYMENT.md
 │   ├── SECURITY_AND_PRIVACY.md
 │   ├── USER_GUIDE.md
 │   ├── PORTALDOT_VALIDATION.md
 │   ├── TEST_PLAN.md
-│   ├── DESIGN_DECISIONS.md
-│   └── DESIGN_APPROVAL.md
+│   ├── AI_HANDOFF.md
+│   └── demo/                    # demo video, narration and timeline
 └── scripts/
-    ├── verify-testnet.mjs
-    └── smoke-test.mjs
+    ├── db/                      # test-data reset utility
+    └── demo-video/              # capture and ffmpeg render scripts
 ```
 
 Directory responsibilities are fixed. The agent may add small implementation files within these boundaries, but must not split into more services or add a new infrastructure dependency. Any necessary deviation is logged in `AI_HANDOFF.md`'s Decision Log.

@@ -2,9 +2,9 @@
 
 **Execution mode:** Autonomous. Phase completion reports are for the record, not for approval. See AGENTS.md §1.1. The only stops are hard blockers.
 
-**Last updated:** 6 November 2026
-**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, and the demo video re-rendered at 2:02. A post-handoff hardening pass removed ghost draft/pending rows, added optimistic pending-to-active lists and back navigation, and cleaned three unsubmitted license ghosts plus one stale asset draft from the test database. A final UX pass added Portaldot explorer transaction links, button hover/pressed/loading states, and Quick Start guides in the README and `/docs`. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
-**Current phase:** Phase 10 and final polish complete. Post-handoff transaction UX and onboarding polish are complete; the operator owns live wallet verification.
+**Last updated:** 8 November 2026
+**Project state:** Phases 1–10 complete plus final polish: auth-state hydration and 401 re-authentication fixed, enterprise copy/logo/docs applied, external-database assets implemented, and the demo video re-rendered at 2:02. A post-handoff hardening pass removed ghost draft/pending rows, added optimistic pending-to-active lists and back navigation, and cleaned three unsubmitted license ghosts plus one stale asset draft from the test database. A final UX pass added Portaldot explorer transaction links, button hover/pressed/loading states, and Quick Start guides in the README and `/docs`. The repository is now packaged as an open-source template: internal planning and handoff documents live under `docs/`, the root contains only standard entry files, and the README is a public landing page. Final live testnet end-to-end verification is being handled manually by the operator in a real browser. The custom `zorq-preview` alias still serves the previous build (L-012).
+**Current phase:** Phase 10 and final polish complete. Open-source template cleanup and documentation are complete; the operator owns live wallet verification.
 
 ## Phase 3 deployment evidence
 
@@ -294,6 +294,8 @@ Format: `D-NNN — YYYY-MM-DD — Phase N — short decision title — rationale
 
 **D-023 — 2026-11-06 — Final UX — Confirmed records link to the Portaldot scanner through its hash route, and primary submit buttons expose explicit busy states.** The scanner is a hash-router SPA; `/tx/<hash>` renders the home shell, while `/#/extrinsics/<hash>` resolves the extrinsic detail. `explorerTxUrl()` builds the hash route from `NEXT_PUBLIC_PORTALDOT_EXPLORER_URL`, validates the 32-byte hash, and is unit-tested. List and detail pages render the link only for confirmed statuses (`active`/`deactivated`, `open`/`paused`/`closed`, `active`/`revoked`/`expired`), never for `draft` or `pending_chain`. Primary buttons retain hover/pressed feedback and now show a spinner with disabled `aria-busy` states during wallet and chain operations. Quick Start checklists were added to README and `/docs` with the tPOT storage-deposit warning. No contract, API, schema or authorization semantics changed. Files: `apps/web/src/lib/explorer.ts`, `apps/web/src/components/explorer-tx-link.tsx`, `apps/web/src/components/spinner.tsx`, `apps/web/src/app/globals.css`, `apps/web/src/app/{app,docs}/**`, `README.md`.
 
+**D-024 — 2026-11-08 — Repository packaging — Internal project records live under `docs/` and the root is reserved for standard entry files.** Moved `AGENTS.md`, `AI_HANDOFF.md`, `ARCHITECTURE.md`, `BLUEPRINT_INDEX.md`, `IMPLEMENTATION_PLAN.md`, `PREREQUISITES.md` and `PROJECT_SPEC.md` into `docs/`; `PRE_IMPLEMENTATION_AUDIT.md` was already there. Moved the shared TypeScript base config to `packages/tsconfig.base.json` and updated the three workspace `extends` paths. The tracked root is now `README.md`, `package.json`, `package-lock.json`, `.env.example`, `.gitignore` and `.nvmrc`. The README was rewritten as a public open-source template with centered badges, live/demo/explorer links, the problem statement, key features, a Mermaid architecture diagram, build-your-own steps, local development and repository structure. No runtime, API, contract, schema or authorization behaviour changed. Files: `README.md`, `docs/**`, `packages/tsconfig.base.json`, `apps/web/tsconfig.json`, `packages/{db,contracts}/tsconfig.json`.
+
 **L-010 — 2026-11-06 — Phase 10 — Demo narration uses a free Microsoft Edge neural male voice, not Google AI Studio.** No Google AI Studio credential or API key was supplied in the prerequisites manifest or environment, and the task cannot create a Google account/API key without operator input. Consequence: the `docs/DEMO_VIDEO.md` hard gate requiring a free Google AI Studio voice is not met, although the narration is synthetic, non-cloned, free, male, and contains no presenter identity. Mitigation: re-render `docs/demo/narration.md` with a Google AI Studio voice and remux using `scripts/demo-video/` when a key is supplied. Files: `docs/demo/zorq-demo.mp4`, `docs/demo/narration.md`, `docs/demo/timeline.json`.
 
 **D-015 — 2026-11-06 — Final polish — Reference image 3 becomes the definitive UI direction.** The dark near-black canvas, lime accent, dot grid, metric cards, icon rail and dense table language replace the earlier light dashboard. Public pages reuse the same palette with dark content cards. The implementation follows Stageshow craft rules but does not copy the kit or reference assets. No route, permission, contract, database or API behaviour changes. Files: `apps/web/src/app/globals.css`, `apps/web/src/components/**`, `apps/web/src/app/**/page.tsx`, `docs/DESIGN_DECISIONS.md`.
@@ -456,7 +458,7 @@ Phase 10 — demo video: complete with one documented exception. docs/demo/zorq-
 
 ```text
 Total phases completed: 10 (Phase 10 with the Google TTS exception in L-010)
-Total decisions logged: 23 (D-001 … D-023)
+Total decisions logged: 24 (D-001 … D-024)
 Total known limitations: 13 (L-001 … L-013)
 
 Final contract: 0xa9ab18d404e2cd19c23f30e7d78a740b562685ff
@@ -499,6 +501,17 @@ Verification steps:
 - **Docs refresh:** `/docs` testing counts updated to 31/31 + 4/4.
 
 **Verification:** `npm run typecheck`, `npm run lint` and `npm run build` pass. Web unit/scaffold is 31/31 + 4/4. Playwright is 40/40 desktop + mobile. The explorer hash route was opened in a real browser against the deployment extrinsic and rendered the extrinsic detail. An authenticated local browser session rendered the jobs list with the new explorer icon and the `/docs` Quick Start card was visually inspected. Live wallet-level testing remains operator-owned (L-013).
+
+## Open-source template and root cleanup (8 November 2026)
+
+- **Root cleanup:** Moved `AGENTS.md`, `AI_HANDOFF.md`, `ARCHITECTURE.md`, `BLUEPRINT_INDEX.md`, `IMPLEMENTATION_PLAN.md`, `PREREQUISITES.md` and `PROJECT_SPEC.md` into `docs/`. `PRE_IMPLEMENTATION_AUDIT.md` was already in `docs/`. The tracked root now contains only `README.md`, `package.json`, `package-lock.json`, `.env.example`, `.gitignore` and `.nvmrc`.
+- **Shared config:** Moved `tsconfig.base.json` to `packages/tsconfig.base.json`; updated `apps/web/tsconfig.json`, `packages/db/tsconfig.json` and `packages/contracts/tsconfig.json` extends paths.
+- **README rewrite:** Replaced the README with a centered, badge-led open-source landing page covering the live app, demo video, deployed contract and explorer, a three-step test guide, the data-control problem, key features, a Mermaid architecture diagram, fork/build/deploy steps, local development, tests and repository structure.
+- **Docs index:** `docs/README.md` now links every moved product/architecture/handoff document and the operator guides.
+- **Link verification:** Checked the live app, `/docs`, demo video, GitHub repository, explorer contract and deployment transaction links; replaced the dead `portaldot.dev` badge destination with the verified Portaldot developer documentation. The Mermaid diagram was rendered through mermaid.ink (HTTP 200, `image/jpeg`) before commit.
+- **Behaviour:** No contract, API, database, authentication or authorization semantics changed.
+
+**Verification:** `npm run typecheck`, `npm run lint`, `npm test` (31/31 Vitest + 4/4 scaffold) and `npm run build` pass after the file moves and TypeScript-config change.
 
 ## Post-handoff hardening completion report
 
