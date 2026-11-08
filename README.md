@@ -321,6 +321,16 @@ Zorq/
 
 ---
 
+## 🗺️ Future Roadmap
+
+Zorq's architecture is built to be modular. The MVP uses an open-source Flower adapter for federated execution while the Portaldot native FL, ZK and HE interfaces continue to mature.
+
+- **Native Portaldot FL** — when Portaldot publishes a developer-ready SDK and a verified testnet interface, replace the Flower demo adapter behind the planned `FLExecutionProvider` boundary. Until then, the deployment continues to label the adapter honestly.
+- **Native ZK & homomorphic encryption** — integrate only after official APIs and successful on-testnet evidence exist. Today's deployment makes no production ZK or HE claim.
+- **Production worker nodes** — transition from simulated partitions to distributed Zorq workers deployed inside enterprise VPCs for real-world regulated datasets.
+
+---
+
 <div align="center">
 
 **Built for the Portaldot V3 testnet.**
