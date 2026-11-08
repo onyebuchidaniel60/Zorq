@@ -509,6 +509,7 @@ Verification steps:
 - **README rewrite:** Replaced the README with a centered, badge-led open-source landing page covering the live app, demo video, deployed contract and explorer, a three-step test guide, the data-control problem, key features, a Mermaid architecture diagram, fork/build/deploy steps, local development, tests and repository structure.
 - **Docs index:** `docs/README.md` now links every moved product/architecture/handoff document and the operator guides.
 - **Link verification:** Checked the live app, `/docs`, demo video, GitHub repository, explorer contract and deployment transaction links; replaced the dead `portaldot.dev` badge destination with the verified Portaldot developer documentation. The Mermaid diagram was rendered through mermaid.ink (HTTP 200, `image/jpeg`) before commit.
+- **Operator README update preserved:** remote `main` received an operator "Future Roadmap" addition (`b93a027`) while this cleanup was in progress. The template rewrite was merged with it (`276e769`) and the roadmap was retained, with wording adjusted to keep the native-FL/ZK/HE claims conditional on official APIs and verified testnet evidence.
 - **Behaviour:** No contract, API, database, authentication or authorization semantics changed.
 
 **Verification:** `npm run typecheck`, `npm run lint`, `npm test` (31/31 Vitest + 4/4 scaffold) and `npm run build` pass after the file moves and TypeScript-config change.
@@ -589,9 +590,9 @@ Next single task: Operator manual testnet verification with a real wallet.
 
 ```text
 Assigned phase/task: Final cleanup — move internal docs under docs/, rewrite README as an open-source template and verify links
-Commit SHA: 6c205b8 (cleanup); this report is committed immediately after
+Commit SHA: 6c205b8 (cleanup) + 276e769 (merge with operator README roadmap); report 6fe8253
 Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
-Deployed commit/deployment ID: Vercel auto-deploy from 6c205b8. Locally built and typechecked; aliases were checked after push. Dashboard deployment ID is not exposed by deployment headers from this environment (L-001).
+Deployed commit/deployment ID: Vercel auto-deploy from the merged cleanup. Locally built and typechecked; aliases were checked after push. Dashboard deployment ID is not exposed by deployment headers from this environment (L-001).
 Changes visible:
 - Root tracked files are now README.md, package.json, package-lock.json, .env.example, .gitignore and .nvmrc.
 - AGENTS.md, AI_HANDOFF.md, ARCHITECTURE.md, BLUEPRINT_INDEX.md, IMPLEMENTATION_PLAN.md, PREREQUISITES.md and PROJECT_SPEC.md live under docs/.
