@@ -590,7 +590,7 @@ Next single task: Operator manual testnet verification with a real wallet.
 
 ```text
 Assigned phase/task: Final cleanup — move internal docs under docs/, rewrite README as an open-source template and verify links
-Commit SHA: 6c205b8 (cleanup) + 276e769 (merge with operator README roadmap); report 6fe8253
+Commit SHA: 6c205b8 (cleanup) + 276e769 (merge with operator README roadmap) + 33f0c5a (badge layout); report 6fe8253
 Preview URL (exact): https://zorq-six.vercel.app and https://zorq-git-preview-uhhh2.vercel.app
 Deployed commit/deployment ID: Vercel auto-deploy from the merged cleanup. Locally built and typechecked; aliases were checked after push. Dashboard deployment ID is not exposed by deployment headers from this environment (L-001).
 Changes visible:
